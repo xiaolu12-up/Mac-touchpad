@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicI32, Ordering};
 use std::sync::mpsc;
 use windows::Win32::Foundation::*;
 use windows::Win32::System::Threading::GetCurrentThreadId;
@@ -13,6 +13,9 @@ pub static TOUCHPAD_SCROLLING: AtomicBool = AtomicBool::new(false);
 
 /// Controls whether mouse wheel smooth scrolling is enabled.
 pub static SMOOTH_SCROLL_ENABLED: AtomicBool = AtomicBool::new(true);
+
+/// Tracks whether the synthetic touchpad device is initialized and active (Windows 11 exclusive)
+pub static SYNTHETIC_DEVICE_ACTIVE: AtomicBool = AtomicBool::new(false);
 
 /// Global channel sender to pass events to core message loop.
 pub static CORE_SENDER: std::sync::Mutex<Option<crate::window::CoreSender>> = std::sync::Mutex::new(None);
@@ -95,14 +98,17 @@ unsafe extern "system" fn low_level_mouse_proc(
     if n_code >= 0 {
         let msg = w_param.0 as u32;
 
-        // Block touch-promoted mouse events to prevent cursor jumping and disappearing
+        // Block touch-promoted mouse events to prevent cursor jumping and disappearing.
+        // We cast dwExtraInfo to u32 to prevent sign-extension mismatches on 64-bit systems.
         if msg == WM_MOUSEMOVE || msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP
             || msg == WM_RBUTTONDOWN || msg == WM_RBUTTONUP || msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP
         {
             let info = l_param.0 as *const MSLLHOOKSTRUCT;
             if !info.is_null() {
                 let info_ref = &*info;
-                if (info_ref.dwExtraInfo & 0xFFFFFF00) == 0xFF515700 {
+                let is_touch = ((info_ref.dwExtraInfo as u32) & 0xFFFFFF00) == 0xFF515700;
+                
+                if is_touch {
                     return LRESULT(1); // Swallow
                 }
             }
@@ -123,8 +129,8 @@ unsafe extern "system" fn low_level_mouse_proc(
                     return LRESULT(1);
                 }
 
-                // 3. If smooth scroll is enabled, intercept physical scrolls.
-                if SMOOTH_SCROLL_ENABLED.load(Ordering::Relaxed) {
+                // 3. If smooth scroll is enabled and Win11 synthetic device is active, intercept physical scrolls.
+                if SMOOTH_SCROLL_ENABLED.load(Ordering::Relaxed) && SYNTHETIC_DEVICE_ACTIVE.load(Ordering::Relaxed) {
                     let flags = info_ref.flags;
                     let is_injected = (flags & 1) != 0 || (flags & 2) != 0;
 

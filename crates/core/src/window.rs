@@ -249,7 +249,7 @@ unsafe fn handle_wm_input(state: &mut WindowState, lparam: LPARAM) {
     let device_id = state.raw_input.get_device_info(hv)
         .map(|d| d.device_id.clone()).unwrap_or_else(|| "default".into());
 
-    if let ContactResult::Complete(contacts) = state.contacts_manager.receive(result.contacts, result.contact_count) {
+    if let crate::contacts::manager::ContactResult::Complete(contacts) = state.contacts_manager.receive(result.contacts, result.contact_count) {
         state.engine.set_touchpad_ranges(result.x_range, result.y_range);
         match state.engine.on_touchpad_contact(&device_id, contacts) {
             TimerAction::StartTimer(ms) => { let _ = SetTimer(state.hwnd, TIMER_DRAG_END, ms, None); }

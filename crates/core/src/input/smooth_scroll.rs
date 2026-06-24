@@ -1,19 +1,75 @@
 use windows::Win32::UI::Input::Pointer::{
-    InitializeTouchInjection, InjectTouchInput, POINTER_TOUCH_INFO,
-    TOUCH_FEEDBACK_NONE, POINTER_FLAG_DOWN, POINTER_FLAG_INRANGE,
+    POINTER_TOUCH_INFO, POINTER_FLAG_DOWN, POINTER_FLAG_INRANGE,
     POINTER_FLAG_INCONTACT, POINTER_FLAG_UPDATE, POINTER_FLAG_UP,
 };
-use windows::Win32::UI::WindowsAndMessaging::{PT_TOUCH, TOUCH_MASK_CONTACTAREA};
+use windows::Win32::UI::WindowsAndMessaging::TOUCH_MASK_CONTACTAREA;
 use windows::Win32::Foundation::RECT;
-use windows::Win32::UI::Input::KeyboardAndMouse::{
-    SendInput, INPUT, INPUT_0, INPUT_MOUSE, MOUSEEVENTF_MOVE, MOUSEINPUT,
-};
+use windows::Win32::System::LibraryLoader::{LoadLibraryW, GetProcAddress};
+use windows::core::PCSTR;
+use std::sync::atomic::Ordering;
+use crate::input::wheel_hook::SYNTHETIC_DEVICE_ACTIVE;
 
-/// Smooth scroll handler for the external mouse wheel.
-///
-/// Converts discrete mouse wheel rotations into virtual two-finger touchpad pan events
-/// using the Windows Touch Injection API. This activates the OS's native DirectComposition
-/// hardware-accelerated smooth scrolling and inertia animations.
+// --- Windows 11 Synthetic Pointer Device FFI Definitions ---
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct SYNTHETIC_DEVICE_CREATION_PARAMS {
+    pub pointer_type: u32,       // POINTER_INPUT_TYPE (PT_TOUCHPAD is 5)
+    pub max_count: u32,
+    pub feedback_mode: u32,      // POINTER_FEEDBACK_MODE (POINTER_FEEDBACK_NONE is 0)
+    pub h_monitor: isize,        // HMONITOR
+    pub device_width: u32,
+    pub device_height: u32,
+    pub options: u32,            // SYNTHETIC_DEVICE_CREATION_OPTIONS
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct POINTER_TYPE_INFO {
+    pub type_: u32,              // POINTER_INPUT_TYPE (PT_TOUCHPAD is 5)
+    pub touch_info: POINTER_TOUCH_INFO,
+}
+
+type CreateSyntheticPointerDevice2Fn = unsafe extern "system" fn(
+    params: *const SYNTHETIC_DEVICE_CREATION_PARAMS,
+) -> isize; // HSYNTHETICPOINTERDEVICE is isize
+
+type InjectSyntheticPointerInputFn = unsafe extern "system" fn(
+    device: isize,
+    pointer_info: *const POINTER_TYPE_INFO,
+    count: u32,
+) -> windows::Win32::Foundation::BOOL;
+
+type DestroySyntheticPointerDeviceFn = unsafe extern "system" fn(
+    device: isize,
+);
+
+struct SyntheticPointerApis {
+    create_device: CreateSyntheticPointerDevice2Fn,
+    inject_input: InjectSyntheticPointerInputFn,
+    destroy_device: DestroySyntheticPointerDeviceFn,
+}
+
+static SYNTHETIC_APIS: std::sync::OnceLock<Option<SyntheticPointerApis>> = std::sync::OnceLock::new();
+
+fn get_synthetic_pointer_apis() -> Option<&'static SyntheticPointerApis> {
+    SYNTHETIC_APIS.get_or_init(|| {
+        unsafe {
+            // Load user32.dll dynamically so it remains compatible with Windows 10
+            let user32 = LoadLibraryW(windows::core::w!("user32.dll")).ok()?;
+            let create_proc = GetProcAddress(user32, PCSTR(b"CreateSyntheticPointerDevice2\0".as_ptr()))?;
+            let inject_proc = GetProcAddress(user32, PCSTR(b"InjectSyntheticPointerInput\0".as_ptr()))?;
+            let destroy_proc = GetProcAddress(user32, PCSTR(b"DestroySyntheticPointerDevice\0".as_ptr()))?;
+            
+            Some(SyntheticPointerApis {
+                create_device: std::mem::transmute(create_proc),
+                inject_input: std::mem::transmute(inject_proc),
+                destroy_device: std::mem::transmute(destroy_proc),
+            })
+        }
+    }).as_ref()
+}
+
 pub struct SmoothScroller {
     velocity_y: f32,
     velocity_x: f32,
@@ -25,16 +81,15 @@ pub struct SmoothScroller {
     pub natural_scroll: bool,
     // Touch injection state
     touch_active: bool,
-    touch_start_x: i32,
-    touch_start_y: i32,
     touch_offset_x: f32,
     touch_offset_y: f32,
-    touch_initialized: bool,
+    // Win11 Synthetic Pointer device handle
+    synthetic_device: Option<isize>,
 }
 
 impl SmoothScroller {
     pub fn new(speed: f32, smoothing: f32, deceleration: f32, natural_scroll: bool) -> Self {
-        Self {
+        let mut scroller = Self {
             velocity_y: 0.0,
             velocity_x: 0.0,
             remainder_y: 0.0,
@@ -44,24 +99,48 @@ impl SmoothScroller {
             deceleration: deceleration.clamp(0.01, 0.99),
             natural_scroll,
             touch_active: false,
-            touch_start_x: 0,
-            touch_start_y: 0,
             touch_offset_x: 0.0,
             touch_offset_y: 0.0,
-            touch_initialized: false,
+            synthetic_device: None,
+        };
+
+        // Try to create Win11 synthetic touchpad device
+        if let Some(apis) = get_synthetic_pointer_apis() {
+            let params = SYNTHETIC_DEVICE_CREATION_PARAMS {
+                pointer_type: 5,     // PT_TOUCHPAD
+                max_count: 2,        // at least 2 fingers
+                feedback_mode: 3,    // POINTER_FEEDBACK_NONE (value is 3)
+                h_monitor: 0,
+                device_width: 10000, // physical size width in himetric
+                device_height: 7000, // physical size height in himetric
+                options: 3,          // SDCO_PHYSICAL_SIZE | SDCO_TOUCHPAD_GESTURE_ONLY
+            };
+            let device = unsafe { (apis.create_device)(&params) };
+            if device != 0 {
+                scroller.synthetic_device = Some(device);
+                SYNTHETIC_DEVICE_ACTIVE.store(true, Ordering::Relaxed);
+                tracing::info!("Created user-mode synthetic touchpad device: {:?}", device);
+            } else {
+                let err = unsafe { windows::Win32::Foundation::GetLastError() };
+                tracing::error!("Failed to create synthetic touchpad device, error: {:?}", err);
+                SYNTHETIC_DEVICE_ACTIVE.store(false, Ordering::Relaxed);
+            }
+        } else {
+            tracing::info!("CreateSyntheticPointerDevice2 API not found. Smooth scrolling disabled (Win11 only).");
+            SYNTHETIC_DEVICE_ACTIVE.store(false, Ordering::Relaxed);
         }
+
+        scroller
     }
 
     pub fn add_scroll(&mut self, delta: i32, horizontal: bool) {
-        // Natural scroll on Windows inverts the direction:
-        // Normally, wheel down (delta < 0) moves page down (scroll down).
-        // With natural scroll, wheel down moves content up, so we invert it.
+        if self.synthetic_device.is_none() {
+            return;
+        }
+
         let scroll_dir = if self.natural_scroll { -1.0 } else { 1.0 };
-        // Accumulate velocity/kinetic energy
         let amount = (delta as f32) * self.speed * scroll_dir;
         
-        // Calculate scaling factor K to ensure the total scrolled distance
-        // matches `amount` exactly, while keeping both smoothing and deceleration active.
         let r = (1.0 - self.smoothing) * self.deceleration;
         let k = (1.0 - r) / self.smoothing;
         let velocity_added = amount * k;
@@ -72,27 +151,16 @@ impl SmoothScroller {
             self.velocity_y += velocity_added;
         }
 
-        // Start touch injection session if not already active
         if !self.touch_active {
-            let mut pt = windows::Win32::Foundation::POINT::default();
-            let _ = unsafe { windows::Win32::UI::WindowsAndMessaging::GetCursorPos(&mut pt) };
-            self.touch_start_x = pt.x;
-            self.touch_start_y = pt.y;
             self.touch_offset_x = 0.0;
             self.touch_offset_y = 0.0;
             self.touch_active = true;
-
-            if !self.touch_initialized {
-                let _ = unsafe { InitializeTouchInjection(2, TOUCH_FEEDBACK_NONE) };
-                self.touch_initialized = true;
-            }
-
             self.inject_touch_frame(POINTER_FLAG_DOWN | POINTER_FLAG_INRANGE | POINTER_FLAG_INCONTACT);
         }
     }
 
     pub fn tick(&mut self) {
-        if !self.touch_active {
+        if !self.touch_active || self.synthetic_device.is_none() {
             return;
         }
 
@@ -121,7 +189,6 @@ impl SmoothScroller {
 
             self.inject_touch_frame(POINTER_FLAG_UPDATE | POINTER_FLAG_INRANGE | POINTER_FLAG_INCONTACT);
         } else {
-            // Under threshold: release touch contacts
             self.inject_touch_frame(POINTER_FLAG_UP);
             self.touch_active = false;
             self.touch_offset_x = 0.0;
@@ -130,24 +197,6 @@ impl SmoothScroller {
             self.velocity_y = 0.0;
             self.remainder_x = 0.0;
             self.remainder_y = 0.0;
-
-            // Inject a dummy mouse event to force Windows back to mouse mode and restore cursor visibility
-            unsafe {
-                let input = INPUT {
-                    r#type: INPUT_MOUSE,
-                    Anonymous: INPUT_0 {
-                        mi: MOUSEINPUT {
-                            dx: 0,
-                            dy: 0,
-                            mouseData: 0,
-                            dwFlags: MOUSEEVENTF_MOVE,
-                            time: 0,
-                            dwExtraInfo: 0,
-                        },
-                    },
-                };
-                let _ = SendInput(&[input], std::mem::size_of::<INPUT>() as i32);
-            }
         }
     }
 
@@ -168,39 +217,108 @@ impl SmoothScroller {
     }
 
     fn inject_touch_frame(&self, flags: windows::Win32::UI::Input::Pointer::POINTER_FLAGS) {
+        let device = match self.synthetic_device {
+            Some(d) => d,
+            None => return,
+        };
+        let apis = match get_synthetic_pointer_apis() {
+            Some(a) => a,
+            None => return,
+        };
+
         unsafe {
-            // Simulate finger 0
+            let mut cursor_pt = windows::Win32::Foundation::POINT::default();
+            let _ = windows::Win32::UI::WindowsAndMessaging::GetCursorPos(&mut cursor_pt);
+
+            // Simulate finger 0 (on touchpad, coordinates are relative to virtual surface [10000 x 7000])
             let mut finger0: POINTER_TOUCH_INFO = std::mem::zeroed();
-            finger0.pointerInfo.pointerType = PT_TOUCH;
+            finger0.pointerInfo.pointerType = windows::Win32::UI::WindowsAndMessaging::POINTER_INPUT_TYPE(5); // PT_TOUCHPAD
             finger0.pointerInfo.pointerId = 0;
-            // Moving fingers up (subtracting offset_y) drags content up -> page scrolls down.
-            finger0.pointerInfo.ptPixelLocation.x = self.touch_start_x - 20 - self.touch_offset_x as i32;
-            finger0.pointerInfo.ptPixelLocation.y = self.touch_start_y - self.touch_offset_y as i32;
             finger0.pointerInfo.pointerFlags = flags;
             finger0.touchMask = TOUCH_MASK_CONTACTAREA;
+            finger0.pointerInfo.ptHimetricLocation.x = 4000 - self.touch_offset_x as i32;
+            finger0.pointerInfo.ptHimetricLocation.y = 3500 - self.touch_offset_y as i32;
+            
+            // Set ptPixelLocation to target the correct window under cursor
+            finger0.pointerInfo.ptPixelLocation = cursor_pt;
+            
             finger0.rcContact = RECT {
-                left: finger0.pointerInfo.ptPixelLocation.x - 2,
-                top: finger0.pointerInfo.ptPixelLocation.y - 2,
-                right: finger0.pointerInfo.ptPixelLocation.x + 2,
-                bottom: finger0.pointerInfo.ptPixelLocation.y + 2,
+                left: finger0.pointerInfo.ptHimetricLocation.x - 50,
+                top: finger0.pointerInfo.ptHimetricLocation.y - 50,
+                right: finger0.pointerInfo.ptHimetricLocation.x + 50,
+                bottom: finger0.pointerInfo.ptHimetricLocation.y + 50,
             };
 
-            // Simulate finger 1 (moving in parallel 40 pixels apart)
+            // Simulate finger 1 (moving in parallel, spaced by 2000 himetric units = 2.0 cm)
             let mut finger1: POINTER_TOUCH_INFO = std::mem::zeroed();
-            finger1.pointerInfo.pointerType = PT_TOUCH;
+            finger1.pointerInfo.pointerType = windows::Win32::UI::WindowsAndMessaging::POINTER_INPUT_TYPE(5); // PT_TOUCHPAD
             finger1.pointerInfo.pointerId = 1;
-            finger1.pointerInfo.ptPixelLocation.x = self.touch_start_x + 20 - self.touch_offset_x as i32;
-            finger1.pointerInfo.ptPixelLocation.y = finger0.pointerInfo.ptPixelLocation.y;
             finger1.pointerInfo.pointerFlags = flags;
             finger1.touchMask = TOUCH_MASK_CONTACTAREA;
+            finger1.pointerInfo.ptHimetricLocation.x = 6000 - self.touch_offset_x as i32;
+            finger1.pointerInfo.ptHimetricLocation.y = finger0.pointerInfo.ptHimetricLocation.y;
+            
+            finger1.pointerInfo.ptPixelLocation = cursor_pt;
+            
             finger1.rcContact = RECT {
-                left: finger1.pointerInfo.ptPixelLocation.x - 2,
-                top: finger1.pointerInfo.ptPixelLocation.y - 2,
-                right: finger1.pointerInfo.ptPixelLocation.x + 2,
-                bottom: finger1.pointerInfo.ptPixelLocation.y + 2,
+                left: finger1.pointerInfo.ptHimetricLocation.x - 50,
+                top: finger1.pointerInfo.ptHimetricLocation.y - 50,
+                right: finger1.pointerInfo.ptHimetricLocation.x + 50,
+                bottom: finger1.pointerInfo.ptHimetricLocation.y + 50,
             };
 
-            let _ = InjectTouchInput(&[finger0, finger1]);
+            let type_info = [
+                POINTER_TYPE_INFO {
+                    type_: 5,
+                    touch_info: finger0,
+                },
+                POINTER_TYPE_INFO {
+                    type_: 5,
+                    touch_info: finger1,
+                },
+            ];
+
+            let _ = (apis.inject_input)(device, type_info.as_ptr(), 2);
+        }
+    }
+}
+
+impl Drop for SmoothScroller {
+    fn drop(&mut self) {
+        if let Some(device) = self.synthetic_device {
+            if let Some(apis) = get_synthetic_pointer_apis() {
+                unsafe {
+                    (apis.destroy_device)(device);
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_synthetic_device() {
+        if let Some(apis) = get_synthetic_pointer_apis() {
+            let params = SYNTHETIC_DEVICE_CREATION_PARAMS {
+                pointer_type: 5,     // PT_TOUCHPAD
+                max_count: 2,        // at least 2 fingers
+                feedback_mode: 3,    // POINTER_FEEDBACK_NONE (value is 3)
+                h_monitor: 0,
+                device_width: 10000, // physical size width in himetric
+                device_height: 7000, // physical size height in himetric
+                options: 3,          // SDCO_PHYSICAL_SIZE | SDCO_TOUCHPAD_GESTURE_ONLY
+            };
+            let device = unsafe { (apis.create_device)(&params) };
+            println!("TEST: device handle = {}, error = {:?}", device, unsafe { windows::Win32::Foundation::GetLastError() });
+            assert_ne!(device, 0, "Failed to create synthetic touchpad device");
+            if device != 0 {
+                unsafe { (apis.destroy_device)(device); }
+            }
+        } else {
+            println!("TEST: APIs not available");
         }
     }
 }
