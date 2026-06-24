@@ -5,6 +5,9 @@ use windows::Win32::UI::Input::Pointer::{
 };
 use windows::Win32::UI::WindowsAndMessaging::{PT_TOUCH, TOUCH_MASK_CONTACTAREA};
 use windows::Win32::Foundation::RECT;
+use windows::Win32::UI::Input::KeyboardAndMouse::{
+    SendInput, INPUT, INPUT_0, INPUT_MOUSE, MOUSEEVENTF_MOVE, MOUSEINPUT,
+};
 
 /// Smooth scroll handler for the external mouse wheel.
 ///
@@ -127,6 +130,24 @@ impl SmoothScroller {
             self.velocity_y = 0.0;
             self.remainder_x = 0.0;
             self.remainder_y = 0.0;
+
+            // Inject a dummy mouse event to force Windows back to mouse mode and restore cursor visibility
+            unsafe {
+                let input = INPUT {
+                    r#type: INPUT_MOUSE,
+                    Anonymous: INPUT_0 {
+                        mi: MOUSEINPUT {
+                            dx: 0,
+                            dy: 0,
+                            mouseData: 0,
+                            dwFlags: MOUSEEVENTF_MOVE,
+                            time: 0,
+                            dwExtraInfo: 0,
+                        },
+                    },
+                };
+                let _ = SendInput(&[input], std::mem::size_of::<INPUT>() as i32);
+            }
         }
     }
 

@@ -94,6 +94,20 @@ unsafe extern "system" fn low_level_mouse_proc(
 ) -> LRESULT {
     if n_code >= 0 {
         let msg = w_param.0 as u32;
+
+        // Block touch-promoted mouse events to prevent cursor jumping and disappearing
+        if msg == WM_MOUSEMOVE || msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP
+            || msg == WM_RBUTTONDOWN || msg == WM_RBUTTONUP || msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP
+        {
+            let info = l_param.0 as *const MSLLHOOKSTRUCT;
+            if !info.is_null() {
+                let info_ref = &*info;
+                if (info_ref.dwExtraInfo & 0xFFFFFF00) == 0xFF515700 {
+                    return LRESULT(1); // Swallow
+                }
+            }
+        }
+
         if msg == WM_MOUSEWHEEL || msg == WM_MOUSEHWHEEL {
             let info = l_param.0 as *const MSLLHOOKSTRUCT;
             if !info.is_null() {
