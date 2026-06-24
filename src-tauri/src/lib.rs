@@ -36,6 +36,9 @@ struct SaveArgs {
     #[serde(default)] smooth_scroll_speed: Option<f32>,
     #[serde(default)] smooth_scroll_smoothing: Option<f32>,
     #[serde(default)] smooth_scroll_deceleration: Option<f32>,
+    #[serde(default)] smooth_scroll_base_scale: Option<f32>,
+    #[serde(default)] smooth_scroll_max_delta: Option<f32>,
+    #[serde(default)] smooth_scroll_deadzone: Option<f32>,
     #[serde(default)] natural_scroll: Option<bool>,
     #[serde(default)] four_finger_swipe_up: Option<String>,
     #[serde(default)] four_finger_swipe_down: Option<String>,
@@ -64,6 +67,9 @@ fn save_config(args: SaveArgs, state: tauri::State<'_, AppState>) -> Result<Conf
     if let Some(v) = args.smooth_scroll_speed { config.smooth_scroll_speed = v; }
     if let Some(v) = args.smooth_scroll_smoothing { config.smooth_scroll_smoothing = v; }
     if let Some(v) = args.smooth_scroll_deceleration { config.smooth_scroll_deceleration = v; }
+    if let Some(v) = args.smooth_scroll_base_scale { config.smooth_scroll_base_scale = v; }
+    if let Some(v) = args.smooth_scroll_max_delta { config.smooth_scroll_max_delta = v; }
+    if let Some(v) = args.smooth_scroll_deadzone { config.smooth_scroll_deadzone = v; }
     if let Some(v) = args.natural_scroll { config.natural_scroll = v; }
 
     if let Some(s) = args.four_finger_swipe_up { config.four_finger_swipe_up = parse_action(&s); }

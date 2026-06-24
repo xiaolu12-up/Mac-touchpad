@@ -120,6 +120,9 @@ fn run_message_loop(
             config.smooth_scroll_speed,
             config.smooth_scroll_smoothing,
             config.smooth_scroll_deceleration,
+            config.smooth_scroll_base_scale,
+            config.smooth_scroll_max_delta,
+            config.smooth_scroll_deadzone,
             config.natural_scroll,
         );
 
@@ -149,6 +152,9 @@ fn run_message_loop(
                             (*sp).scroller.set_speed(new_config.smooth_scroll_speed);
                             (*sp).scroller.set_smoothing(new_config.smooth_scroll_smoothing);
                             (*sp).scroller.set_deceleration(new_config.smooth_scroll_deceleration);
+                            (*sp).scroller.set_base_scale(new_config.smooth_scroll_base_scale);
+                            (*sp).scroller.set_max_delta(new_config.smooth_scroll_max_delta);
+                            (*sp).scroller.set_deadzone(new_config.smooth_scroll_deadzone);
                             (*sp).scroller.set_natural_scroll(new_config.natural_scroll);
                             tracing::info!("Config updated in engine and scroller (atomic)");
                         }
@@ -171,6 +177,9 @@ fn run_message_loop(
                                 (*sp).scroller.set_speed(c.smooth_scroll_speed);
                                 (*sp).scroller.set_smoothing(c.smooth_scroll_smoothing);
                                 (*sp).scroller.set_deceleration(c.smooth_scroll_deceleration);
+                                (*sp).scroller.set_base_scale(c.smooth_scroll_base_scale);
+                                (*sp).scroller.set_max_delta(c.smooth_scroll_max_delta);
+                                (*sp).scroller.set_deadzone(c.smooth_scroll_deadzone);
                                 (*sp).scroller.set_natural_scroll(c.natural_scroll);
                                 tracing::info!("Config updated in engine and scroller (channel)");
                             }

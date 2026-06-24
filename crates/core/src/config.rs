@@ -118,6 +118,9 @@ pub struct Config {
     pub smooth_scroll_speed: f32,
     pub smooth_scroll_smoothing: f32,
     pub smooth_scroll_deceleration: f32,
+    pub smooth_scroll_base_scale: f32,
+    pub smooth_scroll_max_delta: f32,
+    pub smooth_scroll_deadzone: f32,
     pub natural_scroll: bool,
 
     // General
@@ -171,9 +174,12 @@ impl Default for Config {
 
             // Smooth scroll
             smooth_scroll_enabled: true,
-            smooth_scroll_speed: 1.2,
-            smooth_scroll_smoothing: 0.3,
+            smooth_scroll_speed: 1.0,
+            smooth_scroll_smoothing: 0.30,
             smooth_scroll_deceleration: 0.92,
+            smooth_scroll_base_scale: 0.2,
+            smooth_scroll_max_delta: 20.0,
+            smooth_scroll_deadzone: 1.0,
             natural_scroll: true,
 
             run_at_startup: false,

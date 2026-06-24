@@ -1,44 +1,28 @@
-use windows::Win32::UI::Input::Pointer::{
-    POINTER_TOUCH_INFO, POINTER_FLAG_DOWN, POINTER_FLAG_INRANGE,
-    POINTER_FLAG_INCONTACT, POINTER_FLAG_UPDATE, POINTER_FLAG_UP,
+use windows::Win32::UI::Input::KeyboardAndMouse::{
+    SendInput, INPUT, INPUT_0, INPUT_MOUSE, MOUSEEVENTF_HWHEEL, MOUSEEVENTF_WHEEL, MOUSEINPUT,
 };
-use windows::Win32::UI::WindowsAndMessaging::TOUCH_MASK_CONTACTAREA;
-use windows::Win32::Foundation::RECT;
 use windows::Win32::System::LibraryLoader::{LoadLibraryW, GetProcAddress};
 use windows::core::PCSTR;
 use std::sync::atomic::Ordering;
-use crate::input::wheel_hook::SYNTHETIC_DEVICE_ACTIVE;
+use crate::input::wheel_hook::{SYNTHETIC_DEVICE_ACTIVE, SYNTHETIC_SCROLL_MARKER};
 
-// --- Windows 11 Synthetic Pointer Device FFI Definitions ---
+// --- Windows 11 Synthetic Pointer Device FFI (device creation only) ---
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct SYNTHETIC_DEVICE_CREATION_PARAMS {
-    pub pointer_type: u32,       // POINTER_INPUT_TYPE (PT_TOUCHPAD is 5)
+    pub pointer_type: u32,
     pub max_count: u32,
-    pub feedback_mode: u32,      // POINTER_FEEDBACK_MODE (POINTER_FEEDBACK_NONE is 0)
-    pub h_monitor: isize,        // HMONITOR
+    pub feedback_mode: u32,
+    pub h_monitor: isize,
     pub device_width: u32,
     pub device_height: u32,
-    pub options: u32,            // SYNTHETIC_DEVICE_CREATION_OPTIONS
-}
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct POINTER_TYPE_INFO {
-    pub type_: u32,              // POINTER_INPUT_TYPE (PT_TOUCHPAD is 5)
-    pub touch_info: POINTER_TOUCH_INFO,
+    pub options: u32,
 }
 
 type CreateSyntheticPointerDevice2Fn = unsafe extern "system" fn(
     params: *const SYNTHETIC_DEVICE_CREATION_PARAMS,
-) -> isize; // HSYNTHETICPOINTERDEVICE is isize
-
-type InjectSyntheticPointerInputFn = unsafe extern "system" fn(
-    device: isize,
-    pointer_info: *const POINTER_TYPE_INFO,
-    count: u32,
-) -> windows::Win32::Foundation::BOOL;
+) -> isize;
 
 type DestroySyntheticPointerDeviceFn = unsafe extern "system" fn(
     device: isize,
@@ -46,7 +30,6 @@ type DestroySyntheticPointerDeviceFn = unsafe extern "system" fn(
 
 struct SyntheticPointerApis {
     create_device: CreateSyntheticPointerDevice2Fn,
-    inject_input: InjectSyntheticPointerInputFn,
     destroy_device: DestroySyntheticPointerDeviceFn,
 }
 
@@ -55,15 +38,12 @@ static SYNTHETIC_APIS: std::sync::OnceLock<Option<SyntheticPointerApis>> = std::
 fn get_synthetic_pointer_apis() -> Option<&'static SyntheticPointerApis> {
     SYNTHETIC_APIS.get_or_init(|| {
         unsafe {
-            // Load user32.dll dynamically so it remains compatible with Windows 10
             let user32 = LoadLibraryW(windows::core::w!("user32.dll")).ok()?;
             let create_proc = GetProcAddress(user32, PCSTR(b"CreateSyntheticPointerDevice2\0".as_ptr()))?;
-            let inject_proc = GetProcAddress(user32, PCSTR(b"InjectSyntheticPointerInput\0".as_ptr()))?;
             let destroy_proc = GetProcAddress(user32, PCSTR(b"DestroySyntheticPointerDevice\0".as_ptr()))?;
-            
+
             Some(SyntheticPointerApis {
                 create_device: std::mem::transmute(create_proc),
-                inject_input: std::mem::transmute(inject_proc),
                 destroy_device: std::mem::transmute(destroy_proc),
             })
         }
@@ -71,36 +51,42 @@ fn get_synthetic_pointer_apis() -> Option<&'static SyntheticPointerApis> {
 }
 
 pub struct SmoothScroller {
-    velocity_y: f32,
-    velocity_x: f32,
-    remainder_y: f32,
-    remainder_x: f32,
-    pub speed: f32,
-    pub smoothing: f32,
-    pub deceleration: f32,
+    // Dual-velocity model: target decays via damping, current lerps toward target
+    current_velocity_x: f64,
+    current_velocity_y: f64,
+    target_velocity_x: f64,
+    target_velocity_y: f64,
+    // Core physics parameters
+    pub speed: f32,          // sensitivity multiplier
+    pub smoothing: f32,      // lerp factor: (0, 1]. Smaller = smoother but laggier
+    pub deceleration: f32,   // damping: [0, 1). Closer to 1 = longer glide
+    pub base_scale: f32,     // raw delta → target velocity scale (default 0.2)
+    pub max_delta: f32,      // max units sent per tick (default 20, lower = less jump)
+    pub deadzone: f32,       // velocity cutoff threshold (default 1.0)
     pub natural_scroll: bool,
-    // Touch injection state
-    touch_active: bool,
-    touch_offset_x: f32,
-    touch_offset_y: f32,
-    // Win11 Synthetic Pointer device handle
+    // Wheel accumulator for sub-pixel delta accumulation
+    wheel_accum_x: f64,
+    wheel_accum_y: f64,
+    // Win11 Synthetic Pointer device handle (used for 3-finger drag)
     synthetic_device: Option<isize>,
 }
 
 impl SmoothScroller {
-    pub fn new(speed: f32, smoothing: f32, deceleration: f32, natural_scroll: bool) -> Self {
+    pub fn new(speed: f32, smoothing: f32, deceleration: f32, base_scale: f32, max_delta: f32, deadzone: f32, natural_scroll: bool) -> Self {
         let mut scroller = Self {
-            velocity_y: 0.0,
-            velocity_x: 0.0,
-            remainder_y: 0.0,
-            remainder_x: 0.0,
+            current_velocity_x: 0.0,
+            current_velocity_y: 0.0,
+            target_velocity_x: 0.0,
+            target_velocity_y: 0.0,
             speed,
             smoothing: smoothing.clamp(0.01, 1.0),
             deceleration: deceleration.clamp(0.01, 0.99),
+            base_scale: base_scale.clamp(0.05, 0.5),
+            max_delta: max_delta.clamp(5.0, 60.0),
+            deadzone: deadzone.clamp(0.1, 5.0),
             natural_scroll,
-            touch_active: false,
-            touch_offset_x: 0.0,
-            touch_offset_y: 0.0,
+            wheel_accum_x: 0.0,
+            wheel_accum_y: 0.0,
             synthetic_device: None,
         };
 
@@ -133,71 +119,92 @@ impl SmoothScroller {
         scroller
     }
 
+    /// Called when a physical wheel event is intercepted.
+    /// `delta`: raw wheel delta (±120 per notch from Windows).
     pub fn add_scroll(&mut self, delta: i32, horizontal: bool) {
-        if self.synthetic_device.is_none() {
-            return;
-        }
-
         let scroll_dir = if self.natural_scroll { -1.0 } else { 1.0 };
-        let amount = (delta as f32) * self.speed * scroll_dir;
-        
-        let r = (1.0 - self.smoothing) * self.deceleration;
-        let k = (1.0 - r) / self.smoothing;
-        let velocity_added = amount * k;
+        let amount = delta as f64 * self.base_scale as f64 * self.speed as f64 * scroll_dir;
 
         if horizontal {
-            self.velocity_x += velocity_added;
+            self.target_velocity_x += amount;
         } else {
-            self.velocity_y += velocity_added;
-        }
-
-        if !self.touch_active {
-            self.touch_offset_x = 0.0;
-            self.touch_offset_y = 0.0;
-            self.touch_active = true;
-            self.inject_touch_frame(POINTER_FLAG_DOWN | POINTER_FLAG_INRANGE | POINTER_FLAG_INCONTACT);
+            self.target_velocity_y += amount;
         }
     }
 
+    /// Called every ~8ms from the message loop.
+    /// Applies dual-velocity physics and sends wheel events via SendInput.
     pub fn tick(&mut self) {
-        if !self.touch_active || self.synthetic_device.is_none() {
-            return;
+        // Step A: target velocity decays via damping
+        self.target_velocity_x *= self.deceleration as f64;
+        self.target_velocity_y *= self.deceleration as f64;
+
+        // Step B: current velocity lerps toward target (the "smoothness" magic)
+        self.current_velocity_x += (self.target_velocity_x - self.current_velocity_x) * self.smoothing as f64;
+        self.current_velocity_y += (self.target_velocity_y - self.current_velocity_y) * self.smoothing as f64;
+
+        // Deadzone cutoff to prevent CPU spin on tiny float residuals
+        let dz = self.deadzone as f64;
+        if self.current_velocity_x.abs() < dz && self.target_velocity_x.abs() < dz {
+            self.current_velocity_x = 0.0;
+            self.target_velocity_x = 0.0;
+        }
+        if self.current_velocity_y.abs() < dz && self.target_velocity_y.abs() < dz {
+            self.current_velocity_y = 0.0;
+            self.target_velocity_y = 0.0;
         }
 
-        let is_moving = self.velocity_y.abs() > 0.1 || self.velocity_x.abs() > 0.1;
+        // Accumulate velocity, send moderate-sized deltas for responsive smooth scrolling.
+        self.wheel_accum_y += self.current_velocity_y;
+        self.wheel_accum_x += self.current_velocity_x;
 
-        if is_moving {
-            if self.velocity_y.abs() > 0.1 {
-                let scroll_y = self.velocity_y * self.smoothing;
-                self.velocity_y = (self.velocity_y - scroll_y) * self.deceleration;
-                
-                let total_y = scroll_y + self.remainder_y;
-                let move_y = total_y.trunc();
-                self.remainder_y = total_y - move_y;
-                self.touch_offset_y += move_y;
-            }
+        let mut inputs: Vec<INPUT> = Vec::new();
+        let max_delta = self.max_delta as f64;
 
-            if self.velocity_x.abs() > 0.1 {
-                let scroll_x = self.velocity_x * self.smoothing;
-                self.velocity_x = (self.velocity_x - scroll_x) * self.deceleration;
-
-                let total_x = scroll_x + self.remainder_x;
-                let move_x = total_x.trunc();
-                self.remainder_x = total_x - move_x;
-                self.touch_offset_x += move_x;
-            }
-
-            self.inject_touch_frame(POINTER_FLAG_UPDATE | POINTER_FLAG_INRANGE | POINTER_FLAG_INCONTACT);
-        } else {
-            self.inject_touch_frame(POINTER_FLAG_UP);
-            self.touch_active = false;
-            self.touch_offset_x = 0.0;
-            self.touch_offset_y = 0.0;
-            self.velocity_x = 0.0;
-            self.velocity_y = 0.0;
-            self.remainder_x = 0.0;
-            self.remainder_y = 0.0;
+        if self.wheel_accum_y.abs() >= 1.0 {
+            let wy = self.wheel_accum_y.abs().min(max_delta) as i32 * self.wheel_accum_y.signum() as i32;
+            inputs.push(INPUT {
+                r#type: INPUT_MOUSE,
+                Anonymous: INPUT_0 {
+                    mi: MOUSEINPUT {
+                        dx: 0, dy: 0,
+                        mouseData: wy as u32,
+                        dwFlags: MOUSEEVENTF_WHEEL,
+                        time: 0,
+                        dwExtraInfo: SYNTHETIC_SCROLL_MARKER,
+                    },
+                },
+            });
+            self.wheel_accum_y -= wy as f64;
         }
+
+        if self.wheel_accum_x.abs() >= 1.0 {
+            let wx = self.wheel_accum_x.abs().min(max_delta) as i32 * self.wheel_accum_x.signum() as i32;
+            inputs.push(INPUT {
+                r#type: INPUT_MOUSE,
+                Anonymous: INPUT_0 {
+                    mi: MOUSEINPUT {
+                        dx: 0, dy: 0,
+                        mouseData: wx as u32,
+                        dwFlags: MOUSEEVENTF_HWHEEL,
+                        time: 0,
+                        dwExtraInfo: SYNTHETIC_SCROLL_MARKER,
+                    },
+                },
+            });
+            self.wheel_accum_x -= wx as f64;
+        }
+
+        if !inputs.is_empty() {
+            unsafe {
+                SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
+            }
+        }
+    }
+
+    pub fn is_moving(&self) -> bool {
+        let dz = self.deadzone as f64;
+        self.current_velocity_x.abs() >= dz || self.current_velocity_y.abs() >= dz
     }
 
     pub fn set_speed(&mut self, speed: f32) {
@@ -216,70 +223,16 @@ impl SmoothScroller {
         self.natural_scroll = natural;
     }
 
-    fn inject_touch_frame(&self, flags: windows::Win32::UI::Input::Pointer::POINTER_FLAGS) {
-        let device = match self.synthetic_device {
-            Some(d) => d,
-            None => return,
-        };
-        let apis = match get_synthetic_pointer_apis() {
-            Some(a) => a,
-            None => return,
-        };
+    pub fn set_base_scale(&mut self, v: f32) {
+        self.base_scale = v.clamp(0.05, 0.5);
+    }
 
-        unsafe {
-            let mut cursor_pt = windows::Win32::Foundation::POINT::default();
-            let _ = windows::Win32::UI::WindowsAndMessaging::GetCursorPos(&mut cursor_pt);
+    pub fn set_max_delta(&mut self, v: f32) {
+        self.max_delta = v.clamp(5.0, 60.0);
+    }
 
-            // Simulate finger 0 (on touchpad, coordinates are relative to virtual surface [10000 x 7000])
-            let mut finger0: POINTER_TOUCH_INFO = std::mem::zeroed();
-            finger0.pointerInfo.pointerType = windows::Win32::UI::WindowsAndMessaging::POINTER_INPUT_TYPE(5); // PT_TOUCHPAD
-            finger0.pointerInfo.pointerId = 0;
-            finger0.pointerInfo.pointerFlags = flags;
-            finger0.touchMask = TOUCH_MASK_CONTACTAREA;
-            finger0.pointerInfo.ptHimetricLocation.x = 4000 - self.touch_offset_x as i32;
-            finger0.pointerInfo.ptHimetricLocation.y = 3500 - self.touch_offset_y as i32;
-            
-            // Set ptPixelLocation to target the correct window under cursor
-            finger0.pointerInfo.ptPixelLocation = cursor_pt;
-            
-            finger0.rcContact = RECT {
-                left: finger0.pointerInfo.ptHimetricLocation.x - 50,
-                top: finger0.pointerInfo.ptHimetricLocation.y - 50,
-                right: finger0.pointerInfo.ptHimetricLocation.x + 50,
-                bottom: finger0.pointerInfo.ptHimetricLocation.y + 50,
-            };
-
-            // Simulate finger 1 (moving in parallel, spaced by 2000 himetric units = 2.0 cm)
-            let mut finger1: POINTER_TOUCH_INFO = std::mem::zeroed();
-            finger1.pointerInfo.pointerType = windows::Win32::UI::WindowsAndMessaging::POINTER_INPUT_TYPE(5); // PT_TOUCHPAD
-            finger1.pointerInfo.pointerId = 1;
-            finger1.pointerInfo.pointerFlags = flags;
-            finger1.touchMask = TOUCH_MASK_CONTACTAREA;
-            finger1.pointerInfo.ptHimetricLocation.x = 6000 - self.touch_offset_x as i32;
-            finger1.pointerInfo.ptHimetricLocation.y = finger0.pointerInfo.ptHimetricLocation.y;
-            
-            finger1.pointerInfo.ptPixelLocation = cursor_pt;
-            
-            finger1.rcContact = RECT {
-                left: finger1.pointerInfo.ptHimetricLocation.x - 50,
-                top: finger1.pointerInfo.ptHimetricLocation.y - 50,
-                right: finger1.pointerInfo.ptHimetricLocation.x + 50,
-                bottom: finger1.pointerInfo.ptHimetricLocation.y + 50,
-            };
-
-            let type_info = [
-                POINTER_TYPE_INFO {
-                    type_: 5,
-                    touch_info: finger0,
-                },
-                POINTER_TYPE_INFO {
-                    type_: 5,
-                    touch_info: finger1,
-                },
-            ];
-
-            let _ = (apis.inject_input)(device, type_info.as_ptr(), 2);
-        }
+    pub fn set_deadzone(&mut self, v: f32) {
+        self.deadzone = v.clamp(0.1, 5.0);
     }
 }
 

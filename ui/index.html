@@ -120,9 +120,12 @@ select:focus{border-color:var(--accent)}
 <div class="sec"><div class="st">触控板双指滑动</div>
 <div class="row"><div><div class="lbl">启用平滑滚动</div><div class="dsc">拦截双指滑动原生事件，替换为丝滑滚轮信号</div></div>
 <label class="tg"><input type="checkbox" id="smooth" onchange="save('ss3')" onclick="save('ss3')"><span class="sl"></span></label></div>
-<div class="row"><div class="lbl">滚动速度</div><div class="sg"><input type="range" id="scroll_speed_r" min="0.5" max="8" step="0.1" oninput="syncSlider('scroll_speed','ss3')"><input type="number" id="scroll_speed" min="0.5" max="8" step="0.1" onchange="syncInput('scroll_speed','ss3')"></div></div>
-<div class="row"><div class="lbl">平滑度</div><div class="sg"><input type="range" id="scroll_smooth_r" min="0.05" max="1" step="0.05" oninput="syncSlider('scroll_smooth','ss3')"><input type="number" id="scroll_smooth" min="0.05" max="1" step="0.05" onchange="syncInput('scroll_smooth','ss3')"></div></div>
-<div class="row"><div class="lbl">减速系数</div><div class="sg"><input type="range" id="scroll_decel_r" min="0.5" max="0.99" step="0.01" oninput="syncSlider('scroll_decel','ss3')"><input type="number" id="scroll_decel" min="0.5" max="0.99" step="0.01" onchange="syncInput('scroll_decel','ss3')"></div></div>
+<div class="row"><div class="lbl">灵敏度</div><div class="sg"><input type="range" id="scroll_speed_r" min="0.5" max="2.5" step="0.1" oninput="syncSlider('scroll_speed','ss3')"><input type="number" id="scroll_speed" min="0.5" max="2.5" step="0.1" onchange="syncInput('scroll_speed','ss3')"></div></div>
+<div class="row"><div class="lbl">平滑度</div><div class="sg"><input type="range" id="scroll_smooth_r" min="0.15" max="0.45" step="0.01" oninput="syncSlider('scroll_smooth','ss3')"><input type="number" id="scroll_smooth" min="0.15" max="0.45" step="0.01" onchange="syncInput('scroll_smooth','ss3')"></div></div>
+<div class="row"><div class="lbl">惯性</div><div class="sg"><input type="range" id="scroll_decel_r" min="0.88" max="0.96" step="0.01" oninput="syncSlider('scroll_decel','ss3')"><input type="number" id="scroll_decel" min="0.88" max="0.96" step="0.01" onchange="syncInput('scroll_decel','ss3')"></div></div>
+<div class="row"><div class="lbl">基础缩放</div><div class="sg"><input type="range" id="scroll_bscale_r" min="0.05" max="0.5" step="0.01" oninput="syncSlider('scroll_bscale','ss3')"><input type="number" id="scroll_bscale" min="0.05" max="0.5" step="0.01" onchange="syncInput('scroll_bscale','ss3')"></div></div>
+<div class="row"><div class="lbl">最大增量</div><div class="sg"><input type="range" id="scroll_maxd_r" min="5" max="60" step="1" oninput="syncSlider('scroll_maxd','ss3')"><input type="number" id="scroll_maxd" min="5" max="60" step="1" onchange="syncInput('scroll_maxd','ss3')"></div></div>
+<div class="row"><div class="lbl">死区阈值</div><div class="sg"><input type="range" id="scroll_dz_r" min="0.1" max="5" step="0.1" oninput="syncSlider('scroll_dz','ss3')"><input type="number" id="scroll_dz" min="0.1" max="5" step="0.1" onchange="syncInput('scroll_dz','ss3')"></div></div>
 <div class="row"><div><div class="lbl">自然滚动</div><div class="dsc">手指向下 → 内容向下移动（macOS 风格）</div></div>
 <label class="tg"><input type="checkbox" id="natural" onchange="save('ss3')" onclick="save('ss3')"><span class="sl"></span></label></div>
 </div>
@@ -215,9 +218,12 @@ async function loadConfig(){
     setDual('stt',Math.round(cfg.start_threshold));
     setDual('spt',Math.round(cfg.stop_threshold));
     setDual('rel',cfg.release_delay_ms);
-    setDual('scroll_speed',cfg.smooth_scroll_speed||3);
+    setDual('scroll_speed',cfg.smooth_scroll_speed||1.0);
     setDual('scroll_smooth',cfg.smooth_scroll_smoothing||0.3);
     setDual('scroll_decel',cfg.smooth_scroll_deceleration||0.92);
+    setDual('scroll_bscale',cfg.smooth_scroll_base_scale||0.2);
+    setDual('scroll_maxd',cfg.smooth_scroll_max_delta||20);
+    setDual('scroll_dz',cfg.smooth_scroll_deadzone||1.0);
 
     Object.entries(SELS).forEach(([elId,key])=>{document.getElementById(elId).value=cfg[key]||'None'});
 
@@ -257,6 +263,9 @@ async function doSave(statusId){
     smooth_scroll_speed:+document.getElementById('scroll_speed').value,
     smooth_scroll_smoothing:+document.getElementById('scroll_smooth').value,
     smooth_scroll_deceleration:+document.getElementById('scroll_decel').value,
+    smooth_scroll_base_scale:+document.getElementById('scroll_bscale').value,
+    smooth_scroll_max_delta:+document.getElementById('scroll_maxd').value,
+    smooth_scroll_deadzone:+document.getElementById('scroll_dz').value,
     natural_scroll:document.getElementById('natural').checked,
     cursor_speed:+document.getElementById('speed').value,
     cursor_acceleration:+document.getElementById('accel').value,

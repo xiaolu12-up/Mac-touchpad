@@ -1,5 +1,6 @@
 use windows::Win32::UI::Input::KeyboardAndMouse::*;
 use crate::overlay;
+use crate::input::wheel_hook::SYNTHETIC_SCROLL_MARKER;
 
 /// Send a keyboard shortcut as key-down events (in order)
 /// followed by key-up events (in reverse order).
@@ -116,7 +117,7 @@ pub fn smooth_scroll(delta: i32, speed: f32) {
                     mouseData: wheel_delta as u32,
                     dwFlags: MOUSEEVENTF_WHEEL,
                     time: 0,
-                    dwExtraInfo: 0,
+                    dwExtraInfo: SYNTHETIC_SCROLL_MARKER,
                 },
             },
         };
@@ -139,7 +140,7 @@ pub fn smooth_scroll_horizontal(delta: i32, speed: f32) {
                     mouseData: wheel_delta as u32,
                     dwFlags: MOUSEEVENTF_HWHEEL,
                     time: 0,
-                    dwExtraInfo: 0,
+                    dwExtraInfo: SYNTHETIC_SCROLL_MARKER,
                 },
             },
         };
