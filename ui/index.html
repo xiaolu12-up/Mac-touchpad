@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 
 <head>
@@ -1500,12 +1500,22 @@
                     <div class="info">
                         <div>版本: <span id="ver">-</span></div>
                         <div>作者: <span id="author">-</span></div>
-                        <div>仓库: <a href="#" id="repo" style="color:var(--accent)">GitHub</a></div>
-                        <div style="margin-top:8px">Rust · Tauri · 高性能</div>
+                        <div style="margin-top:4px">
+                            仓库: <a href="#" id="repo" style="color:var(--accent)">GitHub</a> | 
+                            <a href="https://gitee.com/lu52/Mac-touchpad" target="_blank" style="color:var(--accent)">Gitee</a>
+                        </div>
+                        <div style="margin-top:4px">
+                            反馈: <a href="https://github.com/xiaolu12-up/Mac-touchpad/issues" target="_blank" style="color:var(--accent)">GitHub Issues</a> | 
+                            <a href="https://gitee.com/lu52/Mac-touchpad/issues" target="_blank" style="color:var(--accent)">Gitee Issues</a>
+                        </div>
+                        <div style="margin-top:12px">Rust · Tauri · 高性能</div>
                     </div>
-                    <div class="update-btn">
-                        <button class="btn btn-sm" onclick="checkUpdate()">🔄 检查更新</button>
-                        <div id="update-result" style="margin-top:10px;font-size:12px"></div>
+                    <div class="update-btn" style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                        <div style="display: flex; gap: 10px; justify-content: center; width: 100%;">
+                            <button class="btn btn-sm" onclick="checkUpdate()">🔄 检查更新</button>
+                            <button class="btn btn-sm btn-sec" onclick="openFeedback()">💬 问题反馈</button>
+                        </div>
+                        <div id="update-result" style="font-size:12px; min-height: 18px; margin-top: 2px;"></div>
                     </div>
                 </div>
             </div>
@@ -1993,6 +2003,31 @@
     initTheme();
 
     loadConfig();
+
+    function openFeedback() {
+        const url = 'https://github.com/xiaolu12-up/Mac-touchpad/issues';
+        if (invoke) {
+            invoke('open_url', { url });
+        } else {
+            window.open(url, '_blank');
+        }
+    }
+
+    // Intercept clicks on external links to open them via Rust (which hides the CMD window)
+    document.addEventListener('click', e => {
+        const a = e.target.closest('a');
+        if (a) {
+            const href = a.getAttribute('href');
+            if (href && href.startsWith('http')) {
+                e.preventDefault();
+                if (invoke) {
+                    invoke('open_url', { url: href });
+                } else {
+                    window.open(href, '_blank');
+                }
+            }
+        }
+    });
 </script>
 </body>
 

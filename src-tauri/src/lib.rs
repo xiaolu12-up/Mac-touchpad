@@ -140,15 +140,15 @@ fn get_version() -> AppInfo {
         name: "MacTouchpad".into(),
         description: "在 Windows 上实现 Mac 触控板手势体验".into(),
         author: "xiao.luy".into(),
-        repo: "https://github.com/user/mac-touchpad".into(),
+        repo: "https://github.com/xiaolu12-up/Mac-touchpad".into(),
     }
 }
 
 #[tauri::command]
 fn check_update() -> UpdateInfo {
-    // Check GitHub for latest release
     let current = env!("CARGO_PKG_VERSION");
-    match check_github_update() {
+    let update = check_gitee_update().or_else(check_github_update);
+    match update {
         Some((ver, url)) if ver != current => UpdateInfo {
             has_update: true,
             current_version: current.into(),
@@ -164,11 +164,12 @@ fn check_update() -> UpdateInfo {
     }
 }
 
-fn check_github_update() -> Option<(String, String)> {
-    // Simple HTTP check via GitHub API (no external crate needed)
+fn check_gitee_update() -> Option<(String, String)> {
+    use std::os::windows::process::CommandExt;
     let output = std::process::Command::new("powershell.exe")
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .args(["-NoProfile", "-Command",
-            "try { $r = Invoke-RestMethod -Uri 'https://api.github.com/repos/user/mac-touchpad/releases/latest' -TimeoutSec 5; $r.tag_name + '|' + $r.html_url } catch { '' }"
+            "try { $r = Invoke-RestMethod -Uri 'https://gitee.com/api/v5/repos/lu52/Mac-touchpad/releases/latest' -TimeoutSec 5; $r.tag_name + '|' + $r.html_url } catch { '' }"
         ])
         .output()
         .ok()?;
@@ -180,6 +181,30 @@ fn check_github_update() -> Option<(String, String)> {
     } else {
         None
     }
+}
+
+fn check_github_update() -> Option<(String, String)> {
+    use std::os::windows::process::CommandExt;
+    let output = std::process::Command::new("powershell.exe")
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+        .args(["-NoProfile", "-Command",
+            "try { $r = Invoke-RestMethod -Uri 'https://api.github.com/repos/xiaolu12-up/Mac-touchpad/releases/latest' -TimeoutSec 5; $r.tag_name + '|' + $r.html_url } catch { '' }"
+        ])
+        .output()
+        .ok()?;
+
+    let text = String::from_utf8(output.stdout).ok()?;
+    let parts: Vec<&str> = text.trim().split('|').collect();
+    if parts.len() >= 2 && !parts[0].is_empty() {
+        Some((parts[0].trim().to_string(), parts[1].trim().to_string()))
+    } else {
+        None
+    }
+}
+
+#[tauri::command]
+fn open_url(url: String) {
+    let _ = tauri_plugin_opener::open_url(url, None::<&str>);
 }
 
 #[derive(Serialize)]
@@ -307,6 +332,7 @@ pub fn run() {
             get_action_list,
             get_version,
             check_update,
+            open_url,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
