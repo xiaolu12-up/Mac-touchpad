@@ -255,8 +255,10 @@ pub fn run() {
             let quit_item = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
 
+            let tray_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray_icon.png"))
+                .expect("Failed to load tray icon");
             let _tray = TrayIconBuilder::new()
-                .icon(app.default_window_icon().unwrap().clone())
+                .icon(tray_icon)
                 .menu(&menu)
                 .tooltip("MacTouchpad")
                 .on_menu_event(move |app, event| {

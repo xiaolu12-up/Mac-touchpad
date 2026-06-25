@@ -1,4 +1,5 @@
 fn main() {
+    println!("cargo:rerun-if-changed=icons/icon.ico");
     let mut windows = tauri_build::WindowsAttributes::new();
     
     // Define the manifest with requireAdministrator and Common-Controls dependency

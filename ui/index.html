@@ -2,825 +2,1088 @@
 <html lang="zh-CN">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MacTouchpad 设置</title>
-  <style>
-    :root {
-      --bg: #0d0d1a;
-      --sidebar: #12121e;
-      --card: #16162a;
-      --border: rgba(255, 255, 255, .06);
-      --text: #e2e2f0;
-      --dim: #7777aa;
-      --accent: #7c6cf0;
-      --glow: rgba(124, 108, 240, .3);
-      --ok: #4ade80;
-      --warn: #f0a040;
-      --track: #1e1e35;
-      --hover: rgba(124, 108, 240, .08)
-    }
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>MacTouchpad 设置</title>
+    <style>
+        :root {
+            --bg: #0d0d1a;
+            --sidebar: #12121e;
+            --card: #16162a;
+            --border: rgba(255, 255, 255, .06);
+            --row-border: rgba(255, 255, 255, .03);
+            --text: #e2e2f0;
+            --dim: #7777aa;
+            --accent: #7c6cf0;
+            --glow: rgba(124, 108, 240, .3);
+            --ok: #4ade80;
+            --warn: #f0a040;
+            --track: #1e1e35;
+            --track-hover: #2a2a45;
+            --hover: rgba(124, 108, 240, .08);
+            --scrollbar-thumb: #33334d
+        }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box
-    }
+        body.light {
+            --bg: #f5f5f7;
+            --sidebar: #e8e8ec;
+            --card: #ffffff;
+            --border: rgba(0, 0, 0, .06);
+            --row-border: rgba(0, 0, 0, .03);
+            --text: #1d1d1f;
+            --dim: #86868b;
+            --accent: #5856d6;
+            --glow: rgba(88, 86, 214, .15);
+            --ok: #34c759;
+            --warn: #ff9500;
+            --track: #e5e5ea;
+            --track-hover: #d1d1d6;
+            --hover: rgba(88, 86, 214, .08);
+            --scrollbar-thumb: #c1c1c7
+        }
 
-    html,
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      height: 100vh;
-      overflow: hidden
-    }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
 
-    .app {
-      display: flex;
-      height: 100vh
-    }
+        html,
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden
+        }
 
-    .sidebar {
-      width: 200px;
-      background: var(--sidebar);
-      border-right: 1px solid var(--border);
-      padding: 20px 0;
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0
-    }
+        .app {
+            display: flex;
+            height: 100vh
+        }
 
-    .brand {
-      padding: 0 20px 24px;
-      font-size: 18px;
-      font-weight: 700;
-      background: linear-gradient(135deg, #a78bfa, #7c6cf0);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent
-    }
+        .sidebar {
+            width: 200px;
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0
+        }
 
-    .nav-item {
-      padding: 10px 20px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--dim);
-      cursor: pointer;
-      transition: .15s;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border-left: 3px solid transparent;
-      user-select: none
-    }
+        .brand {
+            padding: 0 20px 24px;
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a78bfa, #7c6cf0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
 
-    .nav-item:hover {
-      background: var(--hover);
-      color: var(--text)
-    }
+        .nav-item {
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--dim);
+            cursor: pointer;
+            transition: .15s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 3px solid transparent;
+            user-select: none
+        }
 
-    .nav-item.active {
-      color: var(--accent);
-      background: var(--hover);
-      border-left-color: var(--accent)
-    }
+        .nav-item:hover {
+            background: var(--hover);
+            color: var(--text)
+        }
 
-    .nav-item .ic {
-      font-size: 16px;
-      width: 22px;
-      text-align: center
-    }
+        .nav-item:hover .ic {
+            transform: scale(1.1)
+        }
 
-    .nav-spacer {
-      flex: 1
-    }
+        .nav-item.theme-toggle:hover .ic {
+            transform: rotate(20deg) scale(1.15)
+        }
 
-    .nav-ver {
-      padding: 12px 20px;
-      font-size: 10px;
-      color: var(--dim)
-    }
+        .nav-item.active {
+            color: var(--accent);
+            background: var(--hover);
+            border-left-color: var(--accent)
+        }
 
-    .main {
-      flex: 1;
-      overflow-y: auto;
-      padding: 28px 32px
-    }
+        .nav-item .ic {
+            font-size: 16px;
+            width: 22px;
+            text-align: center;
+            transition: transform 0.2s ease
+        }
 
-    .main::-webkit-scrollbar {
-      width: 6px
-    }
+        .nav-spacer {
+            flex: 1
+        }
 
-    .main::-webkit-scrollbar-thumb {
-      background: #333;
-      border-radius: 3px
-    }
+        .nav-ver {
+            padding: 4px 20px 10px;
+            font-size: 10px;
+            color: var(--dim);
+            text-align: center
+        }
 
-    .page {
-      display: none
-    }
+        .sidebar-footer {
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            padding: 2px 12px;
+            border-top: 1px solid var(--border);
+        }
 
-    .page.active {
-      display: block
-    }
+        .footer-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--dim);
+            transition: .15s;
+            user-select: none
+        }
 
-    /* Page header with auto-save status */
-    .page-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 20px
-    }
+        .footer-btn:hover {
+            background: var(--hover);
+            color: var(--text)
+        }
 
-    h2 {
-      font-size: 20px;
-      font-weight: 700
-    }
+        .footer-btn.active {
+            color: var(--accent);
+            background: var(--hover)
+        }
 
-    .save-status {
-      font-size: 11px;
-      padding: 3px 9px;
-      border-radius: 20px;
-      background: rgba(74, 222, 128, .1);
-      color: var(--ok);
-      border: 1px solid rgba(74, 222, 128, .2);
-      opacity: 0;
-      transition: opacity .3s;
-      white-space: nowrap
-    }
+        .footer-btn .ic {
+            font-size: 15px;
+            text-align: center;
+            transition: transform 0.2s ease
+        }
 
-    .save-status.show {
-      opacity: 1
-    }
+        .footer-btn:hover .ic {
+            transform: scale(1.15)
+        }
 
-    .save-status.saving {
-      background: rgba(124, 108, 240, .1);
-      color: var(--accent);
-      border-color: rgba(124, 108, 240, .3)
-    }
+        .footer-btn.theme-toggle:hover .ic {
+            transform: rotate(20deg) scale(1.15)
+        }
 
-    .sec {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 18px;
-      margin-bottom: 14px
-    }
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px 32px
+        }
 
-    .st {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--dim);
-      margin-bottom: 14px
-    }
+        .main::-webkit-scrollbar {
+            width: 6px
+        }
 
-    .row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 9px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, .03)
-    }
+        .main::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 3px
+        }
 
-    .row:last-child {
-      border: none
-    }
+        .page {
+            display: none
+        }
 
-    .lbl {
-      font-size: 13px;
-      font-weight: 500
-    }
+        .page.active {
+            display: block
+        }
 
-    .dsc {
-      font-size: 11px;
-      color: var(--dim);
-      margin-top: 2px
-    }
+        /* Page header with auto-save status */
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px
+        }
 
-    .tg {
-      position: relative;
-      width: 44px;
-      height: 24px;
-      flex-shrink: 0;
-      cursor: pointer
-    }
+        h2 {
+            font-size: 20px;
+            font-weight: 700
+        }
 
-    .tg input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-      position: absolute
-    }
+        .save-status {
+            font-size: 11px;
+            padding: 3px 9px;
+            border-radius: 20px;
+            background: rgba(74, 222, 128, .1);
+            color: var(--ok);
+            border: 1px solid rgba(74, 222, 128, .2);
+            opacity: 0;
+            transition: opacity .3s;
+            white-space: nowrap
+        }
 
-    .tg .sl {
-      position: absolute;
-      inset: 0;
-      background: #2a2a45;
-      border-radius: 12px;
-      transition: .2s cubic-bezier(.4, 0, .2, 1)
-    }
+        .save-status.show {
+            opacity: 1
+        }
 
-    .tg .sl::before {
-      content: '';
-      position: absolute;
-      width: 18px;
-      height: 18px;
-      left: 3px;
-      bottom: 3px;
-      background: #fff;
-      border-radius: 50%;
-      transition: .2s cubic-bezier(.4, 0, .2, 1);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, .3)
-    }
+        .save-status.saving {
+            background: rgba(124, 108, 240, .1);
+            color: var(--accent);
+            border-color: rgba(124, 108, 240, .3)
+        }
 
-    .tg input:checked+.sl {
-      background: var(--accent);
-      box-shadow: 0 0 12px var(--glow)
-    }
+        .sec {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 14px
+        }
 
-    .tg input:checked+.sl::before {
-      transform: translateX(20px)
-    }
+        .st {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--dim);
+            margin-bottom: 14px
+        }
 
-    input[type=number] {
-      background: #1e1e35;
-      color: var(--text);
-      border: 1px solid rgba(255, 255, 255, .08);
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-size: 13px;
-      width: 70px;
-      text-align: center;
-      outline: none;
-      font-variant-numeric: tabular-nums
-    }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 0;
+            border-bottom: 1px solid var(--row-border)
+        }
 
-    input[type=number]:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 6px var(--glow)
-    }
+        .row:last-child {
+            border: none
+        }
 
-    .sg {
-      display: flex;
-      align-items: center;
-      gap: 8px
-    }
+        .lbl {
+            font-size: 13px;
+            font-weight: 500
+        }
 
-    .sg input[type=range] {
-      width: 140px
-    }
+        .dsc {
+            font-size: 11px;
+            color: var(--dim);
+            margin-top: 2px
+        }
 
-    select {
-      background: #2a2a45;
-      color: var(--text);
-      border: 1px solid rgba(255, 255, 255, .08);
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-size: 12px;
-      outline: none;
-      cursor: pointer
-    }
+        .tg {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+            cursor: pointer
+        }
 
-    select:focus {
-      border-color: var(--accent)
-    }
+        .tg input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute
+        }
 
-    .btn {
-      background: linear-gradient(135deg, var(--accent), #6366f1);
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      padding: 12px 28px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: .15s;
-      letter-spacing: .5px
-    }
+        .tg .sl {
+            position: absolute;
+            inset: 0;
+            background: var(--track-hover);
+            border-radius: 12px;
+            transition: .2s cubic-bezier(.4, 0, .2, 1)
+        }
 
-    .btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 16px var(--glow)
-    }
+        .tg .sl::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: .2s cubic-bezier(.4, 0, .2, 1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .3)
+        }
 
-    .btn:active {
-      transform: translateY(0)
-    }
+        .tg input:checked + .sl {
+            background: var(--accent);
+            box-shadow: 0 0 12px var(--glow)
+        }
 
-    .btn-sm {
-      padding: 8px 16px;
-      font-size: 12px;
-      border-radius: 8px
-    }
+        .tg input:checked + .sl::before {
+            transform: translateX(20px)
+        }
 
-    .btn-sec {
-      background: #1e1e35;
-      color: var(--dim);
-      border: 1px solid rgba(255, 255, 255, .08);
-      transition: .15s
-    }
+        input[type=number] {
+            background: var(--track);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 13px;
+            width: 70px;
+            text-align: center;
+            outline: none;
+            font-variant-numeric: tabular-nums
+        }
 
-    .btn-sec:hover {
-      background: #2a2a45;
-      color: var(--text);
-      box-shadow: none;
-      transform: translateY(-1px)
-    }
+        input[type=number]:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 6px var(--glow)
+        }
 
-    .btn-sec:active {
-      transform: translateY(0)
-    }
+        .sg {
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
 
-    .about-card {
-      text-align: center;
-      padding: 30px
-    }
+        .sg input[type=range] {
+            width: 140px
+        }
 
-    .about-card .logo {
-      font-size: 52px;
-      margin-bottom: 12px
-    }
+        select {
+            background: var(--track-hover);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer
+        }
 
-    .about-card .name {
-      font-weight: 700;
-      font-size: 18px
-    }
+        select option {
+            background: var(--track);
+            color: var(--text);
+        }
 
-    .about-card .desc {
-      font-size: 12px;
-      color: var(--dim);
-      margin-top: 4px
-    }
+        select:focus {
+            border-color: var(--accent)
+        }
 
-    .about-card .info {
-      font-size: 11px;
-      color: #666;
-      margin-top: 12px;
-      line-height: 1.8
-    }
+        .btn {
+            background: linear-gradient(135deg, var(--accent), #6366f1);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 28px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .15s;
+            letter-spacing: .5px
+        }
 
-    .about-card .update-btn {
-      margin-top: 16px
-    }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px var(--glow)
+        }
 
-    .tag {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 600
-    }
+        .btn:active {
+            transform: translateY(0)
+        }
 
-    .tag-ok {
-      background: rgba(74, 222, 128, .15);
-      color: var(--ok)
-    }
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 12px;
+            border-radius: 8px
+        }
 
-    .tag-warn {
-      background: rgba(240, 160, 64, .15);
-      color: var(--warn)
-    }
-  </style>
+        .btn-sec {
+            background: var(--track);
+            color: var(--dim);
+            border: 1px solid var(--border);
+            transition: .15s
+        }
+
+        .btn-sec:hover {
+            background: var(--track-hover);
+            color: var(--text);
+            box-shadow: none;
+            transform: translateY(-1px)
+        }
+
+        .btn-sec:active {
+            transform: translateY(0)
+        }
+
+        .about-card {
+            text-align: center;
+            padding: 30px
+        }
+
+        .about-card .logo {
+            font-size: 52px;
+            margin-bottom: 12px
+        }
+
+        .about-card .name {
+            font-weight: 700;
+            font-size: 18px
+        }
+
+        .about-card .desc {
+            font-size: 12px;
+            color: var(--dim);
+            margin-top: 4px
+        }
+
+        .about-card .info {
+            font-size: 11px;
+            color: var(--dim);
+            margin-top: 12px;
+            line-height: 1.8
+        }
+
+        .about-card .update-btn {
+            margin-top: 16px
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600
+        }
+
+        .tag-ok {
+            background: rgba(74, 222, 128, .15);
+            color: var(--ok)
+        }
+
+        .tag-warn {
+            background: rgba(240, 160, 64, .15);
+            color: var(--warn)
+        }
+    </style>
 </head>
 
 <body>
-  <div class="app">
+<script>
+    (function () {
+        const savedTheme = localStorage.getItem('theme');
+        const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+        if (savedTheme === 'light' || (!savedTheme && prefersLight)) {
+            document.body.classList.add('light');
+        }
+    })();
+</script>
+<div class="app">
     <nav class="sidebar">
-      <div class="brand">🍎 MacTouchpad</div>
-      <div class="nav-item active" onclick="go('drag',this)"><span class="ic">🖱️</span>三指拖移</div>
-      <div class="nav-item" onclick="go('gestures',this)"><span class="ic">🖐️</span>手势设置</div>
-      <div class="nav-item" onclick="go('scroll',this)"><span class="ic">📜</span>滚动设置</div>
-      <div class="nav-item" onclick="go('system',this)"><span class="ic">⚙️</span>系统</div>
-      <div class="nav-item" onclick="go('about',this)"><span class="ic">ℹ️</span>关于</div>
-      <div class="nav-spacer"></div>
-      <div class="nav-ver">v0.1.0 · Tauri</div>
+        <div class="brand">🍎 MacTouchpad</div>
+        <div class="nav-item active" onclick="go('drag',this)"><span class="ic">🖱️</span>三指拖移</div>
+        <div class="nav-item" onclick="go('gestures',this)"><span class="ic">🖐️</span>手势设置</div>
+        <div class="nav-item" onclick="go('scroll',this)"><span class="ic">📜</span>滚动设置</div>
+        <div class="nav-spacer"></div>
+        <div class="sidebar-footer">
+            <div class="footer-btn theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="切换主题"><span
+                    class="ic" id="theme-icon">☀️</span></div>
+            <div class="footer-btn" onclick="go('system',this)" title="系统设置"><span class="ic">⚙️</span></div>
+            <div class="footer-btn" onclick="go('about',this)" title="关于"><span class="ic">ℹ️</span></div>
+        </div>
+        <div class="nav-ver">v0.1.0 · Tauri</div>
     </nav>
 
     <main class="main">
 
-      <!-- ═══ 三指拖移 ═══ -->
-      <div id="p-drag" class="page active">
-        <div class="page-header">
-          <h2>三指拖移</h2><span class="save-status" id="ss1">✓ 已保存</span>
-          <div style="flex:1"></div><button class="btn btn-sm btn-sec" onclick="resetDefaults('drag')">恢复默认</button>
-        </div>
-        <div class="sec">
-          <div class="st">设置</div>
-          <div class="row">
-            <div>
-              <div class="lbl">启用三指拖移</div>
-              <div class="dsc">三根手指拖动来移动窗口/选择文本</div>
+        <!-- ═══ 三指拖移 ═══ -->
+        <div class="page active" id="p-drag">
+            <div class="page-header">
+                <h2>三指拖移</h2><span class="save-status" id="ss1">✓ 已保存</span>
+                <div style="flex:1"></div>
+                <button class="btn btn-sm btn-sec" onclick="resetDefaults('drag')">恢复默认</button>
             </div>
-            <label class="tg"><input type="checkbox" id="drag" onchange="save('ss1')" onclick="save('ss1')"><span
-                class="sl"></span></label>
-          </div>
-          <div class="row">
-            <div>
-              <div class="lbl">释放后重新开始</div>
-              <div class="dsc">抬起手指后可继续拖移</div>
+            <div class="sec">
+                <div class="st">设置</div>
+                <div class="row">
+                    <div>
+                        <div class="lbl">启用三指拖移</div>
+                        <div class="dsc">三根手指拖动来移动窗口/选择文本</div>
+                    </div>
+                    <label class="tg"><input id="drag" onchange="save('ss1')" onclick="save('ss1')"
+                                             type="checkbox"><span
+                            class="sl"></span></label>
+                </div>
+                <div class="row">
+                    <div>
+                        <div class="lbl">释放后重新开始</div>
+                        <div class="dsc">抬起手指后可继续拖移</div>
+                    </div>
+                    <label class="tg"><input id="restart" onchange="save('ss1')" onclick="save('ss1')"
+                                             type="checkbox"><span
+                            class="sl"></span></label>
+                </div>
+                <div class="row">
+                    <div>
+                        <div class="lbl">三指轻点 → 搜索</div>
+                        <div class="dsc">三指轻触打开 Win+S</div>
+                    </div>
+                    <label class="tg"><input id="tap" onchange="save('ss1')" onclick="save('ss1')" type="checkbox"><span
+                            class="sl"></span></label>
+                </div>
             </div>
-            <label class="tg"><input type="checkbox" id="restart" onchange="save('ss1')" onclick="save('ss1')"><span
-                class="sl"></span></label>
-          </div>
-          <div class="row">
-            <div>
-              <div class="lbl">三指轻点 → 搜索</div>
-              <div class="dsc">三指轻触打开 Win+S</div>
+            <div class="sec">
+                <div class="st">光标参数</div>
+                <div class="row">
+                    <div class="lbl">光标速度</div>
+                    <div class="sg"><input id="speed_r" max="150" min="10" oninput="syncSlider('speed','ss1')"
+                                           type="range"><input id="speed" max="150" min="10"
+                                                               onchange="syncInput('speed','ss1')"
+                                                               type="number">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="lbl">加速度</div>
+                    <div class="sg"><input id="accel_r" max="30" min="0" oninput="syncSlider('accel','ss1')"
+                                           type="range"><input
+                            id="accel" max="30" min="0" onchange="syncInput('accel','ss1')" type="number"></div>
+                </div>
+                <div class="row">
+                    <div class="lbl">开始阈值</div>
+                    <div class="sg"><input id="stt_r" max="200" min="10" oninput="syncSlider('stt','ss1')" type="range"><input
+                            id="stt" max="200" min="10" onchange="syncInput('stt','ss1')" type="number"></div>
+                </div>
+                <div class="row">
+                    <div class="lbl">停止阈值</div>
+                    <div class="sg"><input id="spt_r" max="30" min="1" oninput="syncSlider('spt','ss1')"
+                                           type="range"><input
+                            id="spt" max="30" min="1" onchange="syncInput('spt','ss1')" type="number"></div>
+                </div>
+                <div class="row">
+                    <div class="lbl">释放延迟(ms)</div>
+                    <div class="sg"><input id="rel_r" max="2000" min="50" oninput="syncSlider('rel','ss1')"
+                                           type="range"><input
+                            id="rel" max="2000" min="50" onchange="syncInput('rel','ss1')" type="number"></div>
+                </div>
             </div>
-            <label class="tg"><input type="checkbox" id="tap" onchange="save('ss1')" onclick="save('ss1')"><span
-                class="sl"></span></label>
-          </div>
         </div>
-        <div class="sec">
-          <div class="st">光标参数</div>
-          <div class="row">
-            <div class="lbl">光标速度</div>
-            <div class="sg"><input type="range" id="speed_r" min="10" max="150"
-                oninput="syncSlider('speed','ss1')"><input type="number" id="speed" min="10" max="150"
-                onchange="syncInput('speed','ss1')"></div>
-          </div>
-          <div class="row">
-            <div class="lbl">加速度</div>
-            <div class="sg"><input type="range" id="accel_r" min="0" max="30" oninput="syncSlider('accel','ss1')"><input
-                type="number" id="accel" min="0" max="30" onchange="syncInput('accel','ss1')"></div>
-          </div>
-          <div class="row">
-            <div class="lbl">开始阈值</div>
-            <div class="sg"><input type="range" id="stt_r" min="10" max="200" oninput="syncSlider('stt','ss1')"><input
-                type="number" id="stt" min="10" max="200" onchange="syncInput('stt','ss1')"></div>
-          </div>
-          <div class="row">
-            <div class="lbl">停止阈值</div>
-            <div class="sg"><input type="range" id="spt_r" min="1" max="30" oninput="syncSlider('spt','ss1')"><input
-                type="number" id="spt" min="1" max="30" onchange="syncInput('spt','ss1')"></div>
-          </div>
-          <div class="row">
-            <div class="lbl">释放延迟(ms)</div>
-            <div class="sg"><input type="range" id="rel_r" min="50" max="2000" oninput="syncSlider('rel','ss1')"><input
-                type="number" id="rel" min="50" max="2000" onchange="syncInput('rel','ss1')"></div>
-          </div>
-        </div>
-      </div>
 
-      <!-- ═══ 手势设置 ═══ -->
-      <div id="p-gestures" class="page">
-        <div class="page-header">
-          <h2>手势设置</h2><span class="save-status" id="ss2">✓ 已保存</span>
-          <div style="flex:1"></div><button class="btn btn-sm btn-sec" onclick="resetDefaults('gestures')">恢复默认</button>
-        </div>
-        <div class="sec">
-          <div class="st">四指手势</div>
-          <div class="row">
-            <div class="lbl">⬆️ 上滑</div><select id="g4u" onchange="save('ss2')" oninput="save('ss2')"></select>
-          </div>
-          <div class="row">
-            <div class="lbl">⬇️ 下滑</div><select id="g4d" onchange="save('ss2')" oninput="save('ss2')"></select>
-          </div>
-          <div class="row">
-            <div class="lbl">⬅️ 左滑（切换应用）</div><select id="g4l" onchange="save('ss2')" oninput="save('ss2')"></select>
-          </div>
-          <div class="row">
-            <div class="lbl">➡️ 右滑（切换应用）</div><select id="g4r" onchange="save('ss2')" oninput="save('ss2')"></select>
-          </div>
-          <div class="row">
-            <div class="lbl">🖐️ 张开</div><select id="g4sp" onchange="save('ss2')" oninput="save('ss2')"></select>
-          </div>
-          <div class="row">
-            <div class="lbl">🤏 捏合</div><select id="g4pi" onchange="save('ss2')" oninput="save('ss2')"></select>
-          </div>
-        </div>
-        <div class="sec">
-          <div class="st">边缘手势</div>
-          <div class="row">
-            <div>
-              <div class="lbl">边缘手势</div>
-              <div class="dsc">左边缘音量 OSD</div>
+        <!-- ═══ 手势设置 ═══ -->
+        <div class="page" id="p-gestures">
+            <div class="page-header">
+                <h2>手势设置</h2><span class="save-status" id="ss2">✓ 已保存</span>
+                <div style="flex:1"></div>
+                <button class="btn btn-sm btn-sec" onclick="resetDefaults('gestures')">恢复默认</button>
             </div>
-            <label class="tg"><input type="checkbox" id="edge" onchange="save('ss2')" onclick="save('ss2')"><span
-                class="sl"></span></label>
-          </div>
-          <div class="row">
-            <div>
-              <div class="lbl">反转音量方向</div>
-              <div class="dsc">上滑=音量减，下滑=音量增</div>
+            <div class="sec">
+                <div class="st">四指手势</div>
+                <div class="row">
+                    <div class="lbl">⬆️ 上滑</div>
+                    <select id="g4u" onchange="save('ss2')" oninput="save('ss2')"></select>
+                </div>
+                <div class="row">
+                    <div class="lbl">⬇️ 下滑</div>
+                    <select id="g4d" onchange="save('ss2')" oninput="save('ss2')"></select>
+                </div>
+                <div class="row">
+                    <div class="lbl">⬅️ 左滑（切换应用）</div>
+                    <select id="g4l" onchange="save('ss2')" oninput="save('ss2')"></select>
+                </div>
+                <div class="row">
+                    <div class="lbl">➡️ 右滑（切换应用）</div>
+                    <select id="g4r" onchange="save('ss2')" oninput="save('ss2')"></select>
+                </div>
+                <div class="row">
+                    <div class="lbl">🖐️ 张开</div>
+                    <select id="g4sp" onchange="save('ss2')" oninput="save('ss2')"></select>
+                </div>
+                <div class="row">
+                    <div class="lbl">🤏 捏合</div>
+                    <select id="g4pi" onchange="save('ss2')" oninput="save('ss2')"></select>
+                </div>
             </div>
-            <label class="tg"><input type="checkbox" id="inv_vol" onchange="save('ss2')" onclick="save('ss2')"><span
-                class="sl"></span></label>
-          </div>
+            <div class="sec">
+                <div class="st">边缘手势</div>
+                <div class="row">
+                    <div>
+                        <div class="lbl">边缘手势</div>
+                        <div class="dsc">左边缘音量 OSD</div>
+                    </div>
+                    <label class="tg"><input id="edge" onchange="save('ss2')" onclick="save('ss2')"
+                                             type="checkbox"><span
+                            class="sl"></span></label>
+                </div>
+                <div class="row">
+                    <div>
+                        <div class="lbl">反转音量方向</div>
+                        <div class="dsc">上滑=音量减，下滑=音量增</div>
+                    </div>
+                    <label class="tg"><input id="inv_vol" onchange="save('ss2')" onclick="save('ss2')"
+                                             type="checkbox"><span
+                            class="sl"></span></label>
+                </div>
+            </div>
         </div>
-      </div>
 
-      <div id="p-scroll" class="page">
-        <div class="page-header">
-          <h2>滚动设置</h2><span class="save-status" id="ss3">✓ 已保存</span>
-          <div style="flex:1"></div><button class="btn btn-sm btn-sec" onclick="resetDefaults('scroll')">恢复默认</button>
-        </div>
-        <div class="sec">
-          <div class="st">触控板双指滑动</div>
-          <div class="row">
-            <div>
-              <div class="lbl">启用平滑滚动</div>
-              <div class="dsc">拦截双指滑动原生事件，替换为丝滑滚轮信号</div>
+        <div class="page" id="p-scroll">
+            <div class="page-header">
+                <h2>滚动设置</h2><span class="save-status" id="ss3">✓ 已保存</span>
+                <div style="flex:1"></div>
+                <button class="btn btn-sm btn-sec" onclick="resetDefaults('scroll')">恢复默认</button>
             </div>
-            <label class="tg"><input type="checkbox" id="smooth" onchange="save('ss3')" onclick="save('ss3')"><span
-                class="sl"></span></label>
-          </div>
-          <div class="row">
-            <div class="lbl">灵敏度</div>
-            <div class="sg"><input type="range" id="scroll_speed_r" min="0.5" max="2.5" step="0.1"
-                oninput="syncSlider('scroll_speed','ss3')"><input type="number" id="scroll_speed" min="0.5" max="2.5"
-                step="0.1" onchange="syncInput('scroll_speed','ss3')"></div>
-          </div>
-          <div class="row">
-            <div class="lbl">平滑度</div>
-            <div class="sg"><input type="range" id="scroll_smooth_r" min="0.15" max="0.45" step="0.01"
-                oninput="syncSlider('scroll_smooth','ss3')"><input type="number" id="scroll_smooth" min="0.15"
-                max="0.45" step="0.01" onchange="syncInput('scroll_smooth','ss3')"></div>
-          </div>
-          <div class="row">
-            <div class="lbl">惯性</div>
-            <div class="sg"><input type="range" id="scroll_decel_r" min="0.88" max="0.96" step="0.01"
-                oninput="syncSlider('scroll_decel','ss3')"><input type="number" id="scroll_decel" min="0.88" max="0.96"
-                step="0.01" onchange="syncInput('scroll_decel','ss3')"></div>
-          </div>
-          <div class="row">
-            <div class="lbl">基础缩放</div>
-            <div class="sg"><input type="range" id="scroll_bscale_r" min="0.05" max="0.5" step="0.01"
-                oninput="syncSlider('scroll_bscale','ss3')"><input type="number" id="scroll_bscale" min="0.05" max="0.5"
-                step="0.01" onchange="syncInput('scroll_bscale','ss3')"></div>
-          </div>
-          <div class="row">
-            <div class="lbl">最大增量</div>
-            <div class="sg"><input type="range" id="scroll_maxd_r" min="5" max="60" step="1"
-                oninput="syncSlider('scroll_maxd','ss3')"><input type="number" id="scroll_maxd" min="5" max="60"
-                step="1" onchange="syncInput('scroll_maxd','ss3')"></div>
-          </div>
-          <div class="row">
-            <div class="lbl">死区阈值</div>
-            <div class="sg"><input type="range" id="scroll_dz_r" min="0.1" max="5" step="0.1"
-                oninput="syncSlider('scroll_dz','ss3')"><input type="number" id="scroll_dz" min="0.1" max="5" step="0.1"
-                onchange="syncInput('scroll_dz','ss3')"></div>
-          </div>
-          <div class="row">
-            <div class="lbl">刷新间隔(ms)</div>
-            <div class="sg"><input type="range" id="scroll_tick_r" min="1" max="16" step="1"
-                oninput="syncSlider('scroll_tick','ss3')"><input type="number" id="scroll_tick" min="1" max="16"
-                step="1" onchange="syncInput('scroll_tick','ss3')"></div>
-          </div>
-          <div class="row">
-            <div>
-              <div class="lbl">自然滚动</div>
-              <div class="dsc">手指向下 → 内容向下移动（macOS 风格）</div>
+            <div class="sec">
+                <div class="st">触控板双指滑动</div>
+                <div class="row">
+                    <div>
+                        <div class="lbl">启用平滑滚动</div>
+                        <div class="dsc">拦截双指滑动原生事件，替换为丝滑滚轮信号</div>
+                    </div>
+                    <label class="tg"><input id="smooth" onchange="save('ss3')" onclick="save('ss3')"
+                                             type="checkbox"><span
+                            class="sl"></span></label>
+                </div>
+                <div class="row">
+                    <div class="lbl">灵敏度</div>
+                    <div class="sg"><input id="scroll_speed_r" max="2.5" min="0.5"
+                                           oninput="syncSlider('scroll_speed','ss3')" step="0.1"
+                                           type="range"><input id="scroll_speed"
+                                                               max="2.5" min="0.5"
+                                                               onchange="syncInput('scroll_speed','ss3')"
+                                                               step="0.1"
+                                                               type="number">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="lbl">平滑度</div>
+                    <div class="sg"><input id="scroll_smooth_r" max="0.45" min="0.15"
+                                           oninput="syncSlider('scroll_smooth','ss3')" step="0.01"
+                                           type="range"><input id="scroll_smooth"
+                                                               max="0.45"
+                                                               min="0.15"
+                                                               onchange="syncInput('scroll_smooth','ss3')" step="0.01"
+                                                               type="number">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="lbl">惯性</div>
+                    <div class="sg"><input id="scroll_decel_r" max="0.96" min="0.88"
+                                           oninput="syncSlider('scroll_decel','ss3')" step="0.01"
+                                           type="range"><input id="scroll_decel"
+                                                               max="0.96"
+                                                               min="0.88" onchange="syncInput('scroll_decel','ss3')"
+                                                               step="0.01"
+                                                               type="number">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="lbl">基础缩放</div>
+                    <div class="sg"><input id="scroll_bscale_r" max="0.5" min="0.05"
+                                           oninput="syncSlider('scroll_bscale','ss3')" step="0.01"
+                                           type="range"><input id="scroll_bscale"
+                                                               max="0.5"
+                                                               min="0.05" onchange="syncInput('scroll_bscale','ss3')"
+                                                               step="0.01"
+                                                               type="number">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="lbl">最大增量</div>
+                    <div class="sg"><input id="scroll_maxd_r" max="60" min="5" oninput="syncSlider('scroll_maxd','ss3')"
+                                           step="1"
+                                           type="range"><input id="scroll_maxd"
+                                                               max="60" min="5"
+                                                               onchange="syncInput('scroll_maxd','ss3')"
+                                                               step="1"
+                                                               type="number">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="lbl">死区阈值</div>
+                    <div class="sg"><input id="scroll_dz_r" max="5" min="0.1" oninput="syncSlider('scroll_dz','ss3')"
+                                           step="0.1"
+                                           type="range"><input id="scroll_dz" max="5"
+                                                               min="0.1" onchange="syncInput('scroll_dz','ss3')"
+                                                               step="0.1"
+                                                               type="number">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="lbl">刷新间隔(ms)</div>
+                    <div class="sg"><input id="scroll_tick_r" max="16" min="1" oninput="syncSlider('scroll_tick','ss3')"
+                                           step="1"
+                                           type="range"><input id="scroll_tick"
+                                                               max="16" min="1"
+                                                               onchange="syncInput('scroll_tick','ss3')"
+                                                               step="1"
+                                                               type="number">
+                    </div>
+                </div>
+                <div class="row">
+                    <div>
+                        <div class="lbl">自然滚动</div>
+                        <div class="dsc">手指向下 → 内容向下移动（macOS 风格）</div>
+                    </div>
+                    <label class="tg"><input id="natural" onchange="save('ss3')" onclick="save('ss3')"
+                                             type="checkbox"><span
+                            class="sl"></span></label>
+                </div>
             </div>
-            <label class="tg"><input type="checkbox" id="natural" onchange="save('ss3')" onclick="save('ss3')"><span
-                class="sl"></span></label>
-          </div>
-        </div>
-        <div class="sec">
-          <div class="st">说明</div>
-          <div class="row">
-            <div>
-              <div class="lbl">ℹ️ 对鼠标滚轮生效</div>
-              <div class="dsc">此设置仅对鼠标滚轮生效</div>
+            <div class="sec">
+                <div class="st">说明</div>
+                <div class="row">
+                    <div>
+                        <div class="lbl">ℹ️ 对鼠标滚轮生效</div>
+                        <div class="dsc">此设置仅对鼠标滚轮生效</div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
 
-      <!-- ═══ 系统 ═══ -->
-      <div id="p-system" class="page">
-        <div class="page-header">
-          <h2>系统设置</h2><span class="save-status" id="ss4">✓ 已保存</span>
-          <div style="flex:1"></div><button class="btn btn-sm btn-sec" onclick="resetDefaults('system')">恢复默认</button>
-        </div>
-        <div class="sec">
-          <div class="st">通用</div>
-          <div class="row">
-            <div>
-              <div class="lbl">开机自启动</div>
-              <div class="dsc">Windows 登录时自动启动</div>
+        <!-- ═══ 系统 ═══ -->
+        <div class="page" id="p-system">
+            <div class="page-header">
+                <h2>系统设置</h2><span class="save-status" id="ss4">✓ 已保存</span>
+                <div style="flex:1"></div>
+                <button class="btn btn-sm btn-sec" onclick="resetDefaults('system')">恢复默认</button>
             </div>
-            <label class="tg"><input type="checkbox" id="auto" onchange="save('ss4')" onclick="save('ss4')"><span
-                class="sl"></span></label>
-          </div>
-          <div class="row">
-            <div>
-              <div class="lbl">关闭时最小化到托盘</div>
-              <div class="dsc">关闭窗口后继续在后台运行</div>
+            <div class="sec">
+                <div class="st">通用</div>
+                <div class="row">
+                    <div>
+                        <div class="lbl">开机自启动</div>
+                        <div class="dsc">Windows 登录时自动启动</div>
+                    </div>
+                    <label class="tg"><input id="auto" onchange="save('ss4')" onclick="save('ss4')"
+                                             type="checkbox"><span
+                            class="sl"></span></label>
+                </div>
+                <div class="row">
+                    <div>
+                        <div class="lbl">关闭时最小化到托盘</div>
+                        <div class="dsc">关闭窗口后继续在后台运行</div>
+                    </div>
+                    <label class="tg"><input id="tray" onchange="save('ss4')" onclick="save('ss4')"
+                                             type="checkbox"><span
+                            class="sl"></span></label>
+                </div>
             </div>
-            <label class="tg"><input type="checkbox" id="tray" onchange="save('ss4')" onclick="save('ss4')"><span
-                class="sl"></span></label>
-          </div>
         </div>
-      </div>
 
-      <!-- ═══ 关于 ═══ -->
-      <div id="p-about" class="page">
-        <div class="page-header">
-          <h2>关于</h2>
-        </div>
-        <div class="sec">
-          <div class="about-card">
-            <div class="logo">🍎</div>
-            <div class="name">MacTouchpad</div>
-            <div class="desc">在 Windows 上实现 Mac 触控板手势体验</div>
-            <div class="info">
-              <div>版本: <span id="ver">-</span></div>
-              <div>作者: <span id="author">-</span></div>
-              <div>仓库: <a id="repo" href="#" style="color:var(--accent)">GitHub</a></div>
-              <div style="margin-top:8px">Rust · Tauri · 高性能</div>
+        <!-- ═══ 关于 ═══ -->
+        <div class="page" id="p-about">
+            <div class="page-header">
+                <h2>关于</h2>
             </div>
-            <div class="update-btn">
-              <button class="btn btn-sm" onclick="checkUpdate()">🔄 检查更新</button>
-              <div id="update-result" style="margin-top:10px;font-size:12px"></div>
+            <div class="sec">
+                <div class="about-card">
+                    <div class="logo">🍎</div>
+                    <div class="name">MacTouchpad</div>
+                    <div class="desc">在 Windows 上实现 Mac 触控板手势体验</div>
+                    <div class="info">
+                        <div>版本: <span id="ver">-</span></div>
+                        <div>作者: <span id="author">-</span></div>
+                        <div>仓库: <a href="#" id="repo" style="color:var(--accent)">GitHub</a></div>
+                        <div style="margin-top:8px">Rust · Tauri · 高性能</div>
+                    </div>
+                    <div class="update-btn">
+                        <button class="btn btn-sm" onclick="checkUpdate()">🔄 检查更新</button>
+                        <div id="update-result" style="margin-top:10px;font-size:12px"></div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
 
     </main>
-  </div>
+</div>
 
-  <script>
+<script>
     const ACTIONS = ['None', 'WinTab', 'AltTab', 'CtrlWinLeft', 'CtrlWinRight', 'ShowDesktop', 'OpenStart', 'Search', 'NotificationCenter', 'VolumeUp', 'VolumeDown', 'PageUp', 'PageDown', 'Maximize'];
-    const LABELS = { 'None': '无', 'WinTab': '任务视图', 'AltTab': 'Alt+Tab 切换应用', 'CtrlWinLeft': '左桌面', 'CtrlWinRight': '右桌面', 'ShowDesktop': '显示桌面', 'OpenStart': '开始菜单', 'Search': '搜索 (Win+S)', 'NotificationCenter': '通知中心', 'VolumeUp': '音量+', 'VolumeDown': '音量-', 'PageUp': 'Page Up', 'PageDown': 'Page Down', 'Maximize': '最大化窗口' };
-    const SELS = { g4u: 'four_finger_swipe_up', g4d: 'four_finger_swipe_down', g4l: 'four_finger_swipe_left', g4r: 'four_finger_swipe_right', g4sp: 'four_finger_spread', g4pi: 'four_finger_pinch' };
+    const LABELS = {
+        'None': '无',
+        'WinTab': '任务视图',
+        'AltTab': 'Alt+Tab 切换应用',
+        'CtrlWinLeft': '左桌面',
+        'CtrlWinRight': '右桌面',
+        'ShowDesktop': '显示桌面',
+        'OpenStart': '开始菜单',
+        'Search': '搜索 (Win+S)',
+        'NotificationCenter': '通知中心',
+        'VolumeUp': '音量+',
+        'VolumeDown': '音量-',
+        'PageUp': 'Page Up',
+        'PageDown': 'Page Down',
+        'Maximize': '最大化窗口'
+    };
+    const SELS = {
+        g4u: 'four_finger_swipe_up',
+        g4d: 'four_finger_swipe_down',
+        g4l: 'four_finger_swipe_left',
+        g4r: 'four_finger_swipe_right',
+        g4sp: 'four_finger_spread',
+        g4pi: 'four_finger_pinch'
+    };
 
     // Init selects
-    Object.keys(SELS).forEach(id => { const el = document.getElementById(id); ACTIONS.forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = LABELS[k] || k; el.appendChild(o) }) });
+    Object.keys(SELS).forEach(id => {
+        const el = document.getElementById(id);
+        ACTIONS.forEach(k => {
+            const o = document.createElement('option');
+            o.value = k;
+            o.textContent = LABELS[k] || k;
+            el.appendChild(o)
+        })
+    });
 
-    function go(name, el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); el.classList.add('active'); document.getElementById('p-' + name).classList.add('active') }
+    function go(name, el) {
+        document.querySelectorAll('.nav-item, .footer-btn').forEach(n => n.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('p-' + name).classList.add('active')
+    }
 
     // Slider ↔ Input sync
-    function syncSlider(id, ss) { document.getElementById(id).value = document.getElementById(id + '_r').value; save(ss) }
-    function syncInput(id, ss) { document.getElementById(id + '_r').value = document.getElementById(id).value; save(ss) }
-    function setDual(id, val) { document.getElementById(id).value = val; document.getElementById(id + '_r').value = val }
+    function syncSlider(id, ss) {
+        document.getElementById(id).value = document.getElementById(id + '_r').value;
+        save(ss)
+    }
+
+    function syncInput(id, ss) {
+        document.getElementById(id + '_r').value = document.getElementById(id).value;
+        save(ss)
+    }
+
+    function setDual(id, val) {
+        document.getElementById(id).value = val;
+        document.getElementById(id + '_r').value = val
+    }
 
     let invoke;
+
     async function waitForTauri() {
-      function check() {
-        if (window.__TAURI_INTERNALS__ && typeof window.__TAURI_INTERNALS__.invoke === 'function') { invoke = window.__TAURI_INTERNALS__.invoke; return true }
-        if (window.__TAURI__ && window.__TAURI__.core && typeof window.__TAURI__.core.invoke === 'function') { invoke = window.__TAURI__.core.invoke; return true }
-        return false
-      }
-      if (check()) return;
-      await new Promise(r => { let t = 0; const p = setInterval(() => { if (check() || t++ > 50) { clearInterval(p); r() } }, 100) })
+        function check() {
+            if (window.__TAURI_INTERNALS__ && typeof window.__TAURI_INTERNALS__.invoke === 'function') {
+                invoke = window.__TAURI_INTERNALS__.invoke;
+                return true
+            }
+            if (window.__TAURI__ && window.__TAURI__.core && typeof window.__TAURI__.core.invoke === 'function') {
+                invoke = window.__TAURI__.core.invoke;
+                return true
+            }
+            return false
+        }
+
+        if (check()) return;
+        await new Promise(r => {
+            let t = 0;
+            const p = setInterval(() => {
+                if (check() || t++ > 50) {
+                    clearInterval(p);
+                    r()
+                }
+            }, 100)
+        })
     }
 
     async function loadConfig() {
-      await waitForTauri();
-      if (!invoke) { document.querySelector('h2').textContent = '⚠️ Tauri API 未加载'; return }
-      try {
-        const cfg = await invoke('get_config');
-        document.getElementById('drag').checked = cfg.three_finger_drag;
-        document.getElementById('restart').checked = cfg.allow_release_and_restart;
-        document.getElementById('tap').checked = cfg.three_finger_tap_enabled;
-        document.getElementById('edge').checked = cfg.edge_slide_enabled;
-        document.getElementById('auto').checked = cfg.run_at_startup;
-        document.getElementById('tray').checked = cfg.close_to_tray;
-        document.getElementById('inv_vol').checked = cfg.invert_volume;
-        document.getElementById('smooth').checked = cfg.smooth_scroll_enabled;
-        document.getElementById('natural').checked = cfg.natural_scroll;
+        await waitForTauri();
+        if (!invoke) {
+            document.querySelector('h2').textContent = '⚠️ Tauri API 未加载';
+            return
+        }
+        try {
+            const cfg = await invoke('get_config');
+            document.getElementById('drag').checked = cfg.three_finger_drag;
+            document.getElementById('restart').checked = cfg.allow_release_and_restart;
+            document.getElementById('tap').checked = cfg.three_finger_tap_enabled;
+            document.getElementById('edge').checked = cfg.edge_slide_enabled;
+            document.getElementById('auto').checked = cfg.run_at_startup;
+            document.getElementById('tray').checked = cfg.close_to_tray;
+            document.getElementById('inv_vol').checked = cfg.invert_volume;
+            document.getElementById('smooth').checked = cfg.smooth_scroll_enabled;
+            document.getElementById('natural').checked = cfg.natural_scroll;
 
-        const dc = Object.values(cfg.device_configs || {})[0] || { cursor_speed: 60, cursor_acceleration: 10 };
-        setDual('speed', Math.round(dc.cursor_speed));
-        setDual('accel', Math.round(dc.cursor_acceleration));
-        setDual('stt', Math.round(cfg.start_threshold));
-        setDual('spt', Math.round(cfg.stop_threshold));
-        setDual('rel', cfg.release_delay_ms);
-        setDual('scroll_speed', cfg.smooth_scroll_speed || 1.0);
-        setDual('scroll_smooth', cfg.smooth_scroll_smoothing || 0.3);
-        setDual('scroll_decel', cfg.smooth_scroll_deceleration || 0.92);
-        setDual('scroll_bscale', cfg.smooth_scroll_base_scale || 0.2);
-        setDual('scroll_maxd', cfg.smooth_scroll_max_delta || 20);
-        setDual('scroll_dz', cfg.smooth_scroll_deadzone || 1.0);
-        setDual('scroll_tick', cfg.smooth_scroll_tick_ms || 4);
+            const dc = Object.values(cfg.device_configs || {})[0] || {cursor_speed: 60, cursor_acceleration: 10};
+            setDual('speed', Math.round(dc.cursor_speed));
+            setDual('accel', Math.round(dc.cursor_acceleration));
+            setDual('stt', Math.round(cfg.start_threshold));
+            setDual('spt', Math.round(cfg.stop_threshold));
+            setDual('rel', cfg.release_delay_ms);
+            setDual('scroll_speed', cfg.smooth_scroll_speed || 1.0);
+            setDual('scroll_smooth', cfg.smooth_scroll_smoothing || 0.3);
+            setDual('scroll_decel', cfg.smooth_scroll_deceleration || 0.92);
+            setDual('scroll_bscale', cfg.smooth_scroll_base_scale || 0.2);
+            setDual('scroll_maxd', cfg.smooth_scroll_max_delta || 20);
+            setDual('scroll_dz', cfg.smooth_scroll_deadzone || 1.0);
+            setDual('scroll_tick', cfg.smooth_scroll_tick_ms || 4);
 
-        Object.entries(SELS).forEach(([elId, key]) => { document.getElementById(elId).value = cfg[key] || 'None' });
+            Object.entries(SELS).forEach(([elId, key]) => {
+                document.getElementById(elId).value = cfg[key] || 'None'
+            });
 
-        // Load version info
-        try { const info = await invoke('get_version'); document.getElementById('ver').textContent = info.version; document.getElementById('author').textContent = info.author; if (info.repo) document.getElementById('repo').href = info.repo } catch (e) { }
-      } catch (e) { console.error('loadConfig:', e) }
+            // Load version info
+            try {
+                const info = await invoke('get_version');
+                document.getElementById('ver').textContent = info.version;
+                document.getElementById('author').textContent = info.author;
+                if (info.repo) document.getElementById('repo').href = info.repo
+            } catch (e) {
+            }
+        } catch (e) {
+            console.error('loadConfig:', e)
+        }
     }
 
     // Auto-save with debounce
     const saveTimers = {};
+
     function save(statusId) {
-      if (statusId) {
-        const el = document.getElementById(statusId);
-        if (el) { el.textContent = '⟳ 保存中…'; el.classList.add('show', 'saving') }
-      }
-      clearTimeout(saveTimers[statusId]);
-      saveTimers[statusId] = setTimeout(() => doSave(statusId), 200);
+        if (statusId) {
+            const el = document.getElementById(statusId);
+            if (el) {
+                el.textContent = '⟳ 保存中…';
+                el.classList.add('show', 'saving')
+            }
+        }
+        clearTimeout(saveTimers[statusId]);
+        saveTimers[statusId] = setTimeout(() => doSave(statusId), 200);
     }
 
     async function doSave(statusId) {
-      const el = statusId ? document.getElementById(statusId) : null;
-      if (!invoke) {
-        // Tauri not ready yet — retry once after a delay
-        if (el) { el.classList.remove('show', 'saving') }
-        return;
-      }
-      const args = {
-        three_finger_drag: document.getElementById('drag').checked,
-        allow_release_and_restart: document.getElementById('restart').checked,
-        three_finger_tap_enabled: document.getElementById('tap').checked,
-        edge_slide_enabled: document.getElementById('edge').checked,
-        run_at_startup: document.getElementById('auto').checked,
-        close_to_tray: document.getElementById('tray').checked,
-        invert_volume: document.getElementById('inv_vol').checked,
-        smooth_scroll_enabled: document.getElementById('smooth').checked,
-        smooth_scroll_speed: +document.getElementById('scroll_speed').value,
-        smooth_scroll_smoothing: +document.getElementById('scroll_smooth').value,
-        smooth_scroll_deceleration: +document.getElementById('scroll_decel').value,
-        smooth_scroll_base_scale: +document.getElementById('scroll_bscale').value,
-        smooth_scroll_max_delta: +document.getElementById('scroll_maxd').value,
-        smooth_scroll_deadzone: +document.getElementById('scroll_dz').value,
-        smooth_scroll_tick_ms: +document.getElementById('scroll_tick').value,
-        natural_scroll: document.getElementById('natural').checked,
-        cursor_speed: +document.getElementById('speed').value,
-        cursor_acceleration: +document.getElementById('accel').value,
-        start_threshold: +document.getElementById('stt').value,
-        stop_threshold: +document.getElementById('spt').value,
-        release_delay_ms: +document.getElementById('rel').value,
-      };
-      Object.entries(SELS).forEach(([elId, key]) => { args[key] = document.getElementById(elId).value });
-      try {
-        await invoke('save_config', { args });
-        if (el) {
-          el.textContent = '✓ 已保存';
-          el.classList.remove('saving');
-          el.classList.add('show');
-          clearTimeout(el._hideTimer);
-          el._hideTimer = setTimeout(() => el.classList.remove('show'), 2000);
+        const el = statusId ? document.getElementById(statusId) : null;
+        if (!invoke) {
+            // Tauri not ready yet — retry once after a delay
+            if (el) {
+                el.classList.remove('show', 'saving')
+            }
+            return;
         }
-      } catch (e) {
-        console.error('save:', e);
-        if (el) {
-          el.textContent = '⚠ 保存失败';
-          el.classList.remove('saving');
-          clearTimeout(el._hideTimer);
-          el._hideTimer = setTimeout(() => el.classList.remove('show'), 3000);
+        const args = {
+            three_finger_drag: document.getElementById('drag').checked,
+            allow_release_and_restart: document.getElementById('restart').checked,
+            three_finger_tap_enabled: document.getElementById('tap').checked,
+            edge_slide_enabled: document.getElementById('edge').checked,
+            run_at_startup: document.getElementById('auto').checked,
+            close_to_tray: document.getElementById('tray').checked,
+            invert_volume: document.getElementById('inv_vol').checked,
+            smooth_scroll_enabled: document.getElementById('smooth').checked,
+            smooth_scroll_speed: +document.getElementById('scroll_speed').value,
+            smooth_scroll_smoothing: +document.getElementById('scroll_smooth').value,
+            smooth_scroll_deceleration: +document.getElementById('scroll_decel').value,
+            smooth_scroll_base_scale: +document.getElementById('scroll_bscale').value,
+            smooth_scroll_max_delta: +document.getElementById('scroll_maxd').value,
+            smooth_scroll_deadzone: +document.getElementById('scroll_dz').value,
+            smooth_scroll_tick_ms: +document.getElementById('scroll_tick').value,
+            natural_scroll: document.getElementById('natural').checked,
+            cursor_speed: +document.getElementById('speed').value,
+            cursor_acceleration: +document.getElementById('accel').value,
+            start_threshold: +document.getElementById('stt').value,
+            stop_threshold: +document.getElementById('spt').value,
+            release_delay_ms: +document.getElementById('rel').value,
+        };
+        Object.entries(SELS).forEach(([elId, key]) => {
+            args[key] = document.getElementById(elId).value
+        });
+        try {
+            await invoke('save_config', {args});
+            if (el) {
+                el.textContent = '✓ 已保存';
+                el.classList.remove('saving');
+                el.classList.add('show');
+                clearTimeout(el._hideTimer);
+                el._hideTimer = setTimeout(() => el.classList.remove('show'), 2000);
+            }
+        } catch (e) {
+            console.error('save:', e);
+            if (el) {
+                el.textContent = '⚠ 保存失败';
+                el.classList.remove('saving');
+                clearTimeout(el._hideTimer);
+                el._hideTimer = setTimeout(() => el.classList.remove('show'), 3000);
+            }
         }
-      }
     }
 
     async function checkUpdate() {
-      const el = document.getElementById('update-result');
-      el.textContent = '检查中...';
-      try {
-        const info = await invoke('check_update');
-        if (info.has_update) {
-          el.innerHTML = '<span class="tag tag-warn">发现新版本 ' + info.latest_version + '</span><br><a href="' + info.download_url + '" target="_blank" style="color:var(--accent)">点击下载</a>'
-        } else {
-          el.innerHTML = '<span class="tag tag-ok">已是最新版本 ✓</span>'
+        const el = document.getElementById('update-result');
+        el.textContent = '检查中...';
+        try {
+            const info = await invoke('check_update');
+            if (info.has_update) {
+                el.innerHTML = '<span class="tag tag-warn">发现新版本 ' + info.latest_version + '</span><br><a href="' + info.download_url + '" target="_blank" style="color:var(--accent)">点击下载</a>'
+            } else {
+                el.innerHTML = '<span class="tag tag-ok">已是最新版本 ✓</span>'
+            }
+        } catch (e) {
+            el.textContent = '检查失败: ' + e
         }
-      } catch (e) { el.textContent = '检查失败: ' + e }
     }
 
     async function resetDefaults(page) {
-      if (page === 'drag') {
-        document.getElementById('drag').checked = true;
-        document.getElementById('restart').checked = true;
-        document.getElementById('tap').checked = true;
-        setDual('speed', 30);
-        setDual('accel', 12);
-        setDual('stt', 40);
-        setDual('spt', 5);
-        setDual('rel', 270);
-        save('ss1');
-      } else if (page === 'gestures') {
-        document.getElementById('g4u').value = "WinTab";
-        document.getElementById('g4d').value = "OpenStart";
-        document.getElementById('g4l').value = "AltTab";
-        document.getElementById('g4r').value = "AltTab";
-        document.getElementById('g4sp').value = "ShowDesktop";
-        document.getElementById('g4pi').value = "OpenStart";
-        document.getElementById('edge').checked = true;
-        document.getElementById('inv_vol').checked = true;
-        save('ss2');
-      } else if (page === 'scroll') {
-        document.getElementById('smooth').checked = true;
-        setDual('scroll_speed', 0.4);
-        setDual('scroll_smooth', 0.42);
-        setDual('scroll_decel', 0.93);
-        setDual('scroll_bscale', 0.22);
-        setDual('scroll_maxd', 52);
-        setDual('scroll_dz', 1.7);
-        setDual('scroll_tick', 10);
-        document.getElementById('natural').checked = false;
-        save('ss3');
-      } else if (page === 'system') {
-        document.getElementById('auto').checked = false;
-        document.getElementById('tray').checked = true;
-        save('ss4');
-      }
+        if (page === 'drag') {
+            document.getElementById('drag').checked = true;
+            document.getElementById('restart').checked = true;
+            document.getElementById('tap').checked = true;
+            setDual('speed', 30);
+            setDual('accel', 12);
+            setDual('stt', 40);
+            setDual('spt', 5);
+            setDual('rel', 270);
+            save('ss1');
+        } else if (page === 'gestures') {
+            document.getElementById('g4u').value = "WinTab";
+            document.getElementById('g4d').value = "OpenStart";
+            document.getElementById('g4l').value = "AltTab";
+            document.getElementById('g4r').value = "AltTab";
+            document.getElementById('g4sp').value = "ShowDesktop";
+            document.getElementById('g4pi').value = "OpenStart";
+            document.getElementById('edge').checked = true;
+            document.getElementById('inv_vol').checked = true;
+            save('ss2');
+        } else if (page === 'scroll') {
+            document.getElementById('smooth').checked = true;
+            setDual('scroll_speed', 0.4);
+            setDual('scroll_smooth', 0.42);
+            setDual('scroll_decel', 0.93);
+            setDual('scroll_bscale', 0.22);
+            setDual('scroll_maxd', 52);
+            setDual('scroll_dz', 1.7);
+            setDual('scroll_tick', 10);
+            document.getElementById('natural').checked = false;
+            save('ss3');
+        } else if (page === 'system') {
+            document.getElementById('auto').checked = false;
+            document.getElementById('tray').checked = true;
+            save('ss4');
+        }
     }
 
+    function toggleTheme() {
+        const isLight = document.body.classList.toggle('light');
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        updateThemeUI(isLight);
+    }
+
+    function updateThemeUI(isLight) {
+        const icon = document.getElementById('theme-icon');
+        const btn = document.getElementById('theme-toggle-btn');
+        if (isLight) {
+            if (icon) icon.textContent = '🌙';
+            if (btn) btn.title = '切换至深色模式';
+        } else {
+            if (icon) icon.textContent = '☀️';
+            if (btn) btn.title = '切换至浅色模式';
+        }
+    }
+
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+        const isLight = savedTheme === 'light' || (!savedTheme && prefersLight);
+        updateThemeUI(isLight);
+    }
+
+    initTheme();
+
     loadConfig();
-  </script>
+</script>
 </body>
 
 </html>
