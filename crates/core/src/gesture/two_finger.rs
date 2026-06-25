@@ -182,51 +182,43 @@ impl EdgeSlideDetector {
         }
 
         let contact = &contacts[0];
-        let edge = detect_single_edge(contact, x_range, edge_threshold);
 
-        match edge {
-            EdgeZone::Center => {
-                // Not on edge — if we were tracking an edge slide, cancel it
-                if self.active_edge.is_some() {
-                    self.reset();
-                }
+        if let Some(active_edge) = self.active_edge {
+            // We are already tracking a left-edge slide!
+            // If the finger drifts too far horizontally into the center, cancel it.
+            if contact.x > x_range.0 + edge_threshold + 200 {
+                self.reset();
                 self.is_invalid = true;
-                None
+                return None;
             }
-            detected_edge => {
-                if self.active_edge.is_none() {
-                    // First touch on edge — start tracking ONLY if initial touch was on edge
-                    self.active_edge = Some(detected_edge);
-                    self.start_y = Some(contact.y);
-                    self.last_y = Some(contact.y);
-                    self.total_dy = 0;
-                    return None;
-                }
 
-                if self.active_edge != Some(detected_edge) {
-                    // Switched edge — reset
-                    self.reset();
-                    return None;
-                }
+            if let Some(last) = self.last_y {
+                self.total_dy += contact.y - last;
+                self.last_y = Some(contact.y);
+            }
 
-                if let Some(last) = self.last_y {
-                    self.total_dy += contact.y - last;
-                    self.last_y = Some(contact.y);
-                }
-
-                if self.total_dy.abs() >= slide_threshold {
-                    let action = match (detected_edge, self.total_dy > 0) {
-                        (EdgeZone::Left, true) => EdgeSlideAction::VolumeUp,
-                        (EdgeZone::Left, false) => EdgeSlideAction::VolumeDown,
-                        (EdgeZone::Right, true) => EdgeSlideAction::BrightnessUp,
-                        (EdgeZone::Right, false) => EdgeSlideAction::BrightnessDown,
-                        _ => return None,
-                    };
-                    self.total_dy = 0;
-                    self.start_y = Some(contact.y);
-                    return Some(action);
-                }
-
+            if self.total_dy.abs() >= slide_threshold {
+                let action = match (active_edge, self.total_dy > 0) {
+                    (EdgeZone::Left, true) => EdgeSlideAction::VolumeUp,
+                    (EdgeZone::Left, false) => EdgeSlideAction::VolumeDown,
+                    _ => return None,
+                };
+                self.total_dy = 0;
+                self.start_y = Some(contact.y);
+                return Some(action);
+            }
+            None
+        } else {
+            // First touch on this slide — check if it's on/near the left edge
+            let landing_tolerance = 150;
+            if contact.x <= x_range.0 + edge_threshold + landing_tolerance {
+                self.active_edge = Some(EdgeZone::Left);
+                self.start_y = Some(contact.y);
+                self.last_y = Some(contact.y);
+                self.total_dy = 0;
+                None
+            } else {
+                self.is_invalid = true;
                 None
             }
         }
@@ -262,13 +254,3 @@ fn detect_edge(contacts: &[TouchpadContact], x_range: (i32, i32), threshold: i32
     }
 }
 
-/// Detect which edge zone a single contact is in.
-fn detect_single_edge(contact: &TouchpadContact, x_range: (i32, i32), threshold: i32) -> EdgeZone {
-    if contact.x <= x_range.0 + threshold {
-        EdgeZone::Left
-    } else if contact.x >= x_range.1 - threshold {
-        EdgeZone::Right
-    } else {
-        EdgeZone::Center
-    }
-}

@@ -6,26 +6,8 @@ use windows::Win32::UI::WindowsAndMessaging::*;
 
 use crate::hid::types::{TouchpadContact, TouchpadContactCreator};
 
-/// Debug log file for HID parsing diagnostics.
-fn debug_log(msg: &str) {
-    static ONCE: std::sync::Once = std::sync::Once::new();
-    ONCE.call_once(|| {
-        let _ = std::fs::remove_file("C:\\a.WorkCode\\mactouchpad\\hid_debug.log");
-    });
-    if let Ok(mut f) = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open("C:\\a.WorkCode\\mactouchpad\\hid_debug.log")
-    {
-        let _ = writeln!(f, "{}", msg);
-    }
-}
-
 macro_rules! dbg_log {
-    ($($arg:tt)*) => {{
-        let msg = format!($($arg)*);
-        debug_log(&msg);
-    }};
+    ($($arg:tt)*) => {};
 }
 
 /// Result of parsing a WM_INPUT message.
@@ -134,16 +116,22 @@ pub unsafe fn parse_input(lparam: LPARAM) -> Option<ParseResult> {
     // Sort value caps by LinkCollection (matching reference project)
     value_caps.sort_by_key(|vc| vc.LinkCollection);
 
-    // Extract touchpad logical ranges from value caps (LinkCollection 1)
+    // Extract touchpad logical ranges from value caps
     let mut x_range: (i32, i32) = (0, 0);
     let mut y_range: (i32, i32) = (0, 0);
     for vc in &value_caps {
-        if vc.LinkCollection == 1 {
-            match (vc.UsagePage, vc.Anonymous.NotRange.Usage) {
-                (0x01, 0x30) => x_range = (vc.LogicalMin, vc.LogicalMax),
-                (0x01, 0x31) => y_range = (vc.LogicalMin, vc.LogicalMax),
-                _ => {}
+        match (vc.UsagePage, vc.Anonymous.NotRange.Usage) {
+            (0x01, 0x30) => {
+                if x_range == (0, 0) || vc.LinkCollection == 1 {
+                    x_range = (vc.LogicalMin, vc.LogicalMax);
+                }
             }
+            (0x01, 0x31) => {
+                if y_range == (0, 0) || vc.LinkCollection == 1 {
+                    y_range = (vc.LogicalMin, vc.LogicalMax);
+                }
+            }
+            _ => {}
         }
     }
 

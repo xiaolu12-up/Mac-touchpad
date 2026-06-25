@@ -27,10 +27,16 @@ pub struct TapDetector {
     max_movement: f32,
     /// Whether the movement exceeded the threshold (cancel tap).
     cancelled: bool,
+    label: &'static str,
 }
 
 impl TapDetector {
     pub fn new(target_fingers: usize) -> Self {
+        let label = match target_fingers {
+            3 => "3F-TAP",
+            4 => "4F-TAP",
+            _ => "TAP",
+        };
         Self {
             state: TapState::Idle,
             finger_count: 0,
@@ -39,6 +45,7 @@ impl TapDetector {
             start_positions: HashMap::new(),
             max_movement: 0.0,
             cancelled: false,
+            label,
         }
     }
 
@@ -56,6 +63,7 @@ impl TapDetector {
             TapState::Idle => {
                 if count >= self.target_fingers {
                     // Fingers appeared — start tracking
+                    tracing::info!("[{}] Idle→Touching: {} fingers", self.label, count);
                     self.state = TapState::Touching;
                     self.finger_count = count;
                     self.touch_start_time = now_ms;
@@ -72,16 +80,22 @@ impl TapDetector {
                 if count == 0 {
                     // All fingers lifted — check if it was a valid tap
                     let duration = (now_ms - self.touch_start_time) as u64;
+                    tracing::info!(
+                        "[{}] Touching→check: duration={}ms, cancelled={}, max_move={:.1}, max_dur={}ms, max_dist={:.1}",
+                        self.label, duration, self.cancelled, self.max_movement, max_duration_ms, max_distance
+                    );
                     if !self.cancelled && duration <= max_duration_ms {
+                        tracing::info!("[{}] TAP DETECTED! duration={}ms", self.label, duration);
                         self.state = TapState::Idle;
                         return true; // TAP DETECTED!
                     }
+                    tracing::info!("[{}] Tap REJECTED: cancelled={}, duration={}ms>{}ms", self.label, self.cancelled, duration, max_duration_ms);
                     self.state = TapState::Idle;
                     return false;
                 }
 
                 if count != self.finger_count {
-                    // Finger count changed (added or removed) — cancel
+                    tracing::info!("[{}] Finger count changed {}→{}, cancelling", self.label, self.finger_count, count);
                     self.cancelled = true;
                 }
 
@@ -96,6 +110,7 @@ impl TapDetector {
                                 self.max_movement = dist;
                             }
                             if self.max_movement > max_distance {
+                                tracing::info!("[{}] Movement {:.1}>{:.1}, cancelling", self.label, self.max_movement, max_distance);
                                 self.cancelled = true;
                             }
                         }
@@ -104,6 +119,7 @@ impl TapDetector {
 
                 // Check timeout
                 if (now_ms - self.touch_start_time) as u64 > max_duration_ms {
+                    tracing::info!("[{}] Timeout {}ms>{}ms, cancelling", self.label, (now_ms - self.touch_start_time), max_duration_ms);
                     self.cancelled = true;
                 }
 
@@ -119,10 +135,17 @@ impl TapDetector {
     }
 
     pub fn reset(&mut self) {
+        if self.state != TapState::Idle {
+            tracing::info!("[{}] RESET from {:?}", self.label, self.state);
+        }
         self.state = TapState::Idle;
         self.finger_count = 0;
         self.start_positions.clear();
         self.max_movement = 0.0;
         self.cancelled = false;
+    }
+
+    pub fn is_touching(&self) -> bool {
+        self.state == TapState::Touching
     }
 }

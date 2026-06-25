@@ -74,6 +74,13 @@ impl PinchDetector {
         self.initial_avg_distance = None;
         self.fired = false;
     }
+
+    /// Get the change in average pairwise distance since the gesture started.
+    pub fn current_delta(&self, contacts: &[TouchpadContact]) -> Option<f32> {
+        self.initial_avg_distance.map(|initial| {
+            avg_pairwise_distance(contacts) - initial
+        })
+    }
 }
 
 /// Compute the average distance between all pairs of contacts.

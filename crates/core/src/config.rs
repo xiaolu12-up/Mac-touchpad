@@ -41,6 +41,7 @@ pub enum GestureAction {
     BrightnessDown,
     PageUp,
     PageDown,
+    Maximize,
 }
 
 impl Default for GestureAction {
@@ -121,6 +122,7 @@ pub struct Config {
     pub smooth_scroll_base_scale: f32,
     pub smooth_scroll_max_delta: f32,
     pub smooth_scroll_deadzone: f32,
+    pub smooth_scroll_tick_ms: u64,
     pub natural_scroll: bool,
 
     // General
@@ -165,7 +167,7 @@ impl Default for Config {
             edge_slide_threshold: 200, // logical units of movement to trigger
 
             tap_max_duration_ms: 200,
-            tap_max_distance: 50.0,
+            tap_max_distance: 120.0,
             pinch_spread_threshold: 100.0,
 
             // Volume/Brightness
@@ -180,6 +182,7 @@ impl Default for Config {
             smooth_scroll_base_scale: 0.2,
             smooth_scroll_max_delta: 20.0,
             smooth_scroll_deadzone: 1.0,
+            smooth_scroll_tick_ms: 4,
             natural_scroll: true,
 
             run_at_startup: false,

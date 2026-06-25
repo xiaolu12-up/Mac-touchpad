@@ -39,8 +39,11 @@ impl ContactsManager {
         contacts: Vec<TouchpadContact>,
         count: u32,
     ) -> ContactResult {
+        // Empty contacts (all fingers lifted) — always pass through
         if contacts.is_empty() {
-            return ContactResult::Ignored;
+            self.last_contacts.clear();
+            self.target_contact_count = 0;
+            return ContactResult::Complete(contacts);
         }
 
         let contacts_len = contacts.len() as u32;

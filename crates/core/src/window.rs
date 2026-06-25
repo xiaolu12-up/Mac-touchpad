@@ -123,6 +123,7 @@ fn run_message_loop(
             config.smooth_scroll_base_scale,
             config.smooth_scroll_max_delta,
             config.smooth_scroll_deadzone,
+            config.smooth_scroll_tick_ms,
             config.natural_scroll,
         );
 
@@ -156,6 +157,7 @@ fn run_message_loop(
                             (*sp).scroller.set_max_delta(new_config.smooth_scroll_max_delta);
                             (*sp).scroller.set_deadzone(new_config.smooth_scroll_deadzone);
                             (*sp).scroller.set_natural_scroll(new_config.natural_scroll);
+                            (*sp).scroller.set_tick_ms(new_config.smooth_scroll_tick_ms);
                             tracing::info!("Config updated in engine and scroller (atomic)");
                         }
                     }
@@ -181,6 +183,7 @@ fn run_message_loop(
                                 (*sp).scroller.set_max_delta(c.smooth_scroll_max_delta);
                                 (*sp).scroller.set_deadzone(c.smooth_scroll_deadzone);
                                 (*sp).scroller.set_natural_scroll(c.natural_scroll);
+                                (*sp).scroller.set_tick_ms(c.smooth_scroll_tick_ms);
                                 tracing::info!("Config updated in engine and scroller (channel)");
                             }
                             CoreCommand::MouseWheel(delta, horizontal) => {
@@ -191,13 +194,14 @@ fn run_message_loop(
                 }
             }
 
-            // Tick smooth scroller
+            // Tick smooth scroller (dynamic interval based on velocity)
             let now = std::time::Instant::now();
-            if now.duration_since(last_tick) >= std::time::Duration::from_millis(8) {
-                last_tick = now;
+            {
                 let sp = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut WindowState;
-                if !sp.is_null() {
+                if !sp.is_null() && now.duration_since(last_tick) >= std::time::Duration::from_millis((*sp).scroller.tick_interval_ms()) {
+                    last_tick = now;
                     (*sp).scroller.tick();
+                    (*sp).engine.check_timeouts();
                 }
             }
 
@@ -217,7 +221,11 @@ fn run_message_loop(
             } else {
                 // No messages — sleep briefly; hook is on a separate thread
                 // so this sleep does not affect mouse responsiveness
-                std::thread::sleep(std::time::Duration::from_millis(1));
+                {
+                    let sp = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut WindowState;
+                    let sleep_ms = if !sp.is_null() { (*sp).scroller.tick_ms.min(1) } else { 1 };
+                    std::thread::sleep(std::time::Duration::from_millis(sleep_ms));
+                }
             }
         }
 

@@ -63,6 +63,7 @@ pub struct SmoothScroller {
     pub base_scale: f32,     // raw delta → target velocity scale (default 0.2)
     pub max_delta: f32,      // max units sent per tick (default 20, lower = less jump)
     pub deadzone: f32,       // velocity cutoff threshold (default 1.0)
+    pub tick_ms: u64,        // base tick interval in ms (default 4)
     pub natural_scroll: bool,
     // Wheel accumulator for sub-pixel delta accumulation
     wheel_accum_x: f64,
@@ -72,7 +73,7 @@ pub struct SmoothScroller {
 }
 
 impl SmoothScroller {
-    pub fn new(speed: f32, smoothing: f32, deceleration: f32, base_scale: f32, max_delta: f32, deadzone: f32, natural_scroll: bool) -> Self {
+    pub fn new(speed: f32, smoothing: f32, deceleration: f32, base_scale: f32, max_delta: f32, deadzone: f32, tick_ms: u64, natural_scroll: bool) -> Self {
         let mut scroller = Self {
             current_velocity_x: 0.0,
             current_velocity_y: 0.0,
@@ -84,6 +85,7 @@ impl SmoothScroller {
             base_scale: base_scale.clamp(0.05, 0.5),
             max_delta: max_delta.clamp(5.0, 60.0),
             deadzone: deadzone.clamp(0.1, 5.0),
+            tick_ms: tick_ms.clamp(1, 16),
             natural_scroll,
             wheel_accum_x: 0.0,
             wheel_accum_y: 0.0,
@@ -233,6 +235,21 @@ impl SmoothScroller {
 
     pub fn set_deadzone(&mut self, v: f32) {
         self.deadzone = v.clamp(0.1, 5.0);
+    }
+
+    pub fn set_tick_ms(&mut self, v: u64) {
+        self.tick_ms = v.clamp(1, 16);
+    }
+
+    /// Dynamic tick interval: fast when velocity is low (smooth tail), slow when high (save CPU).
+    pub fn tick_interval_ms(&self) -> u64 {
+        let v = (self.current_velocity_x.powi(2) + self.current_velocity_y.powi(2)).sqrt();
+        let base = self.tick_ms as f64;
+        if v <= 1.0 {
+            return base as u64;
+        }
+        let scale = 1.0 + (v / 5.0).ln().max(0.0);
+        (base * scale).min(16.0) as u64
     }
 }
 
