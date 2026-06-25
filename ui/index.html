@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 
 <head>
@@ -463,6 +463,711 @@
             background: rgba(240, 160, 64, .15);
             color: var(--warn)
         }
+
+        /* ─── Preview Layout ─── */
+        .page-body {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+        .settings-column {
+            flex: 1;
+            min-width: 0;
+        }
+        .preview-column {
+            width: 250px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .15);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        body.light .preview-column {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .06);
+        }
+        .preview-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .mock-screen {
+            position: relative;
+            width: 100%;
+            height: 125px;
+            background: linear-gradient(135deg, #0f0c1b, #240a34);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .08);
+            transition: background 0.3s;
+        }
+        body.light .mock-screen {
+            background: linear-gradient(135deg, #e0e7ff, #fae8ff);
+            border: 1px solid rgba(0, 0, 0, .08);
+        }
+        .wallpaper {
+            position: absolute;
+            inset: 0;
+            opacity: .4;
+            background-image: radial-gradient(circle at 20% 30%, rgba(124, 108, 240, .3) 0%, transparent 50%),
+                              radial-gradient(circle at 80% 70%, rgba(236, 72, 153, .2) 0%, transparent 50%);
+        }
+        .mock-trackpad {
+            position: relative;
+            width: 100%;
+            height: 100px;
+            background: rgba(255, 255, 255, .02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        body.light .mock-trackpad {
+            background: rgba(0, 0, 0, .01);
+        }
+        .trackpad-surface {
+            position: relative;
+            width: 90%;
+            height: 85%;
+            background: rgba(255, 255, 255, .01);
+            border: 1px solid rgba(255, 255, 255, .02);
+            border-radius: 6px;
+        }
+        body.light .trackpad-surface {
+            background: rgba(0, 0, 0, .005);
+            border: 1px solid rgba(0, 0, 0, .01);
+        }
+        .mock-trackpad::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: var(--border);
+        }
+        .preview-caption {
+            padding: 2px 4px;
+        }
+        .preview-title {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+        .preview-desc {
+            font-size: 11px;
+            color: var(--dim);
+            line-height: 1.4;
+        }
+        .finger {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.75);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            box-shadow: 0 0 6px rgba(255, 255, 255, 0.8), 0 0 0 3px rgba(124, 108, 240, 0.25);
+            pointer-events: none;
+        }
+        body.light .finger {
+            background: rgba(0, 0, 0, .6);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(88, 86, 214, 0.2);
+        }
+
+        /* ─── Mock Elements ─── */
+        .mock-window {
+            display: none;
+            position: absolute;
+            width: 80px;
+            height: 52px;
+            background: rgba(255, 255, 255, .1);
+            border: 1px solid rgba(255, 255, 255, .15);
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, .25);
+            left: 20px;
+            top: 30px;
+            backdrop-filter: blur(2px);
+        }
+        body.light .mock-window {
+            background: rgba(255, 255, 255, .75);
+            border: 1px solid rgba(0, 0, 0, .1);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .06);
+        }
+        .win-header {
+            height: 8px;
+            background: rgba(255, 255, 255, .05);
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding-left: 4px;
+        }
+        body.light .win-header {
+            background: rgba(0, 0, 0, .02);
+            border-bottom: 1px solid rgba(0, 0, 0, .04);
+        }
+        .win-dot {
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+        }
+        .win-dot.red { background: #ff5f56; }
+        .win-dot.yellow { background: #ffbd2e; }
+        .win-dot.green { background: #27c93f; }
+        
+        .mock-windows-spread {
+            display: none;
+            position: absolute;
+            inset: 0;
+        }
+        .win-spread {
+            position: absolute;
+            width: 60px;
+            height: 38px;
+            background: rgba(255, 255, 255, .1);
+            border: 1px solid rgba(255, 255, 255, .15);
+            border-radius: 5px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .2);
+            left: 65px;
+            top: 35px;
+            backdrop-filter: blur(2px);
+        }
+        body.light .win-spread {
+            background: rgba(255, 255, 255, .7);
+            border: 1px solid rgba(0, 0, 0, .08);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .05);
+        }
+        
+        .mock-desktop-icons {
+            display: none;
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            gap: 5px;
+            flex-direction: column;
+        }
+        .d-icon {
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, .35);
+            border-radius: 1.5px;
+        }
+        body.light .d-icon {
+            background: rgba(0, 0, 0, .25);
+        }
+
+        .mock-launchpad {
+            display: none;
+            position: absolute;
+            inset: 0;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, .15);
+        }
+        body.light .mock-launchpad {
+            background: rgba(255, 255, 255, .15);
+        }
+        .lp-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+        .lp-icon {
+            width: 10px;
+            height: 10px;
+            background: linear-gradient(135deg, #a78bfa, #7c6cf0);
+            border-radius: 2.5px;
+        }
+
+        .mock-search-bar {
+            display: none;
+            position: absolute;
+            left: 50%;
+            top: 35px;
+            transform: translateX(-50%);
+            width: 110px;
+            height: 18px;
+            background: rgba(255, 255, 255, .15);
+            border: 1px solid rgba(255, 255, 255, .2);
+            border-radius: 9px;
+            align-items: center;
+            padding: 0 6px;
+            gap: 4px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .2);
+            backdrop-filter: blur(4px);
+        }
+        body.light .mock-search-bar {
+            background: rgba(255, 255, 255, .8);
+            border: 1px solid rgba(0, 0, 0, .08);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .05);
+        }
+        .search-icon { font-size: 8px; }
+        .search-text { font-size: 7px; color: var(--dim); }
+
+        .mock-scroll-container {
+            display: none;
+            position: absolute;
+            left: 15px;
+            right: 15px;
+            top: 15px;
+            bottom: 15px;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid rgba(255, 255, 255, .06);
+            border-radius: 5px;
+            overflow: hidden;
+            padding: 6px;
+        }
+        body.light .mock-scroll-container {
+            background: rgba(0, 0, 0, .02);
+            border: 1px solid rgba(0, 0, 0, .04);
+        }
+        .scroll-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .scroll-line {
+            height: 4px;
+            background: rgba(255, 255, 255, .1);
+            border-radius: 2px;
+            width: 75%;
+        }
+        .scroll-line.flex-long { width: 90%; }
+        body.light .scroll-line { background: rgba(0, 0, 0, .06); }
+        .mock-scrollbar {
+            position: absolute;
+            right: 3px;
+            top: 3px;
+            width: 2px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 1px;
+            opacity: .5;
+        }
+
+        .mock-volume-hud {
+            display: none;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 60px;
+            background: rgba(0, 0, 0, .65);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 7px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .3);
+            backdrop-filter: blur(6px);
+        }
+        body.light .mock-volume-hud {
+            background: rgba(255, 255, 255, .8);
+            border: 1px solid rgba(0, 0, 0, .06);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .1);
+        }
+        .vol-icon { font-size: 11px; }
+        .vol-track {
+            position: relative;
+            width: 3px;
+            height: 28px;
+            background: rgba(255, 255, 255, .15);
+            border-radius: 1.5px;
+            overflow: hidden;
+        }
+        body.light .vol-track { background: rgba(0, 0, 0, .08); }
+        .vol-fill {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            background: var(--accent);
+            border-radius: 1.5px;
+        }
+
+        .mock-cursor {
+            display: none;
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            left: 50%;
+            top: 50%;
+            pointer-events: none;
+        }
+
+        /* ─── Keyframes & Animations ─── */
+        @keyframes drag-fingers {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 50%; top: 75%; }
+            5% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 50%; top: 75%; }
+            15% { left: 50%; top: 75%; }
+            45% { left: 65%; top: 35%; }
+            75% { left: 65%; top: 35%; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            85% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 65%; top: 35%; }
+            100% { opacity: 0; }
+        }
+        @keyframes drag-window {
+            0%, 15% { transform: translate(0, 0); left: 20px; top: 35px; }
+            45%, 75% { left: 50px; top: 15px; }
+            85%, 100% { opacity: 0; left: 50px; top: 15px; }
+        }
+        .mode-three-finger-drag .f1 { animation: drag-fingers 3s infinite; margin-left: -14px; }
+        .mode-three-finger-drag .f2 { animation: drag-fingers 3s infinite; margin-left: 0px; }
+        .mode-three-finger-drag .f3 { animation: drag-fingers 3s infinite; margin-left: 14px; }
+        .mode-three-finger-drag .mock-window { display: block; animation: drag-window 3s infinite; }
+
+        @keyframes tap-fingers {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 50%; top: 55%; }
+            10% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            20% { transform: translate(-50%, -50%) scale(0.9); }
+            25% { transform: translate(-50%, -50%) scale(1); }
+            45% { opacity: 1; }
+            55% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+            100% { opacity: 0; }
+        }
+        @keyframes tap-search {
+            0%, 20% { opacity: 0; transform: translate(-50%, -8px) scale(0.95); }
+            30%, 75% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+            85%, 100% { opacity: 0; transform: translate(-50%, 4px) scale(0.95); }
+        }
+        .mode-three-finger-tap .f1 { animation: tap-fingers 2.5s infinite; margin-left: -14px; }
+        .mode-three-finger-tap .f2 { animation: tap-fingers 2.5s infinite; margin-left: 0px; }
+        .mode-three-finger-tap .f3 { animation: tap-fingers 2.5s infinite; margin-left: 14px; }
+        .mode-three-finger-tap .mock-search-bar { display: flex; animation: tap-search 2.5s infinite; }
+
+        @keyframes swipe-up-fingers {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 50%; top: 80%; }
+            10% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 50%; top: 80%; }
+            40% { left: 50%; top: 30%; }
+            70% { left: 50%; top: 30%; opacity: 1; }
+            80% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 50%; top: 30%; }
+            100% { opacity: 0; }
+        }
+        @keyframes swipe-up-windows {
+            0%, 15% { transform: scale(1) translate(0, 0); opacity: 0.9; }
+            45%, 75% { transform: scale(0.7) translate(var(--tx), var(--ty)); opacity: 1; }
+            85%, 100% { opacity: 0; }
+        }
+        .mode-four-finger-up .f1 { animation: swipe-up-fingers 3s infinite; margin-left: -20px; }
+        .mode-four-finger-up .f2 { animation: swipe-up-fingers 3s infinite; margin-left: -7px; margin-top: -5px; }
+        .mode-four-finger-up .f3 { animation: swipe-up-fingers 3s infinite; margin-left: 7px; margin-top: -5px; }
+        .mode-four-finger-up .f4 { animation: swipe-up-fingers 3s infinite; margin-left: 20px; }
+        .mode-four-finger-up .mock-windows-spread { display: block; }
+        .mode-four-finger-up .w1 { --tx: -40px; --ty: -15px; animation: swipe-up-windows 3s infinite; }
+        .mode-four-finger-up .w2 { --tx: 0px; --ty: -25px; animation: swipe-up-windows 3s infinite; }
+        .mode-four-finger-up .w3 { --tx: 40px; --ty: -15px; animation: swipe-up-windows 3s infinite; }
+
+        @keyframes swipe-down-fingers {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 50%; top: 30%; }
+            10% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 50%; top: 30%; }
+            40% { left: 50%; top: 80%; }
+            70% { left: 50%; top: 80%; opacity: 1; }
+            80% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 50%; top: 80%; }
+            100% { opacity: 0; }
+        }
+        @keyframes swipe-down-menu {
+            0%, 15% { transform: translate(-50%, -15px); opacity: 0; }
+            40%, 75% { transform: translate(-50%, 0); opacity: 1; }
+            85%, 100% { opacity: 0; }
+        }
+        .mode-four-finger-down .f1 { animation: swipe-down-fingers 3s infinite; margin-left: -20px; }
+        .mode-four-finger-down .f2 { animation: swipe-down-fingers 3s infinite; margin-left: -7px; margin-top: -5px; }
+        .mode-four-finger-down .f3 { animation: swipe-down-fingers 3s infinite; margin-left: 7px; margin-top: -5px; }
+        .mode-four-finger-down .f4 { animation: swipe-down-fingers 3s infinite; margin-left: 20px; }
+        .mode-four-finger-down .mock-search-bar { display: flex; animation: swipe-down-menu 3s infinite; top: 12px; height: 80px; border-radius: 6px; flex-direction: column; align-items: stretch; padding: 6px; gap: 6px; }
+        .mode-four-finger-down .mock-search-bar::after {
+            content: '📌 常用项\n• 浏览器\n• 设置\n• 终端';
+            font-size: 7px;
+            color: var(--dim);
+            white-space: pre-line;
+            line-height: 1.5;
+            margin-top: 3px;
+            border-top: 1px solid var(--border);
+            padding-top: 3px;
+        }
+
+        @keyframes swipe-left-fingers {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 80%; top: 55%; }
+            10% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 80%; top: 55%; }
+            40% { left: 20%; top: 55%; }
+            70% { left: 20%; top: 55%; opacity: 1; }
+            80% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 20%; top: 55%; }
+            100% { opacity: 0; }
+        }
+        @keyframes swipe-right-fingers {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 20%; top: 55%; }
+            10% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 20%; top: 55%; }
+            40% { left: 80%; top: 55%; }
+            70% { left: 80%; top: 55%; opacity: 1; }
+            80% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 80%; top: 55%; }
+            100% { opacity: 0; }
+        }
+        @keyframes desktop-slide-left {
+            0%, 15% { transform: translateX(0); }
+            45%, 75% { transform: translateX(-90px); }
+            85%, 100% { opacity: 0; }
+        }
+        @keyframes desktop-slide-right {
+            0%, 15% { transform: translateX(-90px); }
+            45%, 75% { transform: translateX(0); }
+            85%, 100% { opacity: 0; }
+        }
+        .mode-four-finger-left .f1 { animation: swipe-left-fingers 3s infinite; margin-left: -20px; }
+        .mode-four-finger-left .f2 { animation: swipe-left-fingers 3s infinite; margin-left: -7px; }
+        .mode-four-finger-left .f3 { animation: swipe-left-fingers 3s infinite; margin-left: 7px; }
+        .mode-four-finger-left .f4 { animation: swipe-left-fingers 3s infinite; margin-left: 20px; }
+        .mode-four-finger-left .mock-windows-spread { display: flex; width: 200%; height: 100%; animation: desktop-slide-left 3s infinite; }
+        .mode-four-finger-left .win-spread { position: relative; left: 0; top: 0; margin: 30px 15px; flex-shrink: 0; width: 60px; }
+
+        .mode-four-finger-right .f1 { animation: swipe-right-fingers 3s infinite; margin-left: -20px; }
+        .mode-four-finger-right .f2 { animation: swipe-right-fingers 3s infinite; margin-left: -7px; }
+        .mode-four-finger-right .f3 { animation: swipe-right-fingers 3s infinite; margin-left: 7px; }
+        .mode-four-finger-right .f4 { animation: swipe-right-fingers 3s infinite; margin-left: 20px; }
+        .mode-four-finger-right .mock-windows-spread { display: flex; width: 200%; height: 100%; animation: desktop-slide-right 3s infinite; }
+        .mode-four-finger-right .win-spread { position: relative; left: 0; top: 0; margin: 30px 15px; flex-shrink: 0; width: 60px; }
+
+        @keyframes spread-f1 {
+            0%, 15% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 50%; top: 55%; }
+            20% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 50%; top: 55%; }
+            50% { left: 25%; top: 30%; }
+            75% { left: 25%; top: 30%; opacity: 1; }
+            85% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 25%; top: 30%; }
+            100% { opacity: 0; }
+        }
+        @keyframes spread-f2 {
+            0%, 15% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 50%; top: 55%; }
+            20% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 50%; top: 55%; }
+            50% { left: 75%; top: 30%; }
+            75% { left: 75%; top: 30%; opacity: 1; }
+            85% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 75%; top: 30%; }
+            100% { opacity: 0; }
+        }
+        @keyframes spread-f3 {
+            0%, 15% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 50%; top: 55%; }
+            20% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 50%; top: 55%; }
+            50% { left: 25%; top: 80%; }
+            75% { left: 25%; top: 80%; opacity: 1; }
+            85% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 25%; top: 80%; }
+            100% { opacity: 0; }
+        }
+        @keyframes spread-f4 {
+            0%, 15% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 50%; top: 55%; }
+            20% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 50%; top: 55%; }
+            50% { left: 75%; top: 80%; }
+            75% { left: 75%; top: 80%; opacity: 1; }
+            85% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 75%; top: 80%; }
+            100% { opacity: 0; }
+        }
+        @keyframes spread-windows {
+            0%, 20% { transform: scale(1); opacity: 1; }
+            50%, 75% { transform: scale(1.2); opacity: 0; }
+            85%, 100% { opacity: 0; }
+        }
+        @keyframes spread-desktop {
+            0%, 20% { transform: scale(0.95); opacity: 0; }
+            50%, 75% { transform: scale(1); opacity: 0.6; }
+            85%, 100% { opacity: 0; }
+        }
+        .mode-four-finger-spread .f1 { animation: spread-f1 3s infinite; }
+        .mode-four-finger-spread .f2 { animation: spread-f2 3s infinite; }
+        .mode-four-finger-spread .f3 { animation: spread-f3 3s infinite; }
+        .mode-four-finger-spread .f4 { animation: spread-f4 3s infinite; }
+        .mode-four-finger-spread .mock-window { display: block; animation: spread-windows 3s infinite; left: 60px; top: 30px; }
+        .mode-four-finger-spread .mock-desktop-icons { display: flex; animation: spread-desktop 3s infinite; }
+
+        @keyframes pinch-f1 {
+            0%, 15% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 25%; top: 30%; }
+            20% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 25%; top: 30%; }
+            50% { left: 50%; top: 55%; }
+            75% { left: 50%; top: 55%; opacity: 1; }
+            85% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 50%; top: 55%; }
+            100% { opacity: 0; }
+        }
+        @keyframes pinch-f2 {
+            0%, 15% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 75%; top: 30%; }
+            20% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 75%; top: 30%; }
+            50% { left: 50%; top: 55%; }
+            75% { left: 50%; top: 55%; opacity: 1; }
+            85% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 50%; top: 55%; }
+            100% { opacity: 0; }
+        }
+        @keyframes pinch-f3 {
+            0%, 15% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 25%; top: 80%; }
+            20% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 25%; top: 80%; }
+            50% { left: 50%; top: 55%; }
+            75% { left: 50%; top: 55%; opacity: 1; }
+            85% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 50%; top: 55%; }
+            100% { opacity: 0; }
+        }
+        @keyframes pinch-f4 {
+            0%, 15% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 75%; top: 80%; }
+            20% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 75%; top: 80%; }
+            50% { left: 50%; top: 55%; }
+            75% { left: 50%; top: 55%; opacity: 1; }
+            85% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 50%; top: 55%; }
+            100% { opacity: 0; }
+        }
+        @keyframes pinch-launchpad {
+            0%, 20% { opacity: 0; transform: scale(1.05); }
+            50%, 75% { opacity: 1; transform: scale(1); }
+            85%, 100% { opacity: 0; }
+        }
+        .mode-four-finger-pinch .f1 { animation: pinch-f1 3s infinite; }
+        .mode-four-finger-pinch .f2 { animation: pinch-f2 3s infinite; }
+        .mode-four-finger-pinch .f3 { animation: pinch-f3 3s infinite; }
+        .mode-four-finger-pinch .f4 { animation: pinch-f4 3s infinite; }
+        .mode-four-finger-pinch .mock-launchpad { display: flex; animation: pinch-launchpad 3s infinite; }
+
+        @keyframes scroll-fingers {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 50%; top: 75%; }
+            10% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 50%; top: 75%; }
+            40% { left: 50%; top: 35%; }
+            70% { left: 50%; top: 35%; opacity: 1; }
+            80% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 50%; top: 35%; }
+            100% { opacity: 0; }
+        }
+        @keyframes scroll-fingers-natural {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 50%; top: 35%; }
+            10% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 50%; top: 35%; }
+            40% { left: 50%; top: 75%; }
+            70% { left: 50%; top: 75%; opacity: 1; }
+            80% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 50%; top: 75%; }
+            100% { opacity: 0; }
+        }
+        @keyframes scroll-list {
+            0%, 15% { transform: translateY(0); }
+            45%, 75% { transform: translateY(-30px); }
+            85%, 100% { opacity: 0; }
+        }
+        @keyframes scroll-bar {
+            0%, 15% { transform: translateY(0); }
+            45%, 75% { transform: translateY(22px); }
+            85%, 100% { opacity: 0; }
+        }
+        @keyframes scroll-list-natural {
+            0%, 15% { transform: translateY(-30px); }
+            45%, 75% { transform: translateY(0); }
+            85%, 100% { opacity: 0; }
+        }
+        @keyframes scroll-bar-natural {
+            0%, 15% { transform: translateY(22px); }
+            45%, 75% { transform: translateY(0); }
+            85%, 100% { opacity: 0; }
+        }
+        @keyframes mouse-arrow-move-down {
+            0% { transform: translateY(-4px); opacity: 0; }
+            20% { opacity: 1; }
+            60% { transform: translateY(4px); opacity: 1; }
+            80% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+        .mock-mouse {
+            display: none;
+            width: 100%;
+            height: 100px;
+            background: rgba(255, 255, 255, .02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+        body.light .mock-mouse {
+            background: rgba(0, 0, 0, .01);
+        }
+        .mouse-svg {
+            width: 40px;
+            height: 65px;
+            color: var(--dim);
+        }
+        body.light .mouse-svg {
+            color: rgba(0, 0, 0, 0.35);
+        }
+        .mouse-line {
+            stroke: currentColor;
+        }
+        @keyframes wheel-roll-down {
+            from { stroke-dashoffset: 0; }
+            to { stroke-dashoffset: 5; }
+        }
+        .mode-mouse-wheel-scroll .mock-trackpad { display: none; }
+        .mode-mouse-wheel-scroll .mock-mouse { display: flex; }
+        .mode-mouse-wheel-scroll .mouse-arrow { animation: mouse-arrow-move-down 1.5s infinite; transform-origin: center; }
+        .mode-mouse-wheel-scroll .mock-scroll-container { display: block; }
+        .mode-mouse-wheel-scroll .scroll-content { animation: scroll-list 3s infinite; }
+        .mode-mouse-wheel-scroll .mock-scrollbar { animation: scroll-bar 3s infinite; }
+        .mode-mouse-wheel-scroll.natural .scroll-content { animation: scroll-list-natural 3s infinite; }
+        .mode-mouse-wheel-scroll.natural .mock-scrollbar { animation: scroll-bar-natural 3s infinite; }
+        .mode-mouse-wheel-scroll .mouse-wheel-line { animation: wheel-roll-down 0.8s linear infinite; }
+
+        @keyframes edge-fingers {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 10%; top: 75%; }
+            10% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 10%; top: 75%; }
+            40% { left: 10%; top: 25%; }
+            70% { left: 10%; top: 25%; opacity: 1; }
+            80% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 10%; top: 25%; }
+            100% { opacity: 0; }
+        }
+        @keyframes edge-fingers-inv {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 10%; top: 25%; }
+            10% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 10%; top: 25%; }
+            40% { left: 10%; top: 75%; }
+            70% { left: 10%; top: 75%; opacity: 1; }
+            80% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 10%; top: 75%; }
+            100% { opacity: 0; }
+        }
+        @keyframes volume-pop {
+            0%, 10% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            20%, 75% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            85%, 100% { opacity: 0; }
+        }
+        @keyframes volume-fill-up {
+            0%, 15% { height: 25%; }
+            45%, 75% { height: 80%; }
+        }
+        @keyframes volume-fill-down {
+            0%, 15% { height: 80%; }
+            45%, 75% { height: 25%; }
+        }
+        .mode-edge-volume .f1 { animation: edge-fingers-inv 3s infinite; }
+        .mode-edge-volume.invert .f1 { animation: edge-fingers 3s infinite; }
+        .mode-edge-volume .mock-volume-hud { display: flex; animation: volume-pop 3s infinite; }
+        .mode-edge-volume .vol-fill { animation: volume-fill-up 3s infinite; }
+        .mode-edge-volume.invert .vol-fill { animation: volume-fill-up 3s infinite; }
+
+        @keyframes cursor-finger {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; left: 35%; top: 65%; }
+            10% { transform: translate(-50%, -50%) scale(1); opacity: 1; left: 35%; top: 65%; }
+            20% { left: 35%; top: 65%; }
+            50% { left: 65%; top: 35%; }
+            70% { left: 65%; top: 35%; opacity: 1; }
+            80% { opacity: 0; transform: translate(-50%, -50%) scale(0); left: 65%; top: 35%; }
+            100% { opacity: 0; }
+        }
+        @keyframes cursor-pointer-move {
+            0%, 20% { left: 35%; top: 65%; opacity: 0; }
+            25% { opacity: 1; }
+            50%, 70% { left: 65%; top: 25%; opacity: 1; }
+            80%, 100% { opacity: 0; }
+        }
+        .mode-cursor-move .f1 { animation: cursor-finger 3s infinite; }
+        .mode-cursor-move .mock-cursor { display: block; animation: cursor-pointer-move 3s infinite; }
+
+        @media (max-width: 780px) {
+            .preview-column {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -501,68 +1206,73 @@
                 <div style="flex:1"></div>
                 <button class="btn btn-sm btn-sec" onclick="resetDefaults('drag')">恢复默认</button>
             </div>
-            <div class="sec">
-                <div class="st">设置</div>
-                <div class="row">
-                    <div>
-                        <div class="lbl">启用三指拖移</div>
-                        <div class="dsc">三根手指拖动来移动窗口/选择文本</div>
+            <div class="page-body">
+                <div class="settings-column">
+                    <div class="sec">
+                        <div class="st">设置</div>
+                        <div class="row" onmouseenter="showPreview('p-drag', 'three-finger-drag', '三指拖移', '在触控板上使用三根手指滑动，可以轻松移动窗口或在屏幕上选择文本。')">
+                            <div>
+                                <div class="lbl">启用三指拖移</div>
+                                <div class="dsc">三根手指拖动来移动窗口/选择文本</div>
+                            </div>
+                            <label class="tg"><input id="drag" onchange="save('ss1')" onclick="save('ss1')"
+                                                     type="checkbox"><span
+                                    class="sl"></span></label>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-drag', 'three-finger-drag', '释放后重新开始', '在您抬起手指的短时间内，可以重新放回手指并继续拖移，避免因触控板边缘中断拖移。')">
+                            <div>
+                                <div class="lbl">释放后重新开始</div>
+                                <div class="dsc">抬起手指后可继续拖移</div>
+                            </div>
+                            <label class="tg"><input id="restart" onchange="save('ss1')" onclick="save('ss1')"
+                                                     type="checkbox"><span
+                                    class="sl"></span></label>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-drag', 'three-finger-tap', '三指轻点 → 搜索', '用三根手指快速轻点触控板，可以快速触发 Windows 搜索（Win+S）。')">
+                            <div>
+                                <div class="lbl">三指轻点 → 搜索</div>
+                                <div class="dsc">三指轻触打开 Win+S</div>
+                            </div>
+                            <label class="tg"><input id="tap" onchange="save('ss1')" onclick="save('ss1')" type="checkbox"><span
+                                    class="sl"></span></label>
+                        </div>
                     </div>
-                    <label class="tg"><input id="drag" onchange="save('ss1')" onclick="save('ss1')"
-                                             type="checkbox"><span
-                            class="sl"></span></label>
-                </div>
-                <div class="row">
-                    <div>
-                        <div class="lbl">释放后重新开始</div>
-                        <div class="dsc">抬起手指后可继续拖移</div>
+                    <div class="sec">
+                        <div class="st">光标参数</div>
+                        <div class="row" onmouseenter="showPreview('p-drag', 'cursor-move', '光标速度', '调整三指拖移时的光标移动速度，使其更符合您的个人使用习惯。')">
+                            <div class="lbl">光标速度</div>
+                            <div class="sg"><input id="speed_r" max="150" min="10" oninput="syncSlider('speed','ss1')"
+                                                   type="range"><input id="speed" max="150" min="10"
+                                                                       onchange="syncInput('speed','ss1')"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-drag', 'cursor-move', '光标加速度', '调节光标的加速度，滑得越快光标移动越远，能进行更精准的定位。')">
+                            <div class="lbl">加速度</div>
+                            <div class="sg"><input id="accel_r" max="30" min="0" oninput="syncSlider('accel','ss1')"
+                                                   type="range"><input
+                                    id="accel" max="30" min="0" onchange="syncInput('accel','ss1')" type="number"></div>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-drag', 'cursor-move', '开始阈值', '手指需要移动多少距离才开始触发拖移，防止轻微抖动导致误操作。')">
+                            <div class="lbl">开始阈值</div>
+                            <div class="sg"><input id="stt_r" max="200" min="10" oninput="syncSlider('stt','ss1')" type="range"><input
+                                    id="stt" max="200" min="10" onchange="syncInput('stt','ss1')" type="number"></div>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-drag', 'cursor-move', '停止阈值', '手指抬起或减速到多少以下时停止拖移。')">
+                            <div class="lbl">停止阈值</div>
+                            <div class="sg"><input id="spt_r" max="30" min="1" oninput="syncSlider('spt','ss1')"
+                                                   type="range"><input
+                                    id="spt" max="30" min="1" onchange="syncInput('spt','ss1')" type="number"></div>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-drag', 'three-finger-drag', '释放延迟', '手指抬起后保留拖移状态的延迟时间。在这段时间内放回手指可以继续拖移。')">
+                            <div class="lbl">释放延迟(ms)</div>
+                            <div class="sg"><input id="rel_r" max="2000" min="50" oninput="syncSlider('rel','ss1')"
+                                                   type="range"><input
+                                    id="rel" max="2000" min="50" onchange="syncInput('rel','ss1')" type="number"></div>
+                        </div>
                     </div>
-                    <label class="tg"><input id="restart" onchange="save('ss1')" onclick="save('ss1')"
-                                             type="checkbox"><span
-                            class="sl"></span></label>
                 </div>
-                <div class="row">
-                    <div>
-                        <div class="lbl">三指轻点 → 搜索</div>
-                        <div class="dsc">三指轻触打开 Win+S</div>
-                    </div>
-                    <label class="tg"><input id="tap" onchange="save('ss1')" onclick="save('ss1')" type="checkbox"><span
-                            class="sl"></span></label>
-                </div>
-            </div>
-            <div class="sec">
-                <div class="st">光标参数</div>
-                <div class="row">
-                    <div class="lbl">光标速度</div>
-                    <div class="sg"><input id="speed_r" max="150" min="10" oninput="syncSlider('speed','ss1')"
-                                           type="range"><input id="speed" max="150" min="10"
-                                                               onchange="syncInput('speed','ss1')"
-                                                               type="number">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="lbl">加速度</div>
-                    <div class="sg"><input id="accel_r" max="30" min="0" oninput="syncSlider('accel','ss1')"
-                                           type="range"><input
-                            id="accel" max="30" min="0" onchange="syncInput('accel','ss1')" type="number"></div>
-                </div>
-                <div class="row">
-                    <div class="lbl">开始阈值</div>
-                    <div class="sg"><input id="stt_r" max="200" min="10" oninput="syncSlider('stt','ss1')" type="range"><input
-                            id="stt" max="200" min="10" onchange="syncInput('stt','ss1')" type="number"></div>
-                </div>
-                <div class="row">
-                    <div class="lbl">停止阈值</div>
-                    <div class="sg"><input id="spt_r" max="30" min="1" oninput="syncSlider('spt','ss1')"
-                                           type="range"><input
-                            id="spt" max="30" min="1" onchange="syncInput('spt','ss1')" type="number"></div>
-                </div>
-                <div class="row">
-                    <div class="lbl">释放延迟(ms)</div>
-                    <div class="sg"><input id="rel_r" max="2000" min="50" oninput="syncSlider('rel','ss1')"
-                                           type="range"><input
-                            id="rel" max="2000" min="50" onchange="syncInput('rel','ss1')" type="number"></div>
-                </div>
+                <div class="preview-column"></div>
             </div>
         </div>
 
@@ -573,53 +1283,58 @@
                 <div style="flex:1"></div>
                 <button class="btn btn-sm btn-sec" onclick="resetDefaults('gestures')">恢复默认</button>
             </div>
-            <div class="sec">
-                <div class="st">四指手势</div>
-                <div class="row">
-                    <div class="lbl">⬆️ 上滑</div>
-                    <select id="g4u" onchange="save('ss2')" oninput="save('ss2')"></select>
-                </div>
-                <div class="row">
-                    <div class="lbl">⬇️ 下滑</div>
-                    <select id="g4d" onchange="save('ss2')" oninput="save('ss2')"></select>
-                </div>
-                <div class="row">
-                    <div class="lbl">⬅️ 左滑（切换应用）</div>
-                    <select id="g4l" onchange="save('ss2')" oninput="save('ss2')"></select>
-                </div>
-                <div class="row">
-                    <div class="lbl">➡️ 右滑（切换应用）</div>
-                    <select id="g4r" onchange="save('ss2')" oninput="save('ss2')"></select>
-                </div>
-                <div class="row">
-                    <div class="lbl">🖐️ 张开</div>
-                    <select id="g4sp" onchange="save('ss2')" oninput="save('ss2')"></select>
-                </div>
-                <div class="row">
-                    <div class="lbl">🤏 捏合</div>
-                    <select id="g4pi" onchange="save('ss2')" oninput="save('ss2')"></select>
-                </div>
-            </div>
-            <div class="sec">
-                <div class="st">边缘手势</div>
-                <div class="row">
-                    <div>
-                        <div class="lbl">边缘手势</div>
-                        <div class="dsc">左边缘音量 OSD</div>
+            <div class="page-body">
+                <div class="settings-column">
+                    <div class="sec">
+                        <div class="st">四指手势</div>
+                        <div class="row" onmouseenter="showPreview('p-gestures', 'four-finger-up', '四指上滑', '四根手指向上滑动。默认设置为打开任务视图，展示所有运行窗口。')">
+                            <div class="lbl">⬆️ 上滑</div>
+                            <select id="g4u" onchange="save('ss2')" oninput="save('ss2')"></select>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-gestures', 'four-finger-down', '四指下滑', '四根手指向下滑动。默认设置为打开开始菜单或快捷功能。')">
+                            <div class="lbl">⬇️ 下滑</div>
+                            <select id="g4d" onchange="save('ss2')" oninput="save('ss2')"></select>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-gestures', 'four-finger-left', '四指左滑', '四根手指向左滑动。默认设置为向左切换虚拟桌面或活动窗口。')">
+                            <div class="lbl">⬅️ 左滑（切换应用）</div>
+                            <select id="g4l" onchange="save('ss2')" oninput="save('ss2')"></select>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-gestures', 'four-finger-right', '四指右滑', '四根手指向右滑动。默认设置为向右切换虚拟桌面或活动窗口。')">
+                            <div class="lbl">➡️ 右滑（切换应用）</div>
+                            <select id="g4r" onchange="save('ss2')" oninput="save('ss2')"></select>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-gestures', 'four-finger-spread', '四指张开', '拇指与其余三指呈相反方向张开。默认设置为显示桌面，将所有窗口推离屏幕。')">
+                            <div class="lbl">🖐️ 张开</div>
+                            <select id="g4sp" onchange="save('ss2')" oninput="save('ss2')"></select>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-gestures', 'four-finger-pinch', '四指捏合', '拇指与其余三指呈相反方向收拢捏合。默认设置为触发开始菜单。')">
+                            <div class="lbl">🤏 捏合</div>
+                            <select id="g4pi" onchange="save('ss2')" oninput="save('ss2')"></select>
+                        </div>
                     </div>
-                    <label class="tg"><input id="edge" onchange="save('ss2')" onclick="save('ss2')"
-                                             type="checkbox"><span
-                            class="sl"></span></label>
-                </div>
-                <div class="row">
-                    <div>
-                        <div class="lbl">反转音量方向</div>
-                        <div class="dsc">上滑=音量减，下滑=音量增</div>
+                    <div class="sec">
+                        <div class="st">边缘手势</div>
+                        <div class="row" onmouseenter="showPreview('p-gestures', 'edge-volume', '左边缘手势', '在触控板最左侧边缘上下滑动调节系统音量。默认向下滑动增大音量，向上滑动减小音量。')">
+                            <div>
+                                <div class="lbl">边缘手势</div>
+                                <div class="dsc">左边缘音量 OSD</div>
+                            </div>
+                            <label class="tg"><input id="edge" onchange="save('ss2')" onclick="save('ss2')"
+                                                     type="checkbox"><span
+                                    class="sl"></span></label>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-gestures', 'edge-volume', '反转音量方向', '启用后：上滑=音量增，下滑=音量减（即向上滑动增大音量，向下滑动减小音量）。')">
+                            <div>
+                                <div class="lbl">反转音量方向</div>
+                                <div class="dsc">开启后：上滑=音量增，下滑=音量减</div>
+                            </div>
+                            <label class="tg"><input id="inv_vol" onchange="save('ss2'); updateVolumePreview();" onclick="save('ss2'); updateVolumePreview();"
+                                                     type="checkbox"><span
+                                    class="sl"></span></label>
+                        </div>
                     </div>
-                    <label class="tg"><input id="inv_vol" onchange="save('ss2')" onclick="save('ss2')"
-                                             type="checkbox"><span
-                            class="sl"></span></label>
                 </div>
+                <div class="preview-column"></div>
             </div>
         </div>
 
@@ -629,111 +1344,116 @@
                 <div style="flex:1"></div>
                 <button class="btn btn-sm btn-sec" onclick="resetDefaults('scroll')">恢复默认</button>
             </div>
-            <div class="sec">
-                <div class="st">触控板双指滑动</div>
-                <div class="row">
-                    <div>
-                        <div class="lbl">启用平滑滚动</div>
-                        <div class="dsc">拦截双指滑动原生事件，替换为丝滑滚轮信号</div>
+            <div class="page-body">
+                <div class="settings-column">
+                    <div class="sec">
+                        <div class="st">鼠标滚轮平滑滚动</div>
+                        <div class="row" onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '鼠标滚轮平滑滚动', '开启鼠标滚轮的平滑滚动。拦截原生鼠标滚动事件，转换为高频平顺的惯性滚动效果。')">
+                            <div>
+                                <div class="lbl">启用平滑滚动</div>
+                                <div class="dsc">拦截鼠标滚轮原生事件，替换为丝滑惯性滚动信号</div>
+                            </div>
+                            <label class="tg"><input id="smooth" onchange="save('ss3')" onclick="save('ss3')"
+                                                     type="checkbox"><span
+                                    class="sl"></span></label>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '鼠标滚轮灵敏度', '调整鼠标滚轮的滚动速度。值越大，页面滚动越快。')">
+                            <div class="lbl">灵敏度</div>
+                            <div class="sg"><input id="scroll_speed_r" max="2.5" min="0.5"
+                                                   oninput="syncSlider('scroll_speed','ss3')" step="0.1"
+                                                   type="range"><input id="scroll_speed"
+                                                                       max="2.5" min="0.5"
+                                                                       onchange="syncInput('scroll_speed','ss3')"
+                                                                       step="0.1"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '鼠标滚轮平滑度', '调整鼠标滚轮滚动时的阻尼缓冲。数值越大页面越平顺，但也越有平稳过渡感。')">
+                            <div class="lbl">平滑度</div>
+                            <div class="sg"><input id="scroll_smooth_r" max="0.45" min="0.15"
+                                                   oninput="syncSlider('scroll_smooth','ss3')" step="0.01"
+                                                   type="range"><input id="scroll_smooth"
+                                                                       max="0.45"
+                                                                       min="0.15"
+                                                                       onchange="syncInput('scroll_smooth','ss3')" step="0.01"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '鼠标滚轮惯性系数', '控制滚动停止后，页面继续顺滑滑行的阻尼惯性。越接近1，惯性越强，滑得越远。')">
+                            <div class="lbl">惯性</div>
+                            <div class="sg"><input id="scroll_decel_r" max="0.96" min="0.88"
+                                                   oninput="syncSlider('scroll_decel','ss3')" step="0.01"
+                                                   type="range"><input id="scroll_decel"
+                                                                       max="0.96"
+                                                                       min="0.88" onchange="syncInput('scroll_decel','ss3')"
+                                                                       step="0.01"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '鼠标滚轮基础缩放', '控制轻微拨动滚轮时的初始滚动步长。')">
+                            <div class="lbl">基础缩放</div>
+                            <div class="sg"><input id="scroll_bscale_r" max="0.5" min="0.05"
+                                                   oninput="syncSlider('scroll_bscale','ss3')" step="0.01"
+                                                   type="range"><input id="scroll_bscale"
+                                                                       max="0.5"
+                                                                       min="0.05" onchange="syncInput('scroll_bscale','ss3')"
+                                                                       step="0.01"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '鼠标滚轮最大增量', '限制单次滚动的最大滚动位移，避免大力滚动轮子时页面瞬间滑到底部。')">
+                            <div class="lbl">最大增量</div>
+                            <div class="sg"><input id="scroll_maxd_r" max="60" min="5" oninput="syncSlider('scroll_maxd','ss3')"
+                                                   step="1"
+                                                   type="range"><input id="scroll_maxd"
+                                                                       max="60" min="5"
+                                                                       onchange="syncInput('scroll_maxd','ss3')"
+                                                                       step="1"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '鼠标滚轮死区阈值', '滚轮开始滚动时的死区过滤范围。防止鼠标稍微抖动导致页面滚动。')">
+                            <div class="lbl">死区阈值</div>
+                            <div class="sg"><input id="scroll_dz_r" max="5" min="0.1" oninput="syncSlider('scroll_dz','ss3')"
+                                                   step="0.1"
+                                                   type="range"><input id="scroll_dz" max="5"
+                                                                       min="0.1" onchange="syncInput('scroll_dz','ss3')"
+                                                                       step="0.1"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '刷新间隔', '发送滚轮平滑信号的时间间隔。值越小滚动越细腻高帧，但会增加少量 CPU 开销。')">
+                            <div class="lbl">刷新间隔(ms)</div>
+                            <div class="sg"><input id="scroll_tick_r" max="16" min="1" oninput="syncSlider('scroll_tick','ss3')"
+                                                   step="1"
+                                                   type="range"><input id="scroll_tick"
+                                                                       max="16" min="1"
+                                                                       onchange="syncInput('scroll_tick','ss3')"
+                                                                       step="1"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row" onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '自然滚动', '更改鼠标滚轮的滚动方向。开启时，向下滑动滚轮内容向下移动（macOS 风格）；关闭时为传统滚动方向。')">
+                            <div>
+                                <div class="lbl">自然滚动</div>
+                                <div class="dsc">向下滚动滚轮 → 内容向下移动（macOS 风格）</div>
+                            </div>
+                            <label class="tg"><input id="natural" onchange="save('ss3'); updateScrollPreview();" onclick="save('ss3'); updateScrollPreview();"
+                                                     type="checkbox"><span
+                                    class="sl"></span></label>
+                        </div>
                     </div>
-                    <label class="tg"><input id="smooth" onchange="save('ss3')" onclick="save('ss3')"
-                                             type="checkbox"><span
-                            class="sl"></span></label>
-                </div>
-                <div class="row">
-                    <div class="lbl">灵敏度</div>
-                    <div class="sg"><input id="scroll_speed_r" max="2.5" min="0.5"
-                                           oninput="syncSlider('scroll_speed','ss3')" step="0.1"
-                                           type="range"><input id="scroll_speed"
-                                                               max="2.5" min="0.5"
-                                                               onchange="syncInput('scroll_speed','ss3')"
-                                                               step="0.1"
-                                                               type="number">
+                    <div class="sec">
+                        <div class="st">说明</div>
+                        <div class="row">
+                            <div>
+                                <div class="lbl">ℹ️ 对鼠标滚轮生效</div>
+                                <div class="dsc">此设置仅对鼠标滚轮生效</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="lbl">平滑度</div>
-                    <div class="sg"><input id="scroll_smooth_r" max="0.45" min="0.15"
-                                           oninput="syncSlider('scroll_smooth','ss3')" step="0.01"
-                                           type="range"><input id="scroll_smooth"
-                                                               max="0.45"
-                                                               min="0.15"
-                                                               onchange="syncInput('scroll_smooth','ss3')" step="0.01"
-                                                               type="number">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="lbl">惯性</div>
-                    <div class="sg"><input id="scroll_decel_r" max="0.96" min="0.88"
-                                           oninput="syncSlider('scroll_decel','ss3')" step="0.01"
-                                           type="range"><input id="scroll_decel"
-                                                               max="0.96"
-                                                               min="0.88" onchange="syncInput('scroll_decel','ss3')"
-                                                               step="0.01"
-                                                               type="number">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="lbl">基础缩放</div>
-                    <div class="sg"><input id="scroll_bscale_r" max="0.5" min="0.05"
-                                           oninput="syncSlider('scroll_bscale','ss3')" step="0.01"
-                                           type="range"><input id="scroll_bscale"
-                                                               max="0.5"
-                                                               min="0.05" onchange="syncInput('scroll_bscale','ss3')"
-                                                               step="0.01"
-                                                               type="number">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="lbl">最大增量</div>
-                    <div class="sg"><input id="scroll_maxd_r" max="60" min="5" oninput="syncSlider('scroll_maxd','ss3')"
-                                           step="1"
-                                           type="range"><input id="scroll_maxd"
-                                                               max="60" min="5"
-                                                               onchange="syncInput('scroll_maxd','ss3')"
-                                                               step="1"
-                                                               type="number">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="lbl">死区阈值</div>
-                    <div class="sg"><input id="scroll_dz_r" max="5" min="0.1" oninput="syncSlider('scroll_dz','ss3')"
-                                           step="0.1"
-                                           type="range"><input id="scroll_dz" max="5"
-                                                               min="0.1" onchange="syncInput('scroll_dz','ss3')"
-                                                               step="0.1"
-                                                               type="number">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="lbl">刷新间隔(ms)</div>
-                    <div class="sg"><input id="scroll_tick_r" max="16" min="1" oninput="syncSlider('scroll_tick','ss3')"
-                                           step="1"
-                                           type="range"><input id="scroll_tick"
-                                                               max="16" min="1"
-                                                               onchange="syncInput('scroll_tick','ss3')"
-                                                               step="1"
-                                                               type="number">
-                    </div>
-                </div>
-                <div class="row">
-                    <div>
-                        <div class="lbl">自然滚动</div>
-                        <div class="dsc">手指向下 → 内容向下移动（macOS 风格）</div>
-                    </div>
-                    <label class="tg"><input id="natural" onchange="save('ss3')" onclick="save('ss3')"
-                                             type="checkbox"><span
-                            class="sl"></span></label>
-                </div>
-            </div>
-            <div class="sec">
-                <div class="st">说明</div>
-                <div class="row">
-                    <div>
-                        <div class="lbl">ℹ️ 对鼠标滚轮生效</div>
-                        <div class="dsc">此设置仅对鼠标滚轮生效</div>
-                    </div>
-                </div>
+                <div class="preview-column"></div>
             </div>
         </div>
 
@@ -832,11 +1552,201 @@
         })
     });
 
+    const PREVIEW_TEMPLATE = `
+        <div class="preview-container">
+            <!-- Mock Screen -->
+            <div class="mock-screen">
+                <div class="wallpaper"></div>
+                
+                <!-- Window for dragging -->
+                <div class="mock-window">
+                    <div class="win-header">
+                        <span class="win-dot red"></span>
+                        <span class="win-dot yellow"></span>
+                        <span class="win-dot green"></span>
+                    </div>
+                    <div class="win-content"></div>
+                </div>
+                
+                <!-- Spread Windows -->
+                <div class="mock-windows-spread">
+                    <div class="win-spread w1"></div>
+                    <div class="win-spread w2"></div>
+                    <div class="win-spread w3"></div>
+                </div>
+
+                <!-- Desktop Icons -->
+                <div class="mock-desktop-icons">
+                    <span class="d-icon"></span>
+                    <span class="d-icon"></span>
+                    <span class="d-icon"></span>
+                </div>
+
+                <!-- Launchpad Grid -->
+                <div class="mock-launchpad">
+                    <div class="lp-grid">
+                        <span class="lp-icon"></span><span class="lp-icon"></span><span class="lp-icon"></span>
+                        <span class="lp-icon"></span><span class="lp-icon"></span><span class="lp-icon"></span>
+                        <span class="lp-icon"></span><span class="lp-icon"></span><span class="lp-icon"></span>
+                    </div>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="mock-search-bar">
+                    <span class="search-icon">🔍</span>
+                    <span class="search-text">搜索...</span>
+                </div>
+
+                <!-- Scroll Container -->
+                <div class="mock-scroll-container">
+                    <div class="scroll-content">
+                        <div class="scroll-line"></div>
+                        <div class="scroll-line"></div>
+                        <div class="scroll-line"></div>
+                        <div class="scroll-line flex-long"></div>
+                        <div class="scroll-line"></div>
+                        <div class="scroll-line"></div>
+                        <div class="scroll-line"></div>
+                    </div>
+                    <div class="mock-scrollbar"></div>
+                </div>
+
+                <!-- Volume HUD -->
+                <div class="mock-volume-hud">
+                    <div class="vol-icon">🔊</div>
+                    <div class="vol-track">
+                        <div class="vol-fill"></div>
+                    </div>
+                </div>
+                
+                <!-- Cursor -->
+                <div class="mock-cursor">
+                    <svg viewBox="0 0 24 24" style="width:10px; height:10px; fill: white; stroke: black; stroke-width: 1.5;">
+                        <path d="M4.5,3v15.2l4.1-4.1l3.1,7.2l2.7-1.1l-3.1-7.2h6.2L4.5,3z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Mock Trackpad -->
+            <div class="mock-trackpad">
+                <div class="trackpad-surface">
+                    <div class="finger f1"></div>
+                    <div class="finger f2"></div>
+                    <div class="finger f3"></div>
+                    <div class="finger f4"></div>
+                </div>
+            </div>
+            
+            <!-- Mock Mouse -->
+            <div class="mock-mouse">
+                <svg viewBox="0 0 100 100" class="mouse-svg">
+                    <defs>
+                        <clipPath id="wheel-clip">
+                            <rect x="47" y="18" width="6" height="12" rx="2"/>
+                        </clipPath>
+                    </defs>
+                    <path class="mouse-line" d="M35,20 C35,10 65,10 65,20 L65,70 C65,80 35,80 35,70 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <line class="mouse-line" x1="50" y1="12" x2="50" y2="30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="1 1"/>
+                    <g class="mouse-wheel-group">
+                        <rect class="mouse-wheel-rect" x="47" y="18" width="6" height="12" rx="2" fill="var(--accent)"/>
+                        <g clip-path="url(#wheel-clip)">
+                            <line class="mouse-wheel-line" x1="50" y1="14" x2="50" y2="34" stroke="var(--bg)" stroke-width="2" stroke-dasharray="2 3"/>
+                        </g>
+                    </g>
+                    <path class="mouse-arrow" d="M50,42 L50,48 M50,48 L47,45 M50,48 L53,45" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+                </svg>
+            </div>
+            
+            <!-- Text Caption -->
+            <div class="preview-caption">
+                <h4 class="preview-title">三指拖移</h4>
+                <p class="preview-desc">三根手指拖动来移动窗口或选择文本。</p>
+            </div>
+        </div>
+    `;
+
+    const PAGE_DEFAULTS = {
+        'drag': ['three-finger-drag', '三指拖移', '在触控板上使用三根手指滑动，可以轻松移动窗口或在屏幕上选择文本。'],
+        'gestures': ['four-finger-up', '四指上滑', '四根手指向上滑动。默认设置为打开任务视图，展示所有运行窗口。'],
+        'scroll': ['mouse-wheel-scroll', '鼠标滚轮平滑滚动', '拦截原生鼠标滚轮事件，提供阻尼和平滑过度，使鼠标滚轮滚动像触控板一样丝滑。']
+    };
+
+    function showPreview(pageId, modeName, title, desc) {
+        const page = document.getElementById(pageId);
+        if (!page) return;
+        const container = page.querySelector('.preview-container');
+        if (!container) return;
+        
+        container.className = 'preview-container';
+        container.classList.add('mode-' + modeName);
+        
+        if (modeName === 'mouse-wheel-scroll') {
+            const naturalBox = document.getElementById('natural');
+            if (naturalBox && naturalBox.checked) {
+                container.classList.add('natural');
+            }
+        }
+        
+        if (modeName === 'edge-volume') {
+            const invertBox = document.getElementById('inv_vol');
+            if (invertBox && invertBox.checked) {
+                container.classList.add('invert');
+            }
+        }
+        
+        const titleEl = page.querySelector('.preview-title');
+        const descEl = page.querySelector('.preview-desc');
+        if (titleEl) titleEl.textContent = title;
+        if (descEl) descEl.textContent = desc;
+    }
+
+    function updateScrollPreview() {
+        const isNatural = document.getElementById('natural').checked;
+        showPreview('p-scroll', 'mouse-wheel-scroll', '自然滚动', 
+            isNatural ? '开启时，向下滑动鼠标滚轮，页面内容向下移动（macOS 风格）。' : '关闭时，向下滑动鼠标滚轮，页面内容向上移动（传统 Windows 风格）。'
+        );
+    }
+
+    function updateVolumePreview() {
+        const isInvert = document.getElementById('inv_vol').checked;
+        showPreview('p-gestures', 'edge-volume', '反转音量方向', 
+            isInvert ? '启用后，在左边缘向上滑动增大音量，向下滑动减小音量。' : '关闭后，在左边缘向下滑动增大音量，向上滑动减小音量。'
+        );
+    }
+
+    // Populate preview columns on script load
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.preview-column').forEach(col => {
+            col.innerHTML = PREVIEW_TEMPLATE;
+        });
+        // Set initial defaults
+        Object.keys(PAGE_DEFAULTS).forEach(key => {
+            showPreview('p-' + key, ...PAGE_DEFAULTS[key]);
+        });
+    });
+
+    // Fallback if DOMContentLoaded already fired
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+        document.querySelectorAll('.preview-column').forEach(col => {
+            if (!col.innerHTML) {
+                col.innerHTML = PREVIEW_TEMPLATE;
+            }
+        });
+        Object.keys(PAGE_DEFAULTS).forEach(key => {
+            showPreview('p-' + key, ...PAGE_DEFAULTS[key]);
+        });
+    }
+
     function go(name, el) {
         document.querySelectorAll('.nav-item, .footer-btn').forEach(n => n.classList.remove('active'));
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         el.classList.add('active');
-        document.getElementById('p-' + name).classList.add('active')
+        document.getElementById('p-' + name).classList.add('active');
+        
+        // Show default preview if available
+        if (PAGE_DEFAULTS[name]) {
+            showPreview('p-' + name, ...PAGE_DEFAULTS[name]);
+        }
     }
 
     // Slider ↔ Input sync

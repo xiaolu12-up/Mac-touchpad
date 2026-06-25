@@ -11,6 +11,9 @@ pub const SYNTHETIC_SCROLL_MARKER: usize = 0xFACECAFE;
 /// Set to true while 2+ fingers are on the touchpad with smooth scroll enabled.
 pub static TOUCHPAD_SCROLLING: AtomicBool = AtomicBool::new(false);
 
+/// Timestamp in ms of the last touchpad contact event.
+pub static LAST_TOUCHPAD_CONTACT_TIME: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
 /// Controls whether mouse wheel smooth scrolling is enabled.
 pub static SMOOTH_SCROLL_ENABLED: AtomicBool = AtomicBool::new(true);
 
@@ -118,18 +121,34 @@ unsafe extern "system" fn low_level_mouse_proc(
             let info = l_param.0 as *const MSLLHOOKSTRUCT;
             if !info.is_null() {
                 let info_ref = &*info;
+                let mouse_data = info_ref.mouseData;
+                let delta = (mouse_data >> 16) as i16 as i32;
 
                 // 1. If it's our own synthetic scroll event, let it pass.
                 if info_ref.dwExtraInfo == SYNTHETIC_SCROLL_MARKER {
                     return CallNextHookEx(None, n_code, w_param, l_param);
                 }
 
-                // 2. If touchpad scrolling is active, suppress other scroll events.
+                // 2. Filter out non-mouse scroll events (touchpad scroll/inertia or high-precision free-spin wheels):
+                // - Touchpad and high-precision wheels send deltas that are NOT multiples of 120.
+                // - Touchpad scroll and inertia send events within 1000ms of the last raw touchpad touch.
+                let last_touch = LAST_TOUCHPAD_CONTACT_TIME.load(Ordering::Relaxed) as i64;
+                let now = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_millis() as i64;
+                let is_clicky_mouse = (delta % 120 == 0) && (now - last_touch >= 1000);
+
+                if !is_clicky_mouse {
+                    return CallNextHookEx(None, n_code, w_param, l_param);
+                }
+
+                // 3. If touchpad scrolling is active, suppress other scroll events.
                 if TOUCHPAD_SCROLLING.load(Ordering::Relaxed) {
                     return LRESULT(1);
                 }
 
-                // 3. If smooth scroll is enabled and Win11 synthetic device is active, intercept physical scrolls.
+                // 4. If smooth scroll is enabled and Win11 synthetic device is active, intercept physical scrolls.
                 if SMOOTH_SCROLL_ENABLED.load(Ordering::Relaxed) && SYNTHETIC_DEVICE_ACTIVE.load(Ordering::Relaxed) {
                     let flags = info_ref.flags;
                     let is_injected = (flags & 1) != 0 || (flags & 2) != 0;
@@ -140,8 +159,6 @@ unsafe extern "system" fn low_level_mouse_proc(
                     }
 
                     // Intercept physical mouse wheel scrolls.
-                    let mouse_data = info_ref.mouseData;
-                    let delta = (mouse_data >> 16) as i16 as i32;
                     let horizontal = msg == WM_MOUSEHWHEEL;
                     if let Ok(guard) = CORE_SENDER.lock() {
                         if let Some(ref sender) = *guard {

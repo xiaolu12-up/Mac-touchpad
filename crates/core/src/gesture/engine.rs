@@ -8,7 +8,7 @@ use crate::gesture::two_finger::{
 };
 use crate::hid::types::TouchpadContact;
 use crate::input::{keyboard, mouse::MouseSimulator};
-use crate::input::wheel_hook::TOUCHPAD_SCROLLING;
+use crate::input::wheel_hook::{TOUCHPAD_SCROLLING, LAST_TOUCHPAD_CONTACT_TIME};
 use std::sync::atomic::Ordering;
 
 /// Central gesture orchestrator. Receives each frame of contacts and routes
@@ -71,6 +71,7 @@ impl GestureEngine {
         device_id: &str,
         mut contacts: Vec<TouchpadContact>,
     ) -> TimerAction {
+        LAST_TOUCHPAD_CONTACT_TIME.store(current_time_ms() as u64, Ordering::Relaxed);
         self.check_timeouts();
         let now = current_time_ms();
         let elapsed = if self.last_contact_time > 0 {
