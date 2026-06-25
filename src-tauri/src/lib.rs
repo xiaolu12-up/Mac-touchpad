@@ -144,67 +144,150 @@ fn get_version() -> AppInfo {
     }
 }
 
+#[derive(Deserialize, Debug)]
+struct RawRelease {
+    tag_name: String,
+    html_url: String,
+    body: Option<String>,
+    asset_url: Option<String>,
+}
+
+fn is_newer_version(current: &str, latest: &str) -> bool {
+    let current_clean = current.trim().trim_start_matches('v').trim_start_matches('V');
+    let latest_clean = latest.trim().trim_start_matches('v').trim_start_matches('V');
+    
+    let c_parts: Vec<&str> = current_clean.split('.').collect();
+    let l_parts: Vec<&str> = latest_clean.split('.').collect();
+    
+    for i in 0..std::cmp::max(c_parts.len(), l_parts.len()) {
+        let c_val: u32 = c_parts.get(i).and_then(|s| s.parse().ok()).unwrap_or(0);
+        let l_val: u32 = l_parts.get(i).and_then(|s| s.parse().ok()).unwrap_or(0);
+        if l_val > c_val {
+            return true;
+        } else if c_val > l_val {
+            return false;
+        }
+    }
+    false
+}
+
 #[tauri::command]
 fn check_update() -> UpdateInfo {
     let current = env!("CARGO_PKG_VERSION");
     let update = check_gitee_update().or_else(check_github_update);
     match update {
-        Some((ver, url)) if ver != current => UpdateInfo {
+        Some(raw) if is_newer_version(current, &raw.tag_name) => UpdateInfo {
             has_update: true,
             current_version: current.into(),
-            latest_version: ver,
-            download_url: url,
+            latest_version: raw.tag_name,
+            download_url: raw.html_url,
+            asset_url: raw.asset_url.unwrap_or_default(),
+            body: raw.body.unwrap_or_default(),
         },
         _ => UpdateInfo {
             has_update: false,
             current_version: current.into(),
             latest_version: current.into(),
             download_url: String::new(),
+            asset_url: String::new(),
+            body: String::new(),
         },
     }
 }
 
-fn check_gitee_update() -> Option<(String, String)> {
+fn check_gitee_update() -> Option<RawRelease> {
     use std::os::windows::process::CommandExt;
     let output = std::process::Command::new("powershell.exe")
         .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .args(["-NoProfile", "-Command",
-            "try { $r = Invoke-RestMethod -Uri 'https://gitee.com/api/v5/repos/lu52/Mac-touchpad/releases/latest' -TimeoutSec 5; $r.tag_name + '|' + $r.html_url } catch { '' }"
+            r#"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; try { $c = New-Object System.Net.WebClient; $c.Headers.Add('User-Agent', 'Mac-touchpad'); [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; $bytes = $c.DownloadData('https://gitee.com/api/v5/repos/lu52/Mac-touchpad/releases/latest'); $text = [System.Text.Encoding]::UTF8.GetString($bytes); $json = $text | ConvertFrom-Json; $asset = $json.assets | Where-Object { $_.name -like '*.msi' }; if (-not $asset) { $asset = $json.assets | Where-Object { $_.name -like '*.exe' } }; $asset_url = if ($asset) { $asset.browser_download_url } else { '' }; $html_url = 'https://gitee.com/lu52/Mac-touchpad/releases/tag/' + $json.tag_name; [PSCustomObject]@{tag_name=$json.tag_name; html_url=$html_url; body=$json.body; asset_url=$asset_url} | ConvertTo-Json -Compress } catch { '' }"#
         ])
         .output()
         .ok()?;
 
     let text = String::from_utf8(output.stdout).ok()?;
-    let parts: Vec<&str> = text.trim().split('|').collect();
-    if parts.len() >= 2 && !parts[0].is_empty() {
-        Some((parts[0].trim().to_string(), parts[1].trim().to_string()))
-    } else {
+    let text = text.trim().trim_start_matches('\u{feff}');
+    if text.is_empty() {
         None
+    } else {
+        serde_json::from_str::<RawRelease>(text).ok()
     }
 }
 
-fn check_github_update() -> Option<(String, String)> {
+fn check_github_update() -> Option<RawRelease> {
     use std::os::windows::process::CommandExt;
     let output = std::process::Command::new("powershell.exe")
         .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .args(["-NoProfile", "-Command",
-            "try { $r = Invoke-RestMethod -Uri 'https://api.github.com/repos/xiaolu12-up/Mac-touchpad/releases/latest' -TimeoutSec 5; $r.tag_name + '|' + $r.html_url } catch { '' }"
+            r#"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; try { $c = New-Object System.Net.WebClient; $c.Headers.Add('User-Agent', 'Mac-touchpad'); [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; $bytes = $c.DownloadData('https://api.github.com/repos/xiaolu12-up/Mac-touchpad/releases/latest'); $text = [System.Text.Encoding]::UTF8.GetString($bytes); $json = $text | ConvertFrom-Json; $asset = $json.assets | Where-Object { $_.name -like '*.msi' }; if (-not $asset) { $asset = $json.assets | Where-Object { $_.name -like '*.exe' } }; $asset_url = if ($asset) { $asset.browser_download_url } else { '' }; [PSCustomObject]@{tag_name=$json.tag_name; html_url=$json.html_url; body=$json.body; asset_url=$asset_url} | ConvertTo-Json -Compress } catch { '' }"#
         ])
         .output()
         .ok()?;
 
     let text = String::from_utf8(output.stdout).ok()?;
-    let parts: Vec<&str> = text.trim().split('|').collect();
-    if parts.len() >= 2 && !parts[0].is_empty() {
-        Some((parts[0].trim().to_string(), parts[1].trim().to_string()))
-    } else {
+    let text = text.trim().trim_start_matches('\u{feff}');
+    if text.is_empty() {
         None
+    } else {
+        serde_json::from_str::<RawRelease>(text).ok()
     }
 }
 
 #[tauri::command]
 fn open_url(url: String) {
     let _ = tauri_plugin_opener::open_url(url, None::<&str>);
+}
+
+#[tauri::command]
+fn download_update(url: String) -> Result<String, String> {
+    use std::os::windows::process::CommandExt;
+
+    // Get temp directory path
+    let mut dest_path = std::env::temp_dir();
+    let file_name = url.split('/').last().unwrap_or("update.exe");
+    dest_path.push(file_name);
+    let dest_str = dest_path.to_string_lossy().to_string();
+
+    let output = std::process::Command::new("powershell.exe")
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+        .args([
+            "-NoProfile",
+            "-Command",
+            &format!(
+                r#"[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile('{}', '{}')"#,
+                url, dest_str
+            )
+        ])
+        .output();
+
+    match output {
+        Ok(out) if out.status.success() => Ok(dest_str),
+        Ok(out) => Err(format!(
+            "下载失败: {}",
+            String::from_utf8_lossy(&out.stderr)
+        )),
+        Err(e) => Err(format!("无法执行下载命令: {}", e)),
+    }
+}
+
+#[tauri::command]
+fn run_installer(path: String) -> Result<(), String> {
+    let is_msi = path.ends_with(".msi");
+    let status = if is_msi {
+        std::process::Command::new("msiexec.exe")
+            .args(["/i", &path])
+            .spawn()
+    } else {
+        std::process::Command::new(&path)
+            .spawn()
+    };
+
+    match status {
+        Ok(_) => {
+            std::process::exit(0);
+        }
+        Err(e) => Err(format!("启动安装程序失败: {}", e)),
+    }
 }
 
 #[derive(Serialize)]
@@ -225,6 +308,8 @@ struct UpdateInfo {
     current_version: String,
     latest_version: String,
     download_url: String,
+    asset_url: String,
+    body: String,
 }
 
 fn parse_action(s: &str) -> GestureAction {
@@ -333,6 +418,8 @@ pub fn run() {
             get_version,
             check_update,
             open_url,
+            download_update,
+            run_installer,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
