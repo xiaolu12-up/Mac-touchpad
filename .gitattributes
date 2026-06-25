@@ -1,0 +1,10 @@
+# Exclude Rust target directories
+target/**/* linguist-vendored
+src-tauri/target/**/* linguist-vendored
+
+# Mark lock files and configurations as generated to exclude them from language stats
+Cargo.lock linguist-generated
+Cargo.toml linguist-generated
+tauri.conf.json linguist-generated
+.taurignore linguist-generated
+.gitignore linguist-generated
