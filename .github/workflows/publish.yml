@@ -31,8 +31,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v__VERSION__ # tauri-action will replace this automatically with the version from tauri.conf.json
-          releaseName: "MacTouchpad v__VERSION__"
-          releaseBody: "MacTouchpad 自动构建发布版本。请在下方下载对应的安装包。"
+          tagName: ${{ github.ref_name }}
+          releaseName: "MacTouchpad ${{ github.ref_name }}"
+          releaseBody: "MacTouchpad ${{ github.ref_name }} 自动构建发布版本。请在下方下载对应的安装包。"
           releaseDraft: true
           prerelease: false

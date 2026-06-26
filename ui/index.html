@@ -1194,7 +1194,7 @@
             <div class="footer-btn" onclick="go('system',this)" title="系统设置"><span class="ic">⚙️</span></div>
             <div class="footer-btn" onclick="go('about',this)" title="关于"><span class="ic">ℹ️</span></div>
         </div>
-        <div class="nav-ver">v0.1.0 · Tauri</div>
+        <div class="nav-ver">v0.0.0 · Tauri</div>
     </nav>
 
     <main class="main">
@@ -1843,7 +1843,9 @@
                 const info = await invoke('get_version');
                 document.getElementById('ver').textContent = info.version;
                 document.getElementById('author').textContent = info.author;
-                if (info.repo) document.getElementById('repo').href = info.repo
+                if (info.repo) document.getElementById('repo').href = info.repo;
+                const navVerEl = document.querySelector('.nav-ver');
+                if (navVerEl) navVerEl.textContent = `v${info.version} · Tauri`;
             } catch (e) {
             }
         } catch (e) {
