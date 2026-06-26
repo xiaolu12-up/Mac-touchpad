@@ -3,6 +3,11 @@ param (
     [string]$Version
 )
 
+# Strip leading 'v' or 'V' if present to support both v0.1.2 and 0.1.2 formats
+if ($Version.StartsWith("v") -or $Version.StartsWith("V")) {
+    $Version = $Version.Substring(1)
+}
+
 # Validate version format (e.g. 0.1.2)
 if ($Version -notmatch '^\d+\.\d+\.\d+$') {
     Write-Error "Version format error. Should be X.Y.Z (e.g. 0.1.1)"

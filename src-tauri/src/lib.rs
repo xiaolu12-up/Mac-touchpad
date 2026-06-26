@@ -144,7 +144,7 @@ fn get_version() -> AppInfo {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 struct RawRelease {
     tag_name: String,
     html_url: String,
@@ -172,65 +172,160 @@ fn is_newer_version(current: &str, latest: &str) -> bool {
 }
 
 #[tauri::command]
-fn check_update() -> UpdateInfo {
+fn check_update() -> Result<UpdateInfo, String> {
     let current = env!("CARGO_PKG_VERSION");
-    let update = check_gitee_update().or_else(check_github_update);
-    match update {
-        Some(raw) if is_newer_version(current, &raw.tag_name) => UpdateInfo {
+    let gitee = check_gitee_update();
+    let github = check_github_update();
+    
+    // Log any errors for debugging
+    if let Err(ref e) = gitee {
+        tracing::warn!("Gitee update check failed: {}", e);
+    }
+    if let Err(ref e) = github {
+        tracing::warn!("GitHub update check failed: {}", e);
+    }
+    
+    // If BOTH failed, return a combined error because we have no update information at all
+    if gitee.is_err() && github.is_err() {
+        return Err(format!(
+            "无法连接到更新服务器。\nGitee 错误: {}\nGitHub 错误: {}",
+            gitee.unwrap_err(),
+            github.unwrap_err()
+        ));
+    }
+    
+    let mut best_update: Option<RawRelease> = None;
+    
+    // Check successful results for newer version
+    for update in [gitee.as_ref().ok(), github.as_ref().ok()].into_iter().flatten() {
+        if is_newer_version(current, &update.tag_name) {
+            match best_update {
+                None => best_update = Some(update.clone()),
+                Some(ref best) => {
+                    if is_newer_version(&best.tag_name, &update.tag_name) {
+                        best_update = Some(update.clone());
+                    }
+                }
+            }
+        }
+    }
+    
+    match best_update {
+        Some(raw) => Ok(UpdateInfo {
             has_update: true,
             current_version: current.into(),
             latest_version: raw.tag_name,
             download_url: raw.html_url,
             asset_url: raw.asset_url.unwrap_or_default(),
             body: raw.body.unwrap_or_default(),
-        },
-        _ => UpdateInfo {
-            has_update: false,
-            current_version: current.into(),
-            latest_version: current.into(),
-            download_url: String::new(),
-            asset_url: String::new(),
-            body: String::new(),
-        },
+        }),
+        None => {
+            // Since at least one server succeeded, we return Ok(has_update: false)
+            // instead of throwing an error for the failed server
+            Ok(UpdateInfo {
+                has_update: false,
+                current_version: current.into(),
+                latest_version: current.into(),
+                download_url: String::new(),
+                asset_url: String::new(),
+                body: String::new(),
+            })
+        }
     }
 }
 
-fn check_gitee_update() -> Option<RawRelease> {
-    use std::os::windows::process::CommandExt;
-    let output = std::process::Command::new("powershell.exe")
-        .creation_flags(0x08000000) // CREATE_NO_WINDOW
-        .args(["-NoProfile", "-Command",
-            r#"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; try { $c = New-Object System.Net.WebClient; $c.Headers.Add('User-Agent', 'Mac-touchpad'); [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; $bytes = $c.DownloadData('https://gitee.com/api/v5/repos/lu52/Mac-touchpad/releases/latest'); $text = [System.Text.Encoding]::UTF8.GetString($bytes); $json = $text | ConvertFrom-Json; $asset = $json.assets | Where-Object { $_.name -like '*.msi' }; if (-not $asset) { $asset = $json.assets | Where-Object { $_.name -like '*.exe' } }; $asset_url = if ($asset) { $asset.browser_download_url } else { '' }; $html_url = 'https://gitee.com/lu52/Mac-touchpad/releases/tag/' + $json.tag_name; [PSCustomObject]@{tag_name=$json.tag_name; html_url=$html_url; body=$json.body; asset_url=$asset_url} | ConvertTo-Json -Compress } catch { '' }"#
-        ])
-        .output()
-        .ok()?;
-
-    let text = String::from_utf8(output.stdout).ok()?;
-    let text = text.trim().trim_start_matches('\u{feff}');
-    if text.is_empty() {
-        None
-    } else {
-        serde_json::from_str::<RawRelease>(text).ok()
-    }
+#[derive(Deserialize, Debug)]
+struct GiteeRelease {
+    tag_name: String,
+    body: Option<String>,
+    assets: Vec<GiteeAsset>,
 }
 
-fn check_github_update() -> Option<RawRelease> {
-    use std::os::windows::process::CommandExt;
-    let output = std::process::Command::new("powershell.exe")
-        .creation_flags(0x08000000) // CREATE_NO_WINDOW
-        .args(["-NoProfile", "-Command",
-            r#"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; try { $c = New-Object System.Net.WebClient; $c.Headers.Add('User-Agent', 'Mac-touchpad'); [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; $bytes = $c.DownloadData('https://api.github.com/repos/xiaolu12-up/Mac-touchpad/releases/latest'); $text = [System.Text.Encoding]::UTF8.GetString($bytes); $json = $text | ConvertFrom-Json; $asset = $json.assets | Where-Object { $_.name -like '*.msi' }; if (-not $asset) { $asset = $json.assets | Where-Object { $_.name -like '*.exe' } }; $asset_url = if ($asset) { $asset.browser_download_url } else { '' }; [PSCustomObject]@{tag_name=$json.tag_name; html_url=$json.html_url; body=$json.body; asset_url=$asset_url} | ConvertTo-Json -Compress } catch { '' }"#
-        ])
-        .output()
-        .ok()?;
+#[derive(Deserialize, Debug)]
+struct GiteeAsset {
+    name: String,
+    browser_download_url: String,
+}
 
-    let text = String::from_utf8(output.stdout).ok()?;
-    let text = text.trim().trim_start_matches('\u{feff}');
-    if text.is_empty() {
-        None
-    } else {
-        serde_json::from_str::<RawRelease>(text).ok()
+#[derive(Deserialize, Debug)]
+struct GithubRelease {
+    tag_name: String,
+    html_url: String,
+    body: Option<String>,
+    assets: Vec<GithubAsset>,
+}
+
+#[derive(Deserialize, Debug)]
+struct GithubAsset {
+    name: String,
+    browser_download_url: String,
+}
+
+fn check_gitee_update() -> Result<RawRelease, String> {
+    use std::os::windows::process::CommandExt;
+    let output = std::process::Command::new("curl.exe")
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+        .args(["-s", "https://gitee.com/api/v5/repos/lu52/Mac-touchpad/releases/latest"])
+        .output()
+        .map_err(|e| format!("执行 curl 失败: {}", e))?;
+
+    if !output.status.success() {
+        return Err(format!("curl 返回错误状态: {:?}", output.status.code()));
     }
+
+    let release: GiteeRelease = serde_json::from_slice(&output.stdout)
+        .map_err(|e| {
+            let body = String::from_utf8_lossy(&output.stdout);
+            format!("解析 JSON 失败: {}, 响应体: {}", e, body)
+        })?;
+    
+    // Find MSI asset, fallback to EXE
+    let asset = release.assets.iter()
+        .find(|a| a.name.ends_with(".msi"))
+        .or_else(|| release.assets.iter().find(|a| a.name.ends_with(".exe")));
+        
+    let asset_url = asset.map(|a| a.browser_download_url.clone());
+    let html_url = format!("https://gitee.com/lu52/Mac-touchpad/releases/tag/{}", release.tag_name);
+
+    Ok(RawRelease {
+        tag_name: release.tag_name,
+        html_url,
+        body: release.body,
+        asset_url,
+    })
+}
+
+fn check_github_update() -> Result<RawRelease, String> {
+    use std::os::windows::process::CommandExt;
+    let output = std::process::Command::new("curl.exe")
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+        .args(["-s", "-H", "User-Agent: Mac-touchpad", "https://api.github.com/repos/xiaolu12-up/Mac-touchpad/releases/latest"])
+        .output()
+        .map_err(|e| format!("执行 curl 失败: {}", e))?;
+
+    if !output.status.success() {
+        return Err(format!("curl 返回错误状态: {:?}", output.status.code()));
+    }
+
+    let release: GithubRelease = serde_json::from_slice(&output.stdout)
+        .map_err(|e| {
+            let body = String::from_utf8_lossy(&output.stdout);
+            format!("解析 JSON 失败: {}, 响应体: {}", e, body)
+        })?;
+    
+    // Find MSI asset, fallback to EXE
+    let asset = release.assets.iter()
+        .find(|a| a.name.ends_with(".msi"))
+        .or_else(|| release.assets.iter().find(|a| a.name.ends_with(".exe")));
+        
+    let asset_url = asset.map(|a| a.browser_download_url.clone());
+
+    Ok(RawRelease {
+        tag_name: release.tag_name,
+        html_url: release.html_url,
+        body: release.body,
+        asset_url,
+    })
 }
 
 #[tauri::command]
@@ -433,4 +528,41 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_newer_version() {
+        assert!(is_newer_version("0.1.2", "0.1.3"));
+        assert!(is_newer_version("v0.1.2", "0.1.3"));
+        assert!(is_newer_version("0.1.2", "v0.1.3"));
+        assert!(is_newer_version("v0.1.2", "v0.1.3"));
+        assert!(is_newer_version("0.1.2", "V0.1.3"));
+        
+        assert!(!is_newer_version("0.1.3", "0.1.2"));
+        assert!(!is_newer_version("v0.1.3", "0.1.2"));
+        assert!(!is_newer_version("0.1.3", "v0.1.2"));
+        assert!(!is_newer_version("v0.1.3", "v0.1.2"));
+        
+        assert!(!is_newer_version("0.1.2", "0.1.2"));
+        assert!(!is_newer_version("v0.1.2", "0.1.2"));
+        assert!(!is_newer_version("0.1.2", "v0.1.2"));
+        assert!(!is_newer_version("v0.1.2", "v0.1.2"));
+    }
+
+    #[test]
+    fn test_check_updates() {
+        match check_github_update() {
+            Ok(gh) => println!("GitHub latest release: {:?}", gh),
+            Err(e) => println!("GitHub update check failed (warning only): {}", e),
+        }
+
+        match check_gitee_update() {
+            Ok(gt) => println!("Gitee latest release: {:?}", gt),
+            Err(e) => println!("Gitee update check failed (warning only): {}", e),
+        }
+    }
 }
