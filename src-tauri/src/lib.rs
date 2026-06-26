@@ -439,6 +439,13 @@ pub fn run() {
         .with_env_filter(tracing_subscriber::EnvFilter::new("info"))
         .init();
 
+    let args: Vec<String> = std::env::args().collect();
+    let is_autostart = args.iter().any(|arg| arg == "--autostart");
+    if is_autostart {
+        tracing::info!("App launched via autostart. Delaying startup by 5 seconds to let system settle...");
+        std::thread::sleep(std::time::Duration::from_secs(5));
+    }
+
     tracing::info!("MacTouchpad Tauri starting...");
 
     let config = Config::load();
@@ -495,12 +502,16 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // Check if --autostart argument is passed, hide main window if true
+            // Check if --autostart argument is passed. If true, keep hidden; if false, show.
             let args: Vec<String> = std::env::args().collect();
-            if args.iter().any(|arg| arg == "--autostart") {
+            let is_autostart = args.iter().any(|arg| arg == "--autostart");
+            if is_autostart {
+                tracing::info!("App launched via autostart. Remaining hidden in tray.");
+            } else {
                 if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.hide();
-                    tracing::info!("App launched via autostart. Hiding main window.");
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                    tracing::info!("App launched manually. Showing main window.");
                 }
             }
 

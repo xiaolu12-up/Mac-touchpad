@@ -388,8 +388,8 @@ impl GestureEngine {
             let now = current_time_ms();
             let elapsed = now - self.last_contact_time;
 
-            // If silent for > 80ms, check if we were in the middle of a 3-finger tap
-            if elapsed > 80 && self.three_finger_tap.is_touching() {
+            // If silent for > 150ms, check if we were in the middle of a 3-finger tap
+            if elapsed > 150 && self.three_finger_tap.is_touching() {
                 let tap_detected = self.three_finger_tap.feed(
                     &[],
                     self.last_contact_time,
