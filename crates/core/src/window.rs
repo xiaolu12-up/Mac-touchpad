@@ -1,6 +1,7 @@
 use std::sync::{mpsc, Mutex, atomic::{AtomicBool, Ordering}};
 use windows::Win32::Foundation::*;
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
+use windows::Win32::System::Threading::{GetCurrentProcess, SetPriorityClass, HIGH_PRIORITY_CLASS};
 use windows::Win32::UI::WindowsAndMessaging::*;
 use windows::core::*;
 
@@ -63,6 +64,15 @@ struct WindowState {
 }
 
 pub fn start_message_loop(config: Config, ready_tx: Option<mpsc::Sender<()>>) -> CoreSender {
+    unsafe {
+        let process = GetCurrentProcess();
+        if let Err(e) = SetPriorityClass(process, HIGH_PRIORITY_CLASS) {
+            tracing::error!("Failed to set process priority class: {:?}", e);
+        } else {
+            tracing::info!("Successfully set process priority class to HIGH");
+        }
+    }
+
     let (command_tx, command_rx) = mpsc::channel();
     let (hwnd_tx, hwnd_rx) = mpsc::channel::<HWND>();
 

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 /// Current settings version for migration support.
-const CURRENT_VERSION: u32 = 8;
+const CURRENT_VERSION: u32 = 9;
 
 /// Which mouse button to simulate for 3-finger drag.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -163,11 +163,11 @@ impl Default for Config {
 
             // Edge gestures
             edge_slide_enabled: true,
-            edge_threshold: 800,    // logical units from edge
+            edge_threshold: 400,    // logical units from edge
             edge_slide_threshold: 200, // logical units of movement to trigger
 
             tap_max_duration_ms: 200,
-            tap_max_distance: 120.0,
+            tap_max_distance: 60.0,
             pinch_spread_threshold: 100.0,
 
             // Volume/Brightness
@@ -240,9 +240,14 @@ impl Config {
 
     /// Apply incremental version migrations.
     fn migrate(&mut self) {
-        // Future migrations go here, e.g.:
-        // if self.version < 2 { ... }
-        // if self.version < 3 { ... }
+        if self.version < 9 {
+            if self.edge_threshold == 800 {
+                self.edge_threshold = 400;
+            }
+            if self.tap_max_distance == 120.0 {
+                self.tap_max_distance = 60.0;
+            }
+        }
         self.version = CURRENT_VERSION;
     }
 

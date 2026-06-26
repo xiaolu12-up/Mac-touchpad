@@ -9,12 +9,14 @@
     "withGlobalTauri": true,
     "windows": [
       {
+        "label": "main",
         "title": "MacTouchpad 设置",
         "width": 880,
         "height": 640,
         "resizable": true,
         "minWidth": 700,
-        "minHeight": 500
+        "minHeight": 500,
+        "visible": false
       }
     ],
     "security": {
