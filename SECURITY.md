@@ -1,21 +1,27 @@
-# Security Policy
+# 安全政策 (Security Policy)
 
-## Supported Versions
+## 支持的版本 (Supported Versions)
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+我们致力于为当前活跃的软件版本提供安全更新。目前受支持的版本如下：
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| 版本 (Version) | 支持状态 (Supported) |
+| ------------- | ------------------ |
+| >= 0.1.x      | :white_check_mark: |
+| < 0.1.0       | :x:                |
 
-## Reporting a Vulnerability
+---
 
-Use this section to tell people how to report a vulnerability.
+## 报告安全漏洞 (Reporting a Vulnerability)
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+如果您在 MacTouchpad 中发现了任何安全漏洞，请**不要**公开发布 Issue。我们希望通过负责任的方式进行披露和修复。
+
+请按照以下步骤报告漏洞：
+1. 发送电子邮件至：[xiao.luy@outlook.com](mailto:xiao.luy@outlook.com)。
+2. 在邮件中提供以下信息：
+   * 漏洞的详细描述。
+   * 受影响的系统环境（例如 Windows 10/11 版本）。
+   * 重现漏洞的具体步骤或概念验证（PoC）代码。
+3. 我们会在收到邮件后的 48 小时内予以回复，并与您沟通后续的评估和修复计划。
+4. 在漏洞修复并发布新版本之前，请勿公开任何技术细节。
+
+感谢您为维护开源项目安全所做的贡献！

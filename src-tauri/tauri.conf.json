@@ -1,7 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "mac-touchpad",
-  "version": "0.1.1",
   "identifier": "xiao.luy.mac-touchpad",
   "build": {
     "frontendDist": "../ui"

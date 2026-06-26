@@ -1,38 +1,35 @@
 ---
-name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
+name: Bug report / 缺陷汇报
+about: Create a report to help us improve / 创建缺陷报告以帮助我们改进
+title: '[BUG] '
+labels: 'bug'
 assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+**缺陷描述 / Describe the bug**
+<!-- 请清晰、简明地描述该 Bug 是什么 -->
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+**重现步骤 / To Reproduce**
+<!-- 说明如何重现该问题： -->
+1. 打开软件
+2. 在触控板上进行操作：...
+3. 观察到的异常现象：...
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**预期表现 / Expected behavior**
+<!-- 请简述您预期的正常表现是什么 -->
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+**运行环境信息 / Environment Info (必填/Required):**
+ - 操作系统 / OS: [e.g. Windows 11 专业版 23H2]
+ - 软件版本 / MacTouchpad Version: [e.g. 0.1.1]
+ - 物理设备类型 / Touchpad Hardware: [e.g. 笔记本内置高精度触控板 (Precision Touchpad) / 外接触控板]
+ - 鼠标型号 (如与鼠标滚动有关) / Mouse Model: [e.g. 罗技 MX Master 3S]
 
-**Additional context**
-Add any other context about the problem here.
+**相关截图或日志 / Screenshots or Logs**
+<!-- 如有必要，请在此处附上截图、录屏或 %APPDATA%/MacTouchpad 目录下的日志内容 -->
+
+
+**其他上下文 / Additional context**
+<!-- 在此添加关于该问题的任何其他上下文 -->

@@ -1,6 +1,6 @@
 [package]
 name = "mac-touchpad"
-version = "0.1.1"
+version = "0.1.2"
 description = "MacTouchpad - Mac 触控板手势 for Windows"
 edition = "2021"
 

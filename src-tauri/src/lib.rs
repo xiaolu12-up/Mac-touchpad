@@ -399,6 +399,16 @@ pub fn run() {
                     }
                 })
                 .build(app)?;
+
+            // Check if --autostart argument is passed, hide main window if true
+            let args: Vec<String> = std::env::args().collect();
+            if args.iter().any(|arg| arg == "--autostart") {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.hide();
+                    tracing::info!("App launched via autostart. Hiding main window.");
+                }
+            }
+
             Ok(())
         })
         .on_window_event(|window, event| {
