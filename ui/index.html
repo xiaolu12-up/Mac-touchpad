@@ -1192,7 +1192,10 @@
             <div class="footer-btn theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="切换主题"><span
                     class="ic" id="theme-icon">☀️</span></div>
             <div class="footer-btn" onclick="go('system',this)" title="系统设置"><span class="ic">⚙️</span></div>
-            <div class="footer-btn" onclick="go('about',this)" title="关于"><span class="ic">ℹ️</span></div>
+            <div class="footer-btn" id="about-btn" onclick="go('about',this)" title="关于" style="position: relative;">
+                <span class="ic">ℹ️</span>
+                <span class="badge" id="update-badge" style="display: none; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background-color: #ff4d4f; border-radius: 50%;"></span>
+            </div>
         </div>
         <div class="nav-ver">v0.0.0 · Tauri</div>
     </nav>
@@ -1757,6 +1760,12 @@
         if (PAGE_DEFAULTS[name]) {
             showPreview('p-' + name, ...PAGE_DEFAULTS[name]);
         }
+
+        // Hide update badge when entering the about page
+        if (name === 'about') {
+            const badge = document.getElementById('update-badge');
+            if (badge) badge.style.display = 'none';
+        }
     }
 
     // Slider ↔ Input sync
@@ -1845,7 +1854,13 @@
                 document.getElementById('author').textContent = info.author;
                 if (info.repo) document.getElementById('repo').href = info.repo;
                 const navVerEl = document.querySelector('.nav-ver');
-                if (navVerEl) navVerEl.textContent = `v${info.version} · Tauri`;
+                if (navVerEl) {
+                    let displayVer = info.version;
+                    if (!displayVer.startsWith('v') && !displayVer.startsWith('V')) {
+                        displayVer = 'v' + displayVer;
+                    }
+                    navVerEl.textContent = `${displayVer} · Tauri`;
+                }
             } catch (e) {
             }
         } catch (e) {
@@ -2005,42 +2020,63 @@
         return html;
     }
 
+    function showUpdateInfo(info) {
+        const el = document.getElementById('update-result');
+        if (!el) return;
+        if (info.has_update) {
+            const formattedBody = parseMarkdown(info.body || '无更新日志说明。');
+            let actionHtml = '';
+            if (info.asset_url) {
+                actionHtml = `<button class="btn btn-sm" onclick="doDownload('${info.asset_url}')">📥 立即下载</button>`;
+            } else {
+                actionHtml = `<a href="${info.download_url}" target="_blank" class="btn btn-sm" style="color:var(--accent); text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">🌐 前往网页下载</a>`;
+            }
+
+            el.innerHTML = `
+                <div style="margin-top: 16px; width: 100%; max-width: 460px; margin-left: auto; margin-right: auto; text-align: left; background: var(--bg-sec); border: 1px solid var(--border); border-radius: 10px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            <span style="font-weight: 700; font-size: 13px; color: var(--text);">发现新版本 ${info.latest_version}</span>
+                            <span style="font-size: 11px; color: var(--dim);">当前安装版本: ${info.current_version}</span>
+                        </div>
+                        <span class="tag tag-warn" style="font-size: 10px; padding: 3px 8px; border-radius: 6px;">可更新</span>
+                    </div>
+                    <div style="background: rgba(128,128,128,0.05); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; max-height: 120px; overflow-y: auto; font-size: 11px; color: var(--dim); line-height: 1.5; font-family: inherit;">
+                        <span style="font-weight: 600; color: var(--text); display: inline-block; margin-bottom: 4px;">更新日志：</span><br>${formattedBody}
+                    </div>
+                    <div id="update-action-container" style="display: flex; justify-content: flex-end; gap: 8px; align-items: center; margin-top: 4px;">
+                        ${actionHtml}
+                    </div>
+                </div>
+            `;
+        } else {
+            el.innerHTML = '<span class="tag tag-ok">已是最新版本 ✓</span>';
+        }
+    }
+
     async function checkUpdate() {
         const el = document.getElementById('update-result');
         el.textContent = '检查中...';
         try {
             const info = await invoke('check_update');
-            if (info.has_update) {
-                const formattedBody = parseMarkdown(info.body || '无更新日志说明。');
-                let actionHtml = '';
-                if (info.asset_url) {
-                    actionHtml = `<button class="btn btn-sm" onclick="doDownload('${info.asset_url}')">📥 立即下载</button>`;
-                } else {
-                    actionHtml = `<a href="${info.download_url}" target="_blank" class="btn btn-sm" style="color:var(--accent); text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">🌐 前往网页下载</a>`;
-                }
-
-                el.innerHTML = `
-                    <div style="margin-top: 16px; width: 100%; max-width: 460px; margin-left: auto; margin-right: auto; text-align: left; background: var(--bg-sec); border: 1px solid var(--border); border-radius: 10px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 12px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
-                            <div style="display: flex; flex-direction: column; gap: 2px;">
-                                <span style="font-weight: 700; font-size: 13px; color: var(--text);">发现新版本 ${info.latest_version}</span>
-                                <span style="font-size: 11px; color: var(--dim);">当前安装版本: ${info.current_version}</span>
-                            </div>
-                            <span class="tag tag-warn" style="font-size: 10px; padding: 3px 8px; border-radius: 6px;">可更新</span>
-                        </div>
-                        <div style="background: rgba(128,128,128,0.05); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; max-height: 120px; overflow-y: auto; font-size: 11px; color: var(--dim); line-height: 1.5; font-family: inherit;">
-                            <span style="font-weight: 600; color: var(--text); display: inline-block; margin-bottom: 4px;">更新日志：</span><br>${formattedBody}
-                        </div>
-                        <div id="update-action-container" style="display: flex; justify-content: flex-end; gap: 8px; align-items: center; margin-top: 4px;">
-                            ${actionHtml}
-                        </div>
-                    </div>
-                `;
-            } else {
-                el.innerHTML = '<span class="tag tag-ok">已是最新版本 ✓</span>';
-            }
+            showUpdateInfo(info);
+            const badge = document.getElementById('update-badge');
+            if (badge) badge.style.display = 'none';
         } catch (e) {
             el.textContent = '检查失败: ' + e;
+        }
+    }
+
+    async function checkUpdateSilent() {
+        try {
+            const info = await invoke('check_update');
+            if (info.has_update) {
+                const badge = document.getElementById('update-badge');
+                if (badge) badge.style.display = 'block';
+                showUpdateInfo(info);
+            }
+        } catch (e) {
+            console.error('Silent update check failed:', e);
         }
     }
 
@@ -2111,6 +2147,10 @@
     initTheme();
 
     loadConfig();
+
+    // Silent background check for updates: run 5 seconds after load, and then every 24 hours
+    setTimeout(checkUpdateSilent, 5000);
+    setInterval(checkUpdateSilent, 24 * 60 * 60 * 1000);
 
     function openFeedback() {
         const url = 'https://github.com/xiaolu12-up/Mac-touchpad/issues';
