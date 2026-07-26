@@ -27,6 +27,14 @@ Modern multi-tasking workflow relies heavily on touchpad gestures and scroll whe
 - **Custom Multi-Finger Gestures** — Four-finger swipe up (Task View), down (Start Menu), left/right (virtual desktop switching), pinch & spread (Show Desktop).
 - **Left-Edge Volume Adjustment** — Slide up or down along the leftmost edge of the touchpad to control system volume.
 - **Mouse Smooth Scroll** — Intercepts external clicky mouse wheel events and maps them to a dual-velocity damping model for smooth inertia scrolling.
+
+> [!IMPORTANT]
+> ⚠️ Usage note: To use three-finger/four-finger gestures, please set the system's three-finger/four-finger gestures to "None" to avoid conflicts with this app.
+>
+> Example image:
+>
+> ![gesture settings example](./scratch/gesture-settings-example.png)
+
 - **Smart Device Bypass** — **Advanced dual-bypass algorithm**. Utilizes delta modulo (120) and a touchpad touch safety timer (1000ms) to ensure touchpad scroll and native inertia are never intercepted. High-precision free-spinning wheels are also passed through natively.
 - **Modern Control Panel** — Native app built with Tauri 2. Supports Dark/Light/System theme toggles and features macOS-style vector finger animation guides.
 
