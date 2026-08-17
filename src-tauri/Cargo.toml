@@ -1,6 +1,6 @@
 [package]
 name = "mac-touchpad"
-version = "0.1.4"
+version = "0.1.5"
 description = "MacTouchpad - Mac 触控板手势 for Windows"
 edition = "2021"
 
@@ -14,6 +14,9 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = ["tray-icon", "image-png"] }
 tauri-plugin-opener = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-single-instance = "2"
+tauri-winrt-notification = "0.7"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tracing = "0.1"
@@ -22,3 +25,14 @@ tracing-appender = "0.2"
 
 # Our core engine
 mac-touchpad-core = { path = "../crates/core" }
+image = { version = "0.25", default-features = false, features = ["png"] }
+base64 = "0.22"
+windows = { version = "0.52", features = [
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Controls_Dialogs",
+    "Win32_UI_Shell",
+    "Win32_Graphics_Gdi",
+    "Win32_Storage_FileSystem",
+] }
+

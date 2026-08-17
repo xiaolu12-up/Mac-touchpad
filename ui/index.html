@@ -1,8 +1,4073 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>MacTouchpad 设置</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #0d0d1a;
+            --sidebar: #12121e;
+            --card: #16162a;
+            --bg-sec: #16162a;
+            --border: rgba(255, 255, 255, .06);
+            --row-border: rgba(255, 255, 255, .03);
+            --text: #e2e2f0;
+            --text-sec: #7777aa;
+            --dim: #7777aa;
+            --accent: #7c6cf0;
+            --glow: rgba(124, 108, 240, .3);
+            --ok: #4ade80;
+            --warn: #f0a040;
+            --track: #1e1e35;
+            --track-hover: #2a2a45;
+            --hover: rgba(124, 108, 240, .08);
+            --scrollbar-thumb: #33334d
+        }
+
+        body.light {
+            color-scheme: light;
+            --bg: #f5f5f7;
+            --sidebar: #e8e8ec;
+            --card: #ffffff;
+            --bg-sec: #ffffff;
+            --border: rgba(0, 0, 0, .06);
+            --row-border: rgba(0, 0, 0, .03);
+            --text: #1d1d1f;
+            --text-sec: #86868b;
+            --dim: #86868b;
+            --accent: #5856d6;
+            --glow: rgba(88, 86, 214, .15);
+            --ok: #34c759;
+            --warn: #ff9500;
+            --track: #e5e5ea;
+            --track-hover: #d1d1d6;
+            --hover: rgba(88, 86, 214, .08);
+            --scrollbar-thumb: #c1c1c7
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden
+        }
+
+        .app {
+            display: flex;
+            height: 100vh
+        }
+
+        .sidebar {
+            width: 200px;
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0
+        }
+
+        .brand {
+            padding: 0 20px 24px;
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a78bfa, #7c6cf0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .nav-item {
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--dim);
+            cursor: pointer;
+            transition: .15s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 3px solid transparent;
+            user-select: none
+        }
+
+        .nav-item:hover {
+            background: var(--hover);
+            color: var(--text)
+        }
+
+        .nav-item:hover .ic {
+            transform: scale(1.1)
+        }
+
+        .nav-item.theme-toggle:hover .ic {
+            transform: rotate(20deg) scale(1.15)
+        }
+
+        .nav-item.active {
+            color: var(--accent);
+            background: var(--hover);
+            border-left-color: var(--accent)
+        }
+
+        .nav-item .ic {
+            font-size: 16px;
+            width: 22px;
+            text-align: center;
+            transition: transform 0.2s ease
+        }
+
+        .nav-spacer {
+            flex: 1
+        }
+
+        .nav-ver {
+            padding: 4px 20px 10px;
+            font-size: 10px;
+            color: var(--dim);
+            text-align: center
+        }
+
+        .sidebar-footer {
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            padding: 2px 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--dim);
+            transition: .15s;
+            user-select: none
+        }
+
+        .footer-btn:hover {
+            background: var(--hover);
+            color: var(--text)
+        }
+
+        .footer-btn.active {
+            color: var(--accent);
+            background: var(--hover)
+        }
+
+        .footer-btn .ic {
+            font-size: 15px;
+            text-align: center;
+            transition: transform 0.2s ease
+        }
+
+        .footer-btn:hover .ic {
+            transform: scale(1.15)
+        }
+
+        .footer-btn.theme-toggle:hover .ic {
+            transform: rotate(20deg) scale(1.15)
+        }
+
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px 32px
+        }
+
+        .main::-webkit-scrollbar {
+            width: 6px
+        }
+
+        .main::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 3px
+        }
+
+        .page {
+            display: none
+        }
+
+        .page.active {
+            display: block
+        }
+
+        .page:not(.active) * {
+            animation-play-state: paused !important;
+        }
+
+        /* Page header with auto-save status */
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 700
+        }
+
+        .save-status {
+            font-size: 11px;
+            padding: 3px 9px;
+            border-radius: 20px;
+            background: rgba(74, 222, 128, .1);
+            color: var(--ok);
+            border: 1px solid rgba(74, 222, 128, .2);
+            opacity: 0;
+            transition: opacity .3s;
+            white-space: nowrap
+        }
+
+        .save-status.show {
+            opacity: 1
+        }
+
+        .save-status.saving {
+            background: rgba(124, 108, 240, .1);
+            color: var(--accent);
+            border-color: rgba(124, 108, 240, .3)
+        }
+
+        .sec {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 14px
+        }
+
+        .st {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--dim);
+            margin-bottom: 14px
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 0;
+            border-bottom: 1px solid var(--row-border);
+            flex-wrap: wrap;
+            gap: 6px 0;
+        }
+
+        .row:last-child {
+            border: none
+        }
+
+        .lbl {
+            font-size: 13px;
+            font-weight: 500
+        }
+
+        .dsc {
+            font-size: 11px;
+            color: var(--dim);
+            margin-top: 2px
+        }
+
+        .tg {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+            cursor: pointer
+        }
+
+        .tg input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute
+        }
+
+        .tg .sl {
+            position: absolute;
+            inset: 0;
+            background: var(--track-hover);
+            border-radius: 12px;
+            transition: .2s cubic-bezier(.4, 0, .2, 1)
+        }
+
+        .tg .sl::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: .2s cubic-bezier(.4, 0, .2, 1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .3)
+        }
+
+        .tg input:checked + .sl {
+            background: var(--accent);
+            box-shadow: 0 0 12px var(--glow)
+        }
+
+        .tg input:checked + .sl::before {
+            transform: translateX(20px)
+        }
+
+        input[type=number] {
+            background: var(--track);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 13px;
+            width: 70px;
+            text-align: center;
+            outline: none;
+            font-variant-numeric: tabular-nums
+        }
+
+        input[type=number]:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 6px var(--glow)
+        }
+
+        .sg {
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .sg input[type=range] {
+            width: 140px
+        }
+
+        select {
+            background: var(--track-hover);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+            color-scheme: dark;
+            transition: border-color .15s;
+        }
+
+        body.light select {
+            color-scheme: light;
+        }
+
+        select option {
+            background: var(--card);
+            color: var(--text);
+        }
+
+        select:focus {
+            border-color: var(--accent)
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--accent), #6366f1);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 28px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .15s;
+            letter-spacing: .5px
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px var(--glow)
+        }
+
+        .btn:active {
+            transform: translateY(0)
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 12px;
+            border-radius: 8px
+        }
+
+        .btn-sec {
+            background: var(--track);
+            color: var(--dim);
+            border: 1px solid var(--border);
+            transition: .15s
+        }
+
+        .btn-sec:hover {
+            background: var(--track-hover);
+            color: var(--text);
+            box-shadow: none;
+            transform: translateY(-1px)
+        }
+
+        .btn-sec:active {
+            transform: translateY(0)
+        }
+
+        .about-card {
+            text-align: center;
+            padding: 30px
+        }
+
+        .about-card .logo {
+            font-size: 52px;
+            margin-bottom: 12px
+        }
+
+        .about-card .name {
+            font-weight: 700;
+            font-size: 18px
+        }
+
+        .about-card .desc {
+            font-size: 12px;
+            color: var(--dim);
+            margin-top: 4px
+        }
+
+        .about-card .info {
+            font-size: 11px;
+            color: var(--dim);
+            margin-top: 12px;
+            line-height: 1.8
+        }
+
+        .about-card .update-btn {
+            margin-top: 16px
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600
+        }
+
+        .tag-ok {
+            background: rgba(74, 222, 128, .15);
+            color: var(--ok)
+        }
+
+        .tag-warn {
+            background: rgba(240, 160, 64, .15);
+            color: var(--warn)
+        }
+
+        /* ─── System Notice & Tip Bar ─── */
+        .system-tip-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(124, 108, 240, 0.08);
+            border: 1px solid rgba(124, 108, 240, 0.22);
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            font-size: 12px;
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        body.light .system-tip-bar {
+            background: rgba(88, 86, 214, 0.06);
+            border-color: rgba(88, 86, 214, 0.18);
+        }
+
+        .system-tip-bar .tip-icon {
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        /* ─── Update Toast (Bottom Right) ─── */
+        .update-toast {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            background: var(--card);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .45), 0 0 16px var(--glow);
+            z-index: 99999;
+            transform: translateY(120px) scale(0.95);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform .35s cubic-bezier(.2, .9, .3, 1.2), opacity .3s ease;
+            max-width: 380px;
+        }
+
+        .update-toast.show {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .update-toast-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .update-toast-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .update-toast-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+
+        .update-toast-desc {
+            font-size: 11px;
+            color: var(--dim);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .update-toast-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .update-toast-btn {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .15s;
+        }
+
+        .update-toast-btn:hover {
+            filter: brightness(1.15);
+        }
+
+        .update-toast-close {
+            background: transparent;
+            border: none;
+            color: var(--dim);
+            cursor: pointer;
+            font-size: 13px;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: .15s;
+        }
+
+        .update-toast-close:hover {
+            color: var(--text);
+            background: var(--hover);
+        }
+
+        /* ─── Preview Layout ─── */
+        .page-body {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        .settings-column {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .preview-column {
+            width: 250px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .15);
+            transition: background-color 0.3s, border-color 0.3s;
+            contain: paint;
+            will-change: transform;
+            transform: translateZ(0);
+        }
+
+        body.light .preview-column {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .06);
+        }
+
+        .preview-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .mock-screen {
+            position: relative;
+            width: 100%;
+            height: 125px;
+            background: linear-gradient(135deg, #0f0c1b, #240a34);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .08);
+            transition: background 0.3s;
+            transform: translateZ(0);
+        }
+
+        body.light .mock-screen {
+            background: linear-gradient(135deg, #e0e7ff, #fae8ff);
+            border: 1px solid rgba(0, 0, 0, .08);
+        }
+
+        .wallpaper {
+            position: absolute;
+            inset: 0;
+            opacity: .4;
+            background-image: radial-gradient(circle at 20% 30%, rgba(124, 108, 240, .3) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(236, 72, 153, .2) 0%, transparent 50%);
+        }
+
+        .mock-trackpad {
+            position: relative;
+            width: 100%;
+            height: 100px;
+            background: rgba(255, 255, 255, .02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateZ(0);
+        }
+
+        body.light .mock-trackpad {
+            background: rgba(0, 0, 0, .01);
+        }
+
+        .trackpad-surface {
+            position: relative;
+            width: 90%;
+            height: 85%;
+            background: rgba(255, 255, 255, .01);
+            border: 1px solid rgba(255, 255, 255, .02);
+            border-radius: 6px;
+        }
+
+        body.light .trackpad-surface {
+            background: rgba(0, 0, 0, .005);
+            border: 1px solid rgba(0, 0, 0, .01);
+        }
+
+        .mock-trackpad::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .preview-caption {
+            padding: 2px 4px;
+        }
+
+        .preview-title {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+
+        .preview-desc {
+            font-size: 11px;
+            color: var(--dim);
+            line-height: 1.4;
+        }
+
+        .finger {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.75);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            box-shadow: 0 0 6px rgba(255, 255, 255, 0.8), 0 0 0 3px rgba(124, 108, 240, 0.25);
+            pointer-events: none;
+            will-change: transform, opacity;
+        }
+
+        body.light .finger {
+            background: rgba(0, 0, 0, .6);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(88, 86, 214, 0.2);
+        }
+
+        /* ─── Mock Elements ─── */
+        .mock-window {
+            display: none;
+            position: absolute;
+            width: 80px;
+            height: 52px;
+            background: rgba(255, 255, 255, .1);
+            border: 1px solid rgba(255, 255, 255, .15);
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, .25);
+            left: 20px;
+            top: 30px;
+            backdrop-filter: blur(2px);
+        }
+
+        body.light .mock-window {
+            background: rgba(255, 255, 255, .75);
+            border: 1px solid rgba(0, 0, 0, .1);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .06);
+        }
+
+        .win-header {
+            height: 8px;
+            background: rgba(255, 255, 255, .05);
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding-left: 4px;
+        }
+
+        body.light .win-header {
+            background: rgba(0, 0, 0, .02);
+            border-bottom: 1px solid rgba(0, 0, 0, .04);
+        }
+
+        .win-dot {
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+        }
+
+        .win-dot.red {
+            background: #ff5f56;
+        }
+
+        .win-dot.yellow {
+            background: #ffbd2e;
+        }
+
+        .win-dot.green {
+            background: #27c93f;
+        }
+
+        .mock-windows-spread {
+            display: none;
+            position: absolute;
+            inset: 0;
+        }
+
+        .win-spread {
+            position: absolute;
+            width: 60px;
+            height: 38px;
+            background: rgba(255, 255, 255, .1);
+            border: 1px solid rgba(255, 255, 255, .15);
+            border-radius: 5px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .2);
+            left: 65px;
+            top: 35px;
+            backdrop-filter: blur(2px);
+        }
+
+        body.light .win-spread {
+            background: rgba(255, 255, 255, .7);
+            border: 1px solid rgba(0, 0, 0, .08);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .05);
+        }
+
+        .mock-desktop-icons {
+            display: none;
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            gap: 5px;
+            flex-direction: column;
+        }
+
+        .d-icon {
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, .35);
+            border-radius: 1.5px;
+        }
+
+        body.light .d-icon {
+            background: rgba(0, 0, 0, .25);
+        }
+
+        .mock-launchpad {
+            display: none;
+            position: absolute;
+            inset: 0;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, .15);
+        }
+
+        body.light .mock-launchpad {
+            background: rgba(255, 255, 255, .15);
+        }
+
+        .lp-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .lp-icon {
+            width: 10px;
+            height: 10px;
+            background: linear-gradient(135deg, #a78bfa, #7c6cf0);
+            border-radius: 2.5px;
+        }
+
+        .mock-search-bar {
+            display: none;
+            position: absolute;
+            left: 50%;
+            top: 35px;
+            transform: translateX(-50%);
+            width: 110px;
+            height: 18px;
+            background: rgba(255, 255, 255, .15);
+            border: 1px solid rgba(255, 255, 255, .2);
+            border-radius: 9px;
+            align-items: center;
+            padding: 0 6px;
+            gap: 4px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .2);
+            backdrop-filter: blur(4px);
+        }
+
+        body.light .mock-search-bar {
+            background: rgba(255, 255, 255, .8);
+            border: 1px solid rgba(0, 0, 0, .08);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .05);
+        }
+
+        .search-icon {
+            font-size: 8px;
+        }
+
+        .search-text {
+            font-size: 7px;
+            color: var(--dim);
+        }
+
+        .mock-scroll-container {
+            display: none;
+            position: absolute;
+            left: 15px;
+            right: 15px;
+            top: 15px;
+            bottom: 15px;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid rgba(255, 255, 255, .06);
+            border-radius: 5px;
+            overflow: hidden;
+            padding: 6px;
+        }
+
+        body.light .mock-scroll-container {
+            background: rgba(0, 0, 0, .02);
+            border: 1px solid rgba(0, 0, 0, .04);
+        }
+
+        .scroll-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .scroll-line {
+            height: 4px;
+            background: rgba(255, 255, 255, .1);
+            border-radius: 2px;
+            width: 75%;
+        }
+
+        .scroll-line.flex-long {
+            width: 90%;
+        }
+
+        body.light .scroll-line {
+            background: rgba(0, 0, 0, .06);
+        }
+
+        .mock-scrollbar {
+            position: absolute;
+            right: 3px;
+            top: 3px;
+            width: 2px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 1px;
+            opacity: .5;
+        }
+
+        .mock-volume-hud {
+            display: none;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 60px;
+            background: rgba(0, 0, 0, .65);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 7px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .3);
+            backdrop-filter: blur(6px);
+        }
+
+        body.light .mock-volume-hud {
+            background: rgba(255, 255, 255, .8);
+            border: 1px solid rgba(0, 0, 0, .06);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .1);
+        }
+
+        .vol-icon {
+            font-size: 11px;
+        }
+
+        .vol-track {
+            position: relative;
+            width: 3px;
+            height: 28px;
+            background: rgba(255, 255, 255, .15);
+            border-radius: 1.5px;
+            overflow: hidden;
+        }
+
+        body.light .vol-track {
+            background: rgba(0, 0, 0, .08);
+        }
+
+        .vol-fill {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            background: var(--accent);
+            border-radius: 1.5px;
+        }
+
+        .mock-cursor {
+            display: none;
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            left: 50%;
+            top: 50%;
+            pointer-events: none;
+        }
+
+        /* ─── Keyframes & Animations ─── */
+        @keyframes drag-fingers {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 50%;
+                top: 75%;
+            }
+            5% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 50%;
+                top: 75%;
+            }
+            15% {
+                left: 50%;
+                top: 75%;
+            }
+            45% {
+                left: 65%;
+                top: 35%;
+            }
+            75% {
+                left: 65%;
+                top: 35%;
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            85% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 65%;
+                top: 35%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes drag-window {
+            0%, 15% {
+                transform: translate(0, 0);
+                left: 20px;
+                top: 35px;
+            }
+            45%, 75% {
+                left: 50px;
+                top: 15px;
+            }
+            85%, 100% {
+                opacity: 0;
+                left: 50px;
+                top: 15px;
+            }
+        }
+
+        .mode-three-finger-drag .f1 {
+            animation: drag-fingers 3s infinite;
+            margin-left: -14px;
+        }
+
+        .mode-three-finger-drag .f2 {
+            animation: drag-fingers 3s infinite;
+            margin-left: 0px;
+        }
+
+        .mode-three-finger-drag .f3 {
+            animation: drag-fingers 3s infinite;
+            margin-left: 14px;
+        }
+
+        .mode-three-finger-drag .mock-window {
+            display: block;
+            animation: drag-window 3s infinite;
+        }
+
+        @keyframes tap-fingers {
+            0% {
+                transform: translate(-50%, -50%) scale(0.6);
+                opacity: 0;
+                left: 50%;
+                top: 50%;
+            }
+            12% {
+                transform: translate(-50%, -50%) scale(1.1);
+                opacity: 0.9;
+                left: 50%;
+                top: 50%;
+            }
+            22% {
+                transform: translate(-50%, -50%) scale(0.85);
+                opacity: 1;
+                left: 50%;
+                top: 50%;
+            }
+            32% {
+                transform: translate(-50%, -50%) scale(1.05);
+                opacity: 0.9;
+                left: 50%;
+                top: 50%;
+            }
+            44% {
+                transform: translate(-50%, -50%) scale(0.6);
+                opacity: 0;
+                left: 50%;
+                top: 50%;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(0.6);
+                opacity: 0;
+                left: 50%;
+                top: 50%;
+            }
+        }
+
+        @keyframes tap-cursor {
+            0%, 15% {
+                left: 50%;
+                top: 50%;
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            18% {
+                opacity: 0.9;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            22% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.85);
+            }
+            28% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+            75% {
+                opacity: 0.9;
+            }
+            85%, 100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes tap-search {
+            0%, 22% {
+                opacity: 0;
+                transform: translate(-50%, -10px) scale(0.92);
+            }
+            32%, 75% {
+                opacity: 1;
+                transform: translate(-50%, 0) scale(1);
+            }
+            85%, 100% {
+                opacity: 0;
+                transform: translate(-50%, 4px) scale(0.95);
+            }
+        }
+
+        .mode-three-finger-tap .f1 {
+            animation: tap-fingers 2.6s infinite;
+            margin-left: -14px;
+        }
+
+        .mode-three-finger-tap .f2 {
+            animation: tap-fingers 2.6s infinite;
+            margin-left: 0px;
+        }
+
+        .mode-three-finger-tap .f3 {
+            animation: tap-fingers 2.6s infinite;
+            margin-left: 14px;
+        }
+
+        .mode-three-finger-tap .mock-cursor {
+            display: block;
+            animation: tap-cursor 2.6s infinite;
+        }
+
+        .mode-three-finger-tap .mock-search-bar {
+            display: flex;
+            animation: tap-search 2.6s infinite;
+        }
+
+        @keyframes swipe-up-fingers {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 50%;
+                top: 80%;
+            }
+            10% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 50%;
+                top: 80%;
+            }
+            40% {
+                left: 50%;
+                top: 30%;
+            }
+            70% {
+                left: 50%;
+                top: 30%;
+                opacity: 1;
+            }
+            80% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 50%;
+                top: 30%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes swipe-up-windows {
+            0%, 15% {
+                transform: scale(1) translate(0, 0);
+                opacity: 0.9;
+            }
+            45%, 75% {
+                transform: scale(0.7) translate(var(--tx), var(--ty));
+                opacity: 1;
+            }
+            85%, 100% {
+                opacity: 0;
+            }
+        }
+
+        .mode-four-finger-up .f1 {
+            animation: swipe-up-fingers 3s infinite;
+            margin-left: -20px;
+        }
+
+        .mode-four-finger-up .f2 {
+            animation: swipe-up-fingers 3s infinite;
+            margin-left: -7px;
+            margin-top: -5px;
+        }
+
+        .mode-four-finger-up .f3 {
+            animation: swipe-up-fingers 3s infinite;
+            margin-left: 7px;
+            margin-top: -5px;
+        }
+
+        .mode-four-finger-up .f4 {
+            animation: swipe-up-fingers 3s infinite;
+            margin-left: 20px;
+        }
+
+        .mode-four-finger-up .mock-windows-spread {
+            display: block;
+        }
+
+        .mode-four-finger-up .w1 {
+            --tx: -40px;
+            --ty: -15px;
+            animation: swipe-up-windows 3s infinite;
+        }
+
+        .mode-four-finger-up .w2 {
+            --tx: 0px;
+            --ty: -25px;
+            animation: swipe-up-windows 3s infinite;
+        }
+
+        .mode-four-finger-up .w3 {
+            --tx: 40px;
+            --ty: -15px;
+            animation: swipe-up-windows 3s infinite;
+        }
+
+        @keyframes swipe-down-fingers {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 50%;
+                top: 30%;
+            }
+            10% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 50%;
+                top: 30%;
+            }
+            40% {
+                left: 50%;
+                top: 80%;
+            }
+            70% {
+                left: 50%;
+                top: 80%;
+                opacity: 1;
+            }
+            80% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 50%;
+                top: 80%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes swipe-down-menu {
+            0%, 15% {
+                transform: translate(-50%, -15px);
+                opacity: 0;
+            }
+            40%, 75% {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+            85%, 100% {
+                opacity: 0;
+            }
+        }
+
+        .mode-four-finger-down .f1 {
+            animation: swipe-down-fingers 3s infinite;
+            margin-left: -20px;
+        }
+
+        .mode-four-finger-down .f2 {
+            animation: swipe-down-fingers 3s infinite;
+            margin-left: -7px;
+            margin-top: -5px;
+        }
+
+        .mode-four-finger-down .f3 {
+            animation: swipe-down-fingers 3s infinite;
+            margin-left: 7px;
+            margin-top: -5px;
+        }
+
+        .mode-four-finger-down .f4 {
+            animation: swipe-down-fingers 3s infinite;
+            margin-left: 20px;
+        }
+
+        .mode-four-finger-down .mock-search-bar {
+            display: flex;
+            animation: swipe-down-menu 3s infinite;
+            top: 12px;
+            height: 80px;
+            border-radius: 6px;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 6px;
+            gap: 6px;
+        }
+
+        .mode-four-finger-down .mock-search-bar::after {
+            content: '📌 常用项\n• 浏览器\n• 设置\n• 终端';
+            font-size: 7px;
+            color: var(--dim);
+            white-space: pre-line;
+            line-height: 1.5;
+            margin-top: 3px;
+            border-top: 1px solid var(--border);
+            padding-top: 3px;
+        }
+
+        @keyframes swipe-left-fingers {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 80%;
+                top: 55%;
+            }
+            10% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 80%;
+                top: 55%;
+            }
+            40% {
+                left: 20%;
+                top: 55%;
+            }
+            70% {
+                left: 20%;
+                top: 55%;
+                opacity: 1;
+            }
+            80% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 20%;
+                top: 55%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes swipe-right-fingers {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 20%;
+                top: 55%;
+            }
+            10% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 20%;
+                top: 55%;
+            }
+            40% {
+                left: 80%;
+                top: 55%;
+            }
+            70% {
+                left: 80%;
+                top: 55%;
+                opacity: 1;
+            }
+            80% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 80%;
+                top: 55%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes desktop-slide-left {
+            0%, 15% {
+                transform: translateX(0);
+            }
+            45%, 75% {
+                transform: translateX(-90px);
+            }
+            85%, 100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes desktop-slide-right {
+            0%, 15% {
+                transform: translateX(-90px);
+            }
+            45%, 75% {
+                transform: translateX(0);
+            }
+            85%, 100% {
+                opacity: 0;
+            }
+        }
+
+        .mode-four-finger-left .f1 {
+            animation: swipe-left-fingers 3s infinite;
+            margin-left: -20px;
+        }
+
+        .mode-four-finger-left .f2 {
+            animation: swipe-left-fingers 3s infinite;
+            margin-left: -7px;
+        }
+
+        .mode-four-finger-left .f3 {
+            animation: swipe-left-fingers 3s infinite;
+            margin-left: 7px;
+        }
+
+        .mode-four-finger-left .f4 {
+            animation: swipe-left-fingers 3s infinite;
+            margin-left: 20px;
+        }
+
+        .mode-four-finger-left .mock-windows-spread {
+            display: flex;
+            width: 200%;
+            height: 100%;
+            animation: desktop-slide-left 3s infinite;
+        }
+
+        .mode-four-finger-left .win-spread {
+            position: relative;
+            left: 0;
+            top: 0;
+            margin: 30px 15px;
+            flex-shrink: 0;
+            width: 60px;
+        }
+
+        .mode-four-finger-right .f1 {
+            animation: swipe-right-fingers 3s infinite;
+            margin-left: -20px;
+        }
+
+        .mode-four-finger-right .f2 {
+            animation: swipe-right-fingers 3s infinite;
+            margin-left: -7px;
+        }
+
+        .mode-four-finger-right .f3 {
+            animation: swipe-right-fingers 3s infinite;
+            margin-left: 7px;
+        }
+
+        .mode-four-finger-right .f4 {
+            animation: swipe-right-fingers 3s infinite;
+            margin-left: 20px;
+        }
+
+        .mode-four-finger-right .mock-windows-spread {
+            display: flex;
+            width: 200%;
+            height: 100%;
+            animation: desktop-slide-right 3s infinite;
+        }
+
+        .mode-four-finger-right .win-spread {
+            position: relative;
+            left: 0;
+            top: 0;
+            margin: 30px 15px;
+            flex-shrink: 0;
+            width: 60px;
+        }
+
+        @keyframes spread-f1 {
+            0%, 15% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 50%;
+                top: 55%;
+            }
+            20% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 50%;
+                top: 55%;
+            }
+            50% {
+                left: 25%;
+                top: 30%;
+            }
+            75% {
+                left: 25%;
+                top: 30%;
+                opacity: 1;
+            }
+            85% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 25%;
+                top: 30%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes spread-f2 {
+            0%, 15% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 50%;
+                top: 55%;
+            }
+            20% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 50%;
+                top: 55%;
+            }
+            50% {
+                left: 75%;
+                top: 30%;
+            }
+            75% {
+                left: 75%;
+                top: 30%;
+                opacity: 1;
+            }
+            85% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 75%;
+                top: 30%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes spread-f3 {
+            0%, 15% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 50%;
+                top: 55%;
+            }
+            20% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 50%;
+                top: 55%;
+            }
+            50% {
+                left: 25%;
+                top: 80%;
+            }
+            75% {
+                left: 25%;
+                top: 80%;
+                opacity: 1;
+            }
+            85% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 25%;
+                top: 80%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes spread-f4 {
+            0%, 15% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 50%;
+                top: 55%;
+            }
+            20% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 50%;
+                top: 55%;
+            }
+            50% {
+                left: 75%;
+                top: 80%;
+            }
+            75% {
+                left: 75%;
+                top: 80%;
+                opacity: 1;
+            }
+            85% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 75%;
+                top: 80%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes spread-windows {
+            0%, 20% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50%, 75% {
+                transform: scale(1.2);
+                opacity: 0;
+            }
+            85%, 100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes spread-desktop {
+            0%, 20% {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+            50%, 75% {
+                transform: scale(1);
+                opacity: 0.6;
+            }
+            85%, 100% {
+                opacity: 0;
+            }
+        }
+
+        .mode-four-finger-spread .f1 {
+            animation: spread-f1 3s infinite;
+        }
+
+        .mode-four-finger-spread .f2 {
+            animation: spread-f2 3s infinite;
+        }
+
+        .mode-four-finger-spread .f3 {
+            animation: spread-f3 3s infinite;
+        }
+
+        .mode-four-finger-spread .f4 {
+            animation: spread-f4 3s infinite;
+        }
+
+        .mode-four-finger-spread .mock-window {
+            display: block;
+            animation: spread-windows 3s infinite;
+            left: 60px;
+            top: 30px;
+        }
+
+        .mode-four-finger-spread .mock-desktop-icons {
+            display: flex;
+            animation: spread-desktop 3s infinite;
+        }
+
+        @keyframes pinch-f1 {
+            0%, 15% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 25%;
+                top: 30%;
+            }
+            20% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 25%;
+                top: 30%;
+            }
+            50% {
+                left: 50%;
+                top: 55%;
+            }
+            75% {
+                left: 50%;
+                top: 55%;
+                opacity: 1;
+            }
+            85% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 50%;
+                top: 55%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes pinch-f2 {
+            0%, 15% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 75%;
+                top: 30%;
+            }
+            20% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 75%;
+                top: 30%;
+            }
+            50% {
+                left: 50%;
+                top: 55%;
+            }
+            75% {
+                left: 50%;
+                top: 55%;
+                opacity: 1;
+            }
+            85% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 50%;
+                top: 55%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes pinch-f3 {
+            0%, 15% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 25%;
+                top: 80%;
+            }
+            20% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 25%;
+                top: 80%;
+            }
+            50% {
+                left: 50%;
+                top: 55%;
+            }
+            75% {
+                left: 50%;
+                top: 55%;
+                opacity: 1;
+            }
+            85% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 50%;
+                top: 55%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes pinch-f4 {
+            0%, 15% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 75%;
+                top: 80%;
+            }
+            20% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 75%;
+                top: 80%;
+            }
+            50% {
+                left: 50%;
+                top: 55%;
+            }
+            75% {
+                left: 50%;
+                top: 55%;
+                opacity: 1;
+            }
+            85% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 50%;
+                top: 55%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes pinch-launchpad {
+            0%, 20% {
+                opacity: 0;
+                transform: scale(1.05);
+            }
+            50%, 75% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            85%, 100% {
+                opacity: 0;
+            }
+        }
+
+        .mode-four-finger-pinch .f1 {
+            animation: pinch-f1 3s infinite;
+        }
+
+        .mode-four-finger-pinch .f2 {
+            animation: pinch-f2 3s infinite;
+        }
+
+        .mode-four-finger-pinch .f3 {
+            animation: pinch-f3 3s infinite;
+        }
+
+        .mode-four-finger-pinch .f4 {
+            animation: pinch-f4 3s infinite;
+        }
+
+        .mode-four-finger-pinch .mock-launchpad {
+            display: flex;
+            animation: pinch-launchpad 3s infinite;
+        }
+
+        @keyframes scroll-fingers {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 50%;
+                top: 75%;
+            }
+            10% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 50%;
+                top: 75%;
+            }
+            40% {
+                left: 50%;
+                top: 35%;
+            }
+            70% {
+                left: 50%;
+                top: 35%;
+                opacity: 1;
+            }
+            80% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 50%;
+                top: 35%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes scroll-fingers-natural {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 50%;
+                top: 35%;
+            }
+            10% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 50%;
+                top: 35%;
+            }
+            40% {
+                left: 50%;
+                top: 75%;
+            }
+            70% {
+                left: 50%;
+                top: 75%;
+                opacity: 1;
+            }
+            80% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 50%;
+                top: 75%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes scroll-list {
+            0%, 15% {
+                transform: translateY(0);
+            }
+            45%, 75% {
+                transform: translateY(-30px);
+            }
+            85%, 100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes scroll-bar {
+            0%, 15% {
+                transform: translateY(0);
+            }
+            45%, 75% {
+                transform: translateY(22px);
+            }
+            85%, 100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes scroll-list-natural {
+            0%, 15% {
+                transform: translateY(-30px);
+            }
+            45%, 75% {
+                transform: translateY(0);
+            }
+            85%, 100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes scroll-bar-natural {
+            0%, 15% {
+                transform: translateY(22px);
+            }
+            45%, 75% {
+                transform: translateY(0);
+            }
+            85%, 100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes mouse-arrow-move-down {
+            0% {
+                transform: translateY(-4px);
+                opacity: 0;
+            }
+            20% {
+                opacity: 1;
+            }
+            60% {
+                transform: translateY(4px);
+                opacity: 1;
+            }
+            80% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        .mock-mouse {
+            display: none;
+            width: 100%;
+            height: 100px;
+            background: rgba(255, 255, 255, .02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body.light .mock-mouse {
+            background: rgba(0, 0, 0, .01);
+        }
+
+        .mouse-svg {
+            width: 40px;
+            height: 65px;
+            color: var(--dim);
+        }
+
+        body.light .mouse-svg {
+            color: rgba(0, 0, 0, 0.35);
+        }
+
+        .mouse-line {
+            stroke: currentColor;
+        }
+
+        @keyframes wheel-roll-down {
+            from {
+                stroke-dashoffset: 0;
+            }
+            to {
+                stroke-dashoffset: 5;
+            }
+        }
+
+        .mode-mouse-wheel-scroll .mock-trackpad {
+            display: none;
+        }
+
+        .mode-mouse-wheel-scroll .mock-mouse {
+            display: flex;
+        }
+
+        .mode-mouse-wheel-scroll .mouse-arrow {
+            animation: mouse-arrow-move-down 1.5s infinite;
+            transform-origin: center;
+        }
+
+        .mode-mouse-wheel-scroll .mock-scroll-container {
+            display: block;
+        }
+
+        .mode-mouse-wheel-scroll .scroll-content {
+            animation: scroll-list 3s infinite;
+        }
+
+        .mode-mouse-wheel-scroll .mock-scrollbar {
+            animation: scroll-bar 3s infinite;
+        }
+
+        .mode-mouse-wheel-scroll.natural .scroll-content {
+            animation: scroll-list-natural 3s infinite;
+        }
+
+        .mode-mouse-wheel-scroll.natural .mock-scrollbar {
+            animation: scroll-bar-natural 3s infinite;
+        }
+
+        .mode-mouse-wheel-scroll .mouse-wheel-line {
+            animation: wheel-roll-down 0.8s linear infinite;
+        }
+
+        @keyframes edge-fingers {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 10%;
+                top: 75%;
+            }
+            10% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 10%;
+                top: 75%;
+            }
+            40% {
+                left: 10%;
+                top: 25%;
+            }
+            70% {
+                left: 10%;
+                top: 25%;
+                opacity: 1;
+            }
+            80% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 10%;
+                top: 25%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes edge-fingers-inv {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 10%;
+                top: 25%;
+            }
+            10% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 10%;
+                top: 25%;
+            }
+            40% {
+                left: 10%;
+                top: 75%;
+            }
+            70% {
+                left: 10%;
+                top: 75%;
+                opacity: 1;
+            }
+            80% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 10%;
+                top: 75%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes volume-pop {
+            0%, 10% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            20%, 75% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            85%, 100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes volume-fill-up {
+            0%, 15% {
+                height: 25%;
+            }
+            45%, 75% {
+                height: 80%;
+            }
+        }
+
+        @keyframes volume-fill-down {
+            0%, 15% {
+                height: 80%;
+            }
+            45%, 75% {
+                height: 25%;
+            }
+        }
+
+        .mode-edge-volume .f1 {
+            animation: edge-fingers-inv 3s infinite;
+        }
+
+        .mode-edge-volume.invert .f1 {
+            animation: edge-fingers 3s infinite;
+        }
+
+        .mode-edge-volume .mock-volume-hud {
+            display: flex;
+            animation: volume-pop 3s infinite;
+        }
+
+        .mode-edge-volume .vol-fill {
+            animation: volume-fill-up 3s infinite;
+        }
+
+        .mode-edge-volume.invert .vol-fill {
+            animation: volume-fill-up 3s infinite;
+        }
+
+        @keyframes cursor-finger {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 35%;
+                top: 65%;
+            }
+            10% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 35%;
+                top: 65%;
+            }
+            20% {
+                left: 35%;
+                top: 65%;
+            }
+            50% {
+                left: 65%;
+                top: 35%;
+            }
+            70% {
+                left: 65%;
+                top: 35%;
+                opacity: 1;
+            }
+            80% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                left: 65%;
+                top: 35%;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes cursor-pointer-move {
+            0%, 20% {
+                left: 35%;
+                top: 65%;
+                opacity: 0;
+            }
+            25% {
+                opacity: 1;
+            }
+            50%, 70% {
+                left: 65%;
+                top: 25%;
+                opacity: 1;
+            }
+            80%, 100% {
+                opacity: 0;
+            }
+        }
+
+        .mode-cursor-move .f1 {
+            animation: cursor-finger 3s infinite;
+        }
+
+        .mode-cursor-move .mock-cursor {
+            display: block;
+            animation: cursor-pointer-move 3s infinite;
+        }
+
+        @media (max-width: 780px) {
+            .preview-column {
+                display: none !important;
+            }
+        }
+
+        /* Hint banner */
+        .hint-banner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(240, 160, 64, .08);
+            border: 1px solid rgba(240, 160, 64, .2);
+            border-radius: 10px;
+            margin-bottom: 14px;
+            font-size: 12px;
+            color: var(--warn);
+        }
+
+        .hint-banner .hint-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .hint-banner .hint-text {
+            flex: 1;
+            line-height: 1.4;
+        }
+
+        /* Key recorder */
+        .key-recorder {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding-left: 0;
+            width: 100%;
+        }
+
+        .key-recorder.show {
+            display: flex;
+            margin-top: 6px;
+        }
+
+        .key-recorder-input {
+            flex: 1;
+            background: var(--track);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+            transition: border-color .2s;
+        }
+
+        .key-recorder-input:focus,
+        .key-recorder-input.recording {
+            border-color: var(--accent);
+            box-shadow: 0 0 6px var(--glow);
+        }
+
+        .key-recorder-input.recording {
+            animation: pulse-border 1.2s infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% {
+                border-color: var(--accent);
+            }
+            50% {
+                border-color: transparent;
+            }
+        }
+
+        .btn-clear-key {
+            background: var(--track);
+            color: var(--dim);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: .15s;
+            flex-shrink: 0;
+        }
+
+        .btn-clear-key:hover {
+            background: var(--track-hover);
+            color: var(--text);
+        }
+
+        /* ─── Scroll Policy Rules & App Lists ─── */
+        .policy-sub-group {
+            transition: opacity .25s ease, filter .25s ease;
+        }
+
+        .policy-sub-group.disabled {
+            opacity: 0.38;
+            pointer-events: none;
+            user-select: none;
+            filter: grayscale(0.6);
+        }
+
+        .policy-card-sec {
+            background: rgba(255, 255, 255, .02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        body.light .policy-card-sec {
+            background: rgba(0, 0, 0, .02);
+        }
+
+        .policy-card-header {
+            border-bottom: 1px solid var(--row-border);
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+
+        .app-policy-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 180px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .app-policy-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .app-policy-list::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 2px;
+        }
+
+        .app-policy-empty {
+            font-size: 11px;
+            color: var(--dim);
+            padding: 12px;
+            text-align: center;
+            background: var(--track);
+            border-radius: 6px;
+            border: 1px dashed var(--border);
+        }
+
+        .app-policy-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--track);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            transition: background .15s ease;
+        }
+
+        .app-policy-item:hover {
+            background: var(--track-hover);
+        }
+
+        .app-policy-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 5px;
+            object-fit: contain;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, .05);
+        }
+
+        .app-policy-meta {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .app-policy-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .app-policy-path {
+            font-size: 10px;
+            color: var(--dim);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .app-policy-del {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--dim);
+            border: 1px solid transparent;
+            background: transparent;
+            font-size: 12px;
+            transition: all .15s ease;
+            flex-shrink: 0;
+        }
+
+        .app-policy-del:hover {
+            color: #ff5c5c;
+            background: rgba(255, 92, 92, .12);
+            border-color: rgba(255, 92, 92, .25);
+        }
+    </style>
+</head>
+
+<body>
+<script>
+    (function () {
+        const savedTheme = localStorage.getItem('theme');
+        const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+        if (savedTheme === 'light' || (!savedTheme && prefersLight)) {
+            document.body.classList.add('light');
+        }
+    })();
+</script>
+<div class="app">
+    <nav class="sidebar">
+        <div class="brand">🍎 MacTouchpad</div>
+        <div class="nav-item active" onclick="go('drag',this)"><span class="ic">🖱️</span>三指拖移</div>
+        <div class="nav-item" onclick="go('gestures',this)"><span class="ic">🖐️</span>手势设置</div>
+        <div class="nav-item" onclick="go('scroll',this)"><span class="ic">📜</span>滚动设置</div>
+        <div class="nav-spacer"></div>
+        <div class="sidebar-footer">
+            <div class="footer-btn theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="切换主题"><span
+                    class="ic" id="theme-icon">☀️</span></div>
+            <div class="footer-btn" onclick="go('system',this)" title="系统设置"><span class="ic">⚙️</span></div>
+            <div class="footer-btn" id="about-btn" onclick="go('about',this)" style="position: relative;" title="关于">
+                <span class="ic">ℹ️</span>
+                <span class="badge" id="update-badge"
+                      style="display: none; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background-color: #ff4d4f; border-radius: 50%;"></span>
+            </div>
+        </div>
+        <div class="nav-ver">v0.0.0 · Tauri</div>
+    </nav>
+
+    <main class="main">
+
+        <!-- ═══ 三指拖移 ═══ -->
+        <div class="page active" id="p-drag">
+            <div class="page-header">
+                <h2>三指拖移</h2><span class="save-status" id="ss1">✓ 已保存</span>
+                <div style="flex:1"></div>
+                <button class="btn btn-sm btn-sec" onclick="resetDefaults('drag')">恢复默认</button>
+            </div>
+            <div class="hint-banner">
+                <span class="hint-icon">⚠️</span>
+                <span class="hint-text">需关闭系统三指/四指手势才能生效</span>
+                <button class="btn btn-sm btn-sec" onclick="openSystemTouchpad()">打开系统手势设置</button>
+            </div>
+            <div class="page-body">
+                <div class="settings-column">
+                    <div class="sec">
+                        <div class="st">设置</div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-drag', 'three-finger-drag', '三指拖移', '在触控板上使用三根手指滑动，可以轻松移动窗口或在屏幕上选择文本。')">
+                            <div>
+                                <div class="lbl">启用三指拖移</div>
+                                <div class="dsc">三根手指拖动来移动窗口/选择文本</div>
+                            </div>
+                            <label class="tg"><input id="drag" onchange="save('ss1')" onclick="save('ss1')"
+                                                     type="checkbox"><span
+                                    class="sl"></span></label>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-drag', 'three-finger-drag', '释放后重新开始', '在您抬起手指的短时间内，可以重新放回手指并继续拖移，避免因触控板边缘中断拖移。')">
+                            <div>
+                                <div class="lbl">释放后重新开始</div>
+                                <div class="dsc">抬起手指后可继续拖移</div>
+                            </div>
+                            <label class="tg"><input id="restart" onchange="save('ss1')" onclick="save('ss1')"
+                                                     type="checkbox"><span
+                                    class="sl"></span></label>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-drag', 'three-finger-tap', '三指轻点', '用三根手指快速轻点触控板，可触发自定义动作。')">
+                            <div style="flex:1">
+                                <div class="lbl">三指轻点</div>
+                                <select id="tap_action" onchange="onTapActionChange();save('ss1')" oninput="save('ss1')"
+                                        style="margin-top:6px;width:100%;max-width:200px"></select>
+                                <div class="key-recorder" id="kr-tap">
+                                    <input class="key-recorder-input" id="kr-input-tap" placeholder="点击此处录制快捷键"
+                                           readonly type="text">
+                                    <button class="btn-clear-key"
+                                            onclick="event.stopPropagation();clearKeyRecorder('tap')">清除
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sec">
+                        <div class="st">光标参数</div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-drag', 'cursor-move', '光标速度', '调整三指拖移时的光标移动速度，使其更符合您的个人使用习惯。')">
+                            <div class="lbl">光标速度</div>
+                            <div class="sg"><input id="speed_r" max="150" min="10" oninput="syncSlider('speed','ss1')"
+                                                   type="range"><input id="speed" max="150" min="10"
+                                                                       onchange="syncInput('speed','ss1')"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-drag', 'cursor-move', '光标加速度', '调节光标的加速度，滑得越快光标移动越远，能进行更精准的定位。')">
+                            <div class="lbl">加速度</div>
+                            <div class="sg"><input id="accel_r" max="30" min="0" oninput="syncSlider('accel','ss1')"
+                                                   type="range"><input
+                                    id="accel" max="30" min="0" onchange="syncInput('accel','ss1')" type="number"></div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-drag', 'cursor-move', '开始阈值', '手指需要移动多少距离才开始触发拖移，防止轻微抖动导致误操作。')">
+                            <div class="lbl">开始阈值</div>
+                            <div class="sg"><input id="stt_r" max="200" min="10" oninput="syncSlider('stt','ss1')"
+                                                   type="range"><input
+                                    id="stt" max="200" min="10" onchange="syncInput('stt','ss1')" type="number"></div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-drag', 'cursor-move', '停止阈值', '手指抬起或减速到多少以下时停止拖移。')">
+                            <div class="lbl">停止阈值</div>
+                            <div class="sg"><input id="spt_r" max="30" min="1" oninput="syncSlider('spt','ss1')"
+                                                   type="range"><input
+                                    id="spt" max="30" min="1" onchange="syncInput('spt','ss1')" type="number"></div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-drag', 'three-finger-drag', '释放延迟', '手指抬起后保留拖移状态的延迟时间。在这段时间内放回手指可以继续拖移。')">
+                            <div class="lbl">释放延迟(ms)</div>
+                            <div class="sg"><input id="rel_r" max="2000" min="50" oninput="syncSlider('rel','ss1')"
+                                                   type="range"><input
+                                    id="rel" max="2000" min="50" onchange="syncInput('rel','ss1')" type="number"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="preview-column"></div>
+            </div>
+        </div>
+
+        <!-- ═══ 手势设置 ═══ -->
+        <div class="page" id="p-gestures">
+            <div class="page-header">
+                <h2>手势设置</h2><span class="save-status" id="ss2">✓ 已保存</span>
+                <div style="flex:1"></div>
+                <button class="btn btn-sm btn-sec" onclick="resetDefaults('gestures')">恢复默认</button>
+            </div>
+            <div class="page-body">
+                <div class="settings-column">
+                    <div class="sec">
+                        <div class="st">四指手势</div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-gestures', 'four-finger-up', '四指上滑', '四根手指向上滑动。默认设置为打开任务视图，展示所有运行窗口。')">
+                            <div class="lbl">⬆️ 上滑</div>
+                            <select id="g4u"
+                                    onchange="onGestureActionChange('g4u','four_finger_swipe_up');save('ss2')"></select>
+                            <div class="key-recorder" id="kr-four_finger_swipe_up">
+                                <input class="key-recorder-input" id="kr-input-four_finger_swipe_up" placeholder="点击此处录制快捷键"
+                                       readonly type="text">
+                                <button class="btn-clear-key"
+                                        onclick="event.stopPropagation();clearKeyRecorder('four_finger_swipe_up')">清除
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-gestures', 'four-finger-down', '四指下滑', '四根手指向下滑动。默认设置为打开开始菜单或快捷功能。')">
+                            <div class="lbl">⬇️ 下滑</div>
+                            <select id="g4d"
+                                    onchange="onGestureActionChange('g4d','four_finger_swipe_down');save('ss2')"></select>
+                            <div class="key-recorder" id="kr-four_finger_swipe_down">
+                                <input class="key-recorder-input" id="kr-input-four_finger_swipe_down" placeholder="点击此处录制快捷键"
+                                       readonly type="text">
+                                <button class="btn-clear-key"
+                                        onclick="event.stopPropagation();clearKeyRecorder('four_finger_swipe_down')">清除
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-gestures', 'four-finger-left', '四指左滑', '四根手指向左滑动。默认设置为向左切换虚拟桌面或活动窗口。')">
+                            <div class="lbl">⬅️ 左滑（切换应用）</div>
+                            <select id="g4l"
+                                    onchange="onGestureActionChange('g4l','four_finger_swipe_left');save('ss2')"></select>
+                            <div class="key-recorder" id="kr-four_finger_swipe_left">
+                                <input class="key-recorder-input" id="kr-input-four_finger_swipe_left" placeholder="点击此处录制快捷键"
+                                       readonly type="text">
+                                <button class="btn-clear-key"
+                                        onclick="event.stopPropagation();clearKeyRecorder('four_finger_swipe_left')">清除
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-gestures', 'four-finger-right', '四指右滑', '四根手指向右滑动。默认设置为向右切换虚拟桌面或活动窗口。')">
+                            <div class="lbl">➡️ 右滑（切换应用）</div>
+                            <select id="g4r"
+                                    onchange="onGestureActionChange('g4r','four_finger_swipe_right');save('ss2')"></select>
+                            <div class="key-recorder" id="kr-four_finger_swipe_right">
+                                <input class="key-recorder-input" id="kr-input-four_finger_swipe_right" placeholder="点击此处录制快捷键"
+                                       readonly type="text">
+                                <button class="btn-clear-key"
+                                        onclick="event.stopPropagation();clearKeyRecorder('four_finger_swipe_right')">清除
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-gestures', 'four-finger-spread', '四指张开', '拇指与其余三指呈相反方向张开。默认设置为显示桌面，将所有窗口推离屏幕。')">
+                            <div class="lbl">🖐️ 张开</div>
+                            <select id="g4sp"
+                                    onchange="onGestureActionChange('g4sp','four_finger_spread');save('ss2')"></select>
+                            <div class="key-recorder" id="kr-four_finger_spread">
+                                <input class="key-recorder-input" id="kr-input-four_finger_spread" placeholder="点击此处录制快捷键"
+                                       readonly type="text">
+                                <button class="btn-clear-key"
+                                        onclick="event.stopPropagation();clearKeyRecorder('four_finger_spread')">清除
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-gestures', 'four-finger-pinch', '四指捏合', '拇指与其余三指呈相反方向收拢捏合。默认设置为触发开始菜单。')">
+                            <div class="lbl">🤏 捏合</div>
+                            <select id="g4pi"
+                                    onchange="onGestureActionChange('g4pi','four_finger_pinch');save('ss2')"></select>
+                            <div class="key-recorder" id="kr-four_finger_pinch">
+                                <input class="key-recorder-input" id="kr-input-four_finger_pinch" placeholder="点击此处录制快捷键"
+                                       readonly type="text">
+                                <button class="btn-clear-key"
+                                        onclick="event.stopPropagation();clearKeyRecorder('four_finger_pinch')">清除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sec">
+                        <div class="st">边缘手势</div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-gestures', 'edge-volume', '左边缘手势', '在触控板最左侧边缘上下滑动调节系统音量。默认向下滑动增大音量，向上滑动减小音量。')">
+                            <div>
+                                <div class="lbl">边缘手势</div>
+                                <div class="dsc">左边缘音量 OSD</div>
+                            </div>
+                            <label class="tg"><input id="edge" onchange="save('ss2')" onclick="save('ss2')"
+                                                     type="checkbox"><span
+                                    class="sl"></span></label>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-gestures', 'edge-volume', '反转音量方向', '启用后：上滑=音量增，下滑=音量减（即向上滑动增大音量，向下滑动减小音量）。')">
+                            <div>
+                                <div class="lbl">反转音量方向</div>
+                                <div class="dsc">开启后：上滑=音量增，下滑=音量减</div>
+                            </div>
+                            <label class="tg"><input id="inv_vol" onchange="save('ss2'); updateVolumePreview();"
+                                                     onclick="save('ss2'); updateVolumePreview();"
+                                                     type="checkbox"><span
+                                    class="sl"></span></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="preview-column"></div>
+            </div>
+        </div>
+
+        <div class="page" id="p-scroll">
+            <div class="page-header">
+                <h2>滚动设置</h2><span class="save-status" id="ss3">✓ 已保存</span>
+                <div style="flex:1"></div>
+                <button class="btn btn-sm btn-sec" onclick="resetDefaults('scroll')">恢复默认</button>
+            </div>
+            <div class="page-body">
+                <div class="settings-column">
+                    <div class="system-tip-bar">
+                        <span class="tip-icon">ℹ️</span>
+                        <span class="tip-text">提示：该功能仅 Windows 11 系统可用</span>
+                    </div>
+                    <div class="sec">
+                        <div class="st">鼠标滚轮平滑滚动</div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '鼠标滚轮平滑滚动', '开启鼠标滚轮的平滑滚动。拦截原生鼠标滚动事件，转换为高频平顺的惯性滚动效果。')">
+                            <div>
+                                <div class="lbl">启用平滑滚动</div>
+                                <div class="dsc">拦截鼠标滚轮原生事件，替换为丝滑惯性滚动信号</div>
+                            </div>
+                            <label class="tg"><input id="smooth" onchange="save('ss3')" onclick="save('ss3')"
+                                                     type="checkbox"><span
+                                    class="sl"></span></label>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '鼠标滚轮灵敏度', '调整鼠标滚轮的滚动速度。值越大，页面滚动越快。')">
+                            <div class="lbl">灵敏度</div>
+                            <div class="sg"><input id="scroll_speed_r" max="2.5" min="0.5"
+                                                   oninput="syncSlider('scroll_speed','ss3')" step="0.1"
+                                                   type="range"><input id="scroll_speed"
+                                                                       max="2.5" min="0.5"
+                                                                       onchange="syncInput('scroll_speed','ss3')"
+                                                                       step="0.1"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '鼠标滚轮平滑度', '调整鼠标滚轮滚动时的阻尼缓冲。数值越大页面越平顺，但也越有平稳过渡感。')">
+                            <div class="lbl">平滑度</div>
+                            <div class="sg"><input id="scroll_smooth_r" max="0.45" min="0.15"
+                                                   oninput="syncSlider('scroll_smooth','ss3')" step="0.01"
+                                                   type="range"><input id="scroll_smooth"
+                                                                       max="0.45"
+                                                                       min="0.15"
+                                                                       onchange="syncInput('scroll_smooth','ss3')"
+                                                                       step="0.01"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '鼠标滚轮惯性系数', '控制滚动停止后，页面继续顺滑滑行的阻尼惯性。越接近1，惯性越强，滑得越远。')">
+                            <div class="lbl">惯性</div>
+                            <div class="sg"><input id="scroll_decel_r" max="0.96" min="0.88"
+                                                   oninput="syncSlider('scroll_decel','ss3')" step="0.01"
+                                                   type="range"><input id="scroll_decel"
+                                                                       max="0.96"
+                                                                       min="0.88"
+                                                                       onchange="syncInput('scroll_decel','ss3')"
+                                                                       step="0.01"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '鼠标滚轮基础缩放', '控制轻微拨动滚轮时的初始滚动步长。')">
+                            <div class="lbl">基础缩放</div>
+                            <div class="sg"><input id="scroll_bscale_r" max="0.5" min="0.05"
+                                                   oninput="syncSlider('scroll_bscale','ss3')" step="0.01"
+                                                   type="range"><input id="scroll_bscale"
+                                                                       max="0.5"
+                                                                       min="0.05"
+                                                                       onchange="syncInput('scroll_bscale','ss3')"
+                                                                       step="0.01"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '鼠标滚轮最大增量', '限制单次滚动的最大滚动位移，避免大力滚动轮子时页面瞬间滑到底部。')">
+                            <div class="lbl">最大增量</div>
+                            <div class="sg"><input id="scroll_maxd_r" max="60" min="5"
+                                                   oninput="syncSlider('scroll_maxd','ss3')"
+                                                   step="1"
+                                                   type="range"><input id="scroll_maxd"
+                                                                       max="60" min="5"
+                                                                       onchange="syncInput('scroll_maxd','ss3')"
+                                                                       step="1"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '鼠标滚轮死区阈值', '滚轮开始滚动时的死区过滤范围。防止鼠标稍微抖动导致页面滚动。')">
+                            <div class="lbl">死区阈值</div>
+                            <div class="sg"><input id="scroll_dz_r" max="5" min="0.1"
+                                                   oninput="syncSlider('scroll_dz','ss3')"
+                                                   step="0.1"
+                                                   type="range"><input id="scroll_dz" max="5"
+                                                                       min="0.1" onchange="syncInput('scroll_dz','ss3')"
+                                                                       step="0.1"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '刷新间隔', '发送滚轮平滑信号的时间间隔。值越小滚动越细腻高帧，但会增加少量 CPU 开销。')">
+                            <div class="lbl">刷新间隔(ms)</div>
+                            <div class="sg"><input id="scroll_tick_r" max="16" min="1"
+                                                   oninput="syncSlider('scroll_tick','ss3')"
+                                                   step="1"
+                                                   type="range"><input id="scroll_tick"
+                                                                       max="16" min="1"
+                                                                       onchange="syncInput('scroll_tick','ss3')"
+                                                                       step="1"
+                                                                       type="number">
+                            </div>
+                        </div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '自然滚动', '更改鼠标滚轮的滚动方向。开启时，向下滑动滚轮内容向下移动（macOS 风格）；关闭时为传统滚动方向。')">
+                            <div>
+                                <div class="lbl">自然滚动</div>
+                                <div class="dsc">向下滚动滚轮 → 内容向下移动（macOS 风格）</div>
+                            </div>
+                            <label class="tg"><input id="natural" onchange="save('ss3'); updateScrollPreview();"
+                                                     onclick="save('ss3'); updateScrollPreview();"
+                                                     type="checkbox"><span
+                                    class="sl"></span></label>
+                        </div>
+                    </div>
+                    <div class="sec">
+                        <div class="st">生效策略</div>
+                        <div class="row"
+                             onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '启用生效策略', '根据当前前台窗口及规则一票否决制链式判定平滑滚动是否生效。')">
+                            <div>
+                                <div class="lbl">启用生效策略</div>
+                                <div class="dsc">按窗口及规则判定是否启用平滑滚动（一票否决制）</div>
+                            </div>
+                            <label class="tg"><input id="scroll_policy_enabled"
+                                                     onchange="onScrollPolicyChange(); save('ss3')"
+                                                     onclick="onScrollPolicyChange(); save('ss3')"
+                                                     type="checkbox"><span
+                                    class="sl"></span></label>
+                        </div>
+                        <div id="scroll-policy-details">
+                            <!-- 规则 1：仅在浏览器生效 -->
+                            <div class="row"
+                                 onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '仅在浏览器生效', '仅对系统已知的浏览器应用（如 Chrome、Edge、Firefox 等）启用平滑滚动。开启此项时其余规则置灰禁用。')">
+                                <div>
+                                    <div class="lbl">仅在浏览器生效</div>
+                                    <div class="dsc">仅在内置浏览器列表（Chrome、Edge、Firefox
+                                        等）中启用平滑滚动（开启时其余规则置灰禁用）
+                                    </div>
+                                </div>
+                                <label class="tg"><input id="scroll_policy_browser_only"
+                                                         onchange="onScrollPolicyChange(); save('ss3')"
+                                                         onclick="onScrollPolicyChange(); save('ss3')"
+                                                         type="checkbox"><span
+                                        class="sl"></span></label>
+                            </div>
+
+                            <!-- 其余 3 项：开启“仅在浏览器生效”时置灰并禁用交互 -->
+                            <div class="policy-sub-group" id="scroll-policy-extra-rules">
+                                <!-- 规则 2：全屏应用禁用 -->
+                                <div class="row"
+                                     onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '全屏应用禁用', '当当前窗口全屏显示（覆盖整个屏幕）时，自动禁用平滑滚动。')">
+                                    <div>
+                                        <div class="lbl">全屏应用禁用</div>
+                                        <div class="dsc">当前窗口全屏显示（覆盖屏幕）时自动禁用平滑滚动</div>
+                                    </div>
+                                    <label class="tg"><input id="scroll_policy_fullscreen"
+                                                             onchange="onScrollPolicyChange(); save('ss3')"
+                                                             onclick="onScrollPolicyChange(); save('ss3')"
+                                                             type="checkbox"><span
+                                            class="sl"></span></label>
+                                </div>
+
+                                <!-- 规则 3：黑名单 -->
+                                <div class="policy-card-sec">
+                                    <div class="row policy-card-header">
+                                        <div>
+                                            <div class="lbl">黑名单规则</div>
+                                            <div class="dsc">黑名单中的应用不启用平滑滚动（最高拦截权）</div>
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:10px;">
+                                            <button class="btn btn-sm" id="btn-add-blacklist"
+                                                    onclick="addAppToPolicy('blacklist')">📂 浏览...
+                                            </button>
+                                            <label class="tg"><input id="scroll_policy_blacklist_enabled"
+                                                                     onchange="onScrollPolicyChange(); save('ss3')"
+                                                                     onclick="onScrollPolicyChange(); save('ss3')"
+                                                                     type="checkbox"><span
+                                                    class="sl"></span></label>
+                                        </div>
+                                    </div>
+                                    <div class="app-policy-list" id="blacklist-app-list"></div>
+                                </div>
+
+                                <!-- 规则 4：白名单 -->
+                                <div class="policy-card-sec">
+                                    <div class="row policy-card-header">
+                                        <div>
+                                            <div class="lbl">白名单规则</div>
+                                            <div class="dsc">若开启且列表不为空，仅白名单中的应用启用平滑滚动</div>
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:10px;">
+                                            <button class="btn btn-sm" id="btn-add-whitelist"
+                                                    onclick="addAppToPolicy('whitelist')">📂 浏览...
+                                            </button>
+                                            <label class="tg"><input id="scroll_policy_whitelist_enabled"
+                                                                     onchange="onScrollPolicyChange(); save('ss3')"
+                                                                     onclick="onScrollPolicyChange(); save('ss3')"
+                                                                     type="checkbox"><span
+                                                    class="sl"></span></label>
+                                        </div>
+                                    </div>
+                                    <div class="app-policy-list" id="whitelist-app-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="preview-column"></div>
+            </div>
+        </div>
+
+        <!-- ═══ 系统 ═══ -->
+        <div class="page" id="p-system">
+            <div class="page-header">
+                <h2>系统设置</h2><span class="save-status" id="ss4">✓ 已保存</span>
+                <div style="flex:1"></div>
+                <button class="btn btn-sm btn-sec" onclick="resetDefaults('system')">恢复默认</button>
+            </div>
+            <div class="sec">
+                <div class="st">通用</div>
+                <div class="row">
+                    <div>
+                        <div class="lbl">开机自启动</div>
+                        <div class="dsc">Windows 登录时自动启动</div>
+                    </div>
+                    <label class="tg"><input id="auto" onchange="save('ss4')" onclick="save('ss4')"
+                                             type="checkbox"><span
+                            class="sl"></span></label>
+                </div>
+                <div class="row">
+                    <div>
+                        <div class="lbl">关闭时最小化到托盘</div>
+                        <div class="dsc">关闭窗口后继续在后台运行</div>
+                    </div>
+                    <label class="tg"><input id="tray" onchange="save('ss4')" onclick="save('ss4')"
+                                             type="checkbox"><span
+                            class="sl"></span></label>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ 关于 ═══ -->
+        <div class="page" id="p-about">
+            <div class="page-header">
+                <h2>关于</h2>
+            </div>
+            <div class="sec">
+                <div class="about-card">
+                    <div class="logo">🍎</div>
+                    <div class="name">MacTouchpad</div>
+                    <div class="desc">在 Windows 上实现 Mac 触控板手势体验</div>
+                    <div class="info">
+                        <div>版本: <span id="ver">-</span></div>
+                        <div>作者: <span id="author">-</span></div>
+                        <div style="margin-top:4px">
+                            仓库: <a href="#" id="repo" style="color:var(--accent)">GitHub</a> |
+                            <a href="https://gitee.com/lu52/Mac-touchpad" style="color:var(--accent)" target="_blank">Gitee</a>
+                        </div>
+                        <div style="margin-top:4px">
+                            反馈: <a href="https://github.com/xiaolu12-up/Mac-touchpad/issues" style="color:var(--accent)"
+                                     target="_blank">GitHub Issues</a> |
+                            <a href="https://gitee.com/lu52/Mac-touchpad/issues" style="color:var(--accent)"
+                               target="_blank">Gitee Issues</a>
+                        </div>
+                        <div style="margin-top:12px">Rust · Tauri · 高性能</div>
+                    </div>
+                    <div class="update-btn"
+                         style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                        <div style="display: flex; gap: 10px; justify-content: center; width: 100%;">
+                            <button class="btn btn-sm" onclick="checkUpdate()">🔄 检查更新</button>
+                            <button class="btn btn-sm btn-sec" onclick="openFeedback()">💬 问题反馈</button>
+                        </div>
+                        <div id="update-result" style="font-size:12px; min-height: 18px; margin-top: 2px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ═══ Update Toast Notification ═══ -->
+<div class="update-toast" id="update-toast">
+    <div class="update-toast-icon">🚀</div>
+    <div class="update-toast-content">
+        <div class="update-toast-title">发现新版本 <span id="update-toast-ver"></span></div>
+        <div class="update-toast-desc">点击前往关于页面查看详情并更新</div>
+    </div>
+    <div class="update-toast-actions">
+        <button class="update-toast-btn" onclick="openUpdatePage()">查看更新</button>
+        <button class="update-toast-close" onclick="dismissUpdateToast()" title="关闭提示">✕</button>
+    </div>
+</div>
+
+<script>
+    const ACTIONS = ['None', 'WinTab', 'AltTab', 'CtrlWinLeft', 'CtrlWinRight', 'ShowDesktop', 'OpenStart', 'Search', 'NotificationCenter', 'VolumeUp', 'VolumeDown', 'PageUp', 'PageDown', 'Maximize', 'Custom'];
+    const LABELS = {
+        'None': '无',
+        'WinTab': '任务视图',
+        'AltTab': 'Alt+Tab 切换应用',
+        'CtrlWinLeft': '左桌面',
+        'CtrlWinRight': '右桌面',
+        'ShowDesktop': '显示桌面',
+        'OpenStart': '开始菜单',
+        'Search': '搜索 (Win+S)',
+        'NotificationCenter': '通知中心',
+        'VolumeUp': '音量+',
+        'VolumeDown': '音量-',
+        'PageUp': 'Page Up',
+        'PageDown': 'Page Down',
+        'Maximize': '最大化窗口',
+        'Custom': '自定义快捷键'
+    };
+    const SELS = {
+        g4u: 'four_finger_swipe_up',
+        g4d: 'four_finger_swipe_down',
+        g4l: 'four_finger_swipe_left',
+        g4r: 'four_finger_swipe_right',
+        g4sp: 'four_finger_spread',
+        g4pi: 'four_finger_pinch'
+    };
+
+    // Init selects
+    Object.keys(SELS).forEach(id => {
+        const el = document.getElementById(id);
+        ACTIONS.forEach(k => {
+            const o = document.createElement('option');
+            o.value = k;
+            o.textContent = LABELS[k] || k;
+            el.appendChild(o)
+        })
+    });
+
+    // Init tap action dropdown
+    (function () {
+        const tapSel = document.getElementById('tap_action');
+        if (tapSel) {
+            ACTIONS.forEach(k => {
+                const o = document.createElement('option');
+                o.value = k;
+                o.textContent = LABELS[k] || k;
+                tapSel.appendChild(o);
+            });
+        }
+    })();
+
+    // Init key recorders
+    initKeyRecorder('kr-input-tap', 'three_finger_tap');
+    Object.entries(SELS).forEach(([elId, configKey]) => {
+        initKeyRecorder('kr-input-' + configKey, configKey);
+    });
+
+    const PREVIEW_TEMPLATE = `
+        <div class="preview-container">
+            <!-- Mock Screen -->
+            <div class="mock-screen">
+                <div class="wallpaper"></div>
+                
+                <!-- Window for dragging -->
+                <div class="mock-window">
+                    <div class="win-header">
+                        <span class="win-dot red"></span>
+                        <span class="win-dot yellow"></span>
+                        <span class="win-dot green"></span>
+                    </div>
+                    <div class="win-content"></div>
+                </div>
+                
+                <!-- Spread Windows -->
+                <div class="mock-windows-spread">
+                    <div class="win-spread w1"></div>
+                    <div class="win-spread w2"></div>
+                    <div class="win-spread w3"></div>
+                </div>
+
+                <!-- Desktop Icons -->
+                <div class="mock-desktop-icons">
+                    <span class="d-icon"></span>
+                    <span class="d-icon"></span>
+                    <span class="d-icon"></span>
+                </div>
+
+                <!-- Launchpad Grid -->
+                <div class="mock-launchpad">
+                    <div class="lp-grid">
+                        <span class="lp-icon"></span><span class="lp-icon"></span><span class="lp-icon"></span>
+                        <span class="lp-icon"></span><span class="lp-icon"></span><span class="lp-icon"></span>
+                        <span class="lp-icon"></span><span class="lp-icon"></span><span class="lp-icon"></span>
+                    </div>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="mock-search-bar">
+                    <span class="search-icon">🔍</span>
+                    <span class="search-text">搜索...</span>
+                </div>
+
+                <!-- Scroll Container -->
+                <div class="mock-scroll-container">
+                    <div class="scroll-content">
+                        <div class="scroll-line"></div>
+                        <div class="scroll-line"></div>
+                        <div class="scroll-line"></div>
+                        <div class="scroll-line flex-long"></div>
+                        <div class="scroll-line"></div>
+                        <div class="scroll-line"></div>
+                        <div class="scroll-line"></div>
+                    </div>
+                    <div class="mock-scrollbar"></div>
+                </div>
+
+                <!-- Volume HUD -->
+                <div class="mock-volume-hud">
+                    <div class="vol-icon">🔊</div>
+                    <div class="vol-track">
+                        <div class="vol-fill"></div>
+                    </div>
+                </div>
+                
+                <!-- Cursor -->
+                <div class="mock-cursor">
+                    <svg viewBox="0 0 24 24" style="width:10px; height:10px; fill: white; stroke: black; stroke-width: 1.5;">
+                        <path d="M4.5,3v15.2l4.1-4.1l3.1,7.2l2.7-1.1l-3.1-7.2h6.2L4.5,3z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Mock Trackpad -->
+            <div class="mock-trackpad">
+                <div class="trackpad-surface">
+                    <div class="finger f1"></div>
+                    <div class="finger f2"></div>
+                    <div class="finger f3"></div>
+                    <div class="finger f4"></div>
+                </div>
+            </div>
+            
+            <!-- Mock Mouse -->
+            <div class="mock-mouse">
+                <svg viewBox="0 0 100 100" class="mouse-svg">
+                    <defs>
+                        <clipPath id="wheel-clip">
+                            <rect x="47" y="18" width="6" height="12" rx="2"/>
+                        </clipPath>
+                    </defs>
+                    <path class="mouse-line" d="M35,20 C35,10 65,10 65,20 L65,70 C65,80 35,80 35,70 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <line class="mouse-line" x1="50" y1="12" x2="50" y2="30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="1 1"/>
+                    <g class="mouse-wheel-group">
+                        <rect class="mouse-wheel-rect" x="47" y="18" width="6" height="12" rx="2" fill="var(--accent)"/>
+                        <g clip-path="url(#wheel-clip)">
+                            <line class="mouse-wheel-line" x1="50" y1="14" x2="50" y2="34" stroke="var(--bg)" stroke-width="2" stroke-dasharray="2 3"/>
+                        </g>
+                    </g>
+                    <path class="mouse-arrow" d="M50,42 L50,48 M50,48 L47,45 M50,48 L53,45" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+                </svg>
+            </div>
+            
+            <!-- Text Caption -->
+            <div class="preview-caption">
+                <h4 class="preview-title">三指拖移</h4>
+                <p class="preview-desc">三根手指拖动来移动窗口或选择文本。</p>
+            </div>
+        </div>
+    `;
+
+    const PAGE_DEFAULTS = {
+        'drag': ['three-finger-drag', '三指拖移', '在触控板上使用三根手指滑动，可以轻松移动窗口或在屏幕上选择文本。'],
+        'gestures': ['four-finger-up', '四指上滑', '四根手指向上滑动。默认设置为打开任务视图，展示所有运行窗口。'],
+        'scroll': ['mouse-wheel-scroll', '鼠标滚轮平滑滚动', '拦截原生鼠标滚轮事件，提供阻尼和平滑过渡，使鼠标滚轮滚动像触控板一样丝滑。（该功能仅 Windows 11 系统可用）']
+    };
+
+    function showPreview(pageId, modeName, title, desc) {
+        const page = document.getElementById(pageId);
+        if (!page) return;
+        const container = page.querySelector('.preview-container');
+        if (!container) return;
+
+        let desiredClass = 'preview-container mode-' + modeName;
+        if (modeName === 'mouse-wheel-scroll') {
+            const naturalBox = document.getElementById('natural');
+            if (naturalBox && naturalBox.checked) {
+                desiredClass += ' natural';
+            }
+        }
+
+        if (modeName === 'edge-volume') {
+            const invertBox = document.getElementById('inv_vol');
+            if (invertBox && invertBox.checked) {
+                desiredClass += ' invert';
+            }
+        }
+
+        if (container.className !== desiredClass) {
+            container.className = desiredClass;
+        }
+
+        const titleEl = page.querySelector('.preview-title');
+        const descEl = page.querySelector('.preview-desc');
+        if (titleEl && titleEl.textContent !== title) titleEl.textContent = title;
+        if (descEl && descEl.textContent !== desc) descEl.textContent = desc;
+    }
+
+    function updateScrollPreview() {
+        const isNatural = document.getElementById('natural').checked;
+        showPreview('p-scroll', 'mouse-wheel-scroll', '自然滚动',
+            isNatural ? '开启时，向下滑动鼠标滚轮，页面内容向下移动（macOS 风格）。' : '关闭时，向下滑动鼠标滚轮，页面内容向上移动（传统 Windows 风格）。'
+        );
+    }
+
+    function updateVolumePreview() {
+        const isInvert = document.getElementById('inv_vol').checked;
+        showPreview('p-gestures', 'edge-volume', '反转音量方向',
+            isInvert ? '启用后，在左边缘向上滑动增大音量，向下滑动减小音量。' : '关闭后，在左边缘向下滑动增大音量，向上滑动减小音量。'
+        );
+    }
+
+    // Populate preview columns on script load
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.preview-column').forEach(col => {
+            col.innerHTML = PREVIEW_TEMPLATE;
+        });
+        // Set initial defaults
+        Object.keys(PAGE_DEFAULTS).forEach(key => {
+            showPreview('p-' + key, ...PAGE_DEFAULTS[key]);
+        });
+    });
+
+    // Fallback if DOMContentLoaded already fired
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+        document.querySelectorAll('.preview-column').forEach(col => {
+            if (!col.innerHTML) {
+                col.innerHTML = PREVIEW_TEMPLATE;
+            }
+        });
+        Object.keys(PAGE_DEFAULTS).forEach(key => {
+            showPreview('p-' + key, ...PAGE_DEFAULTS[key]);
+        });
+    }
+
+    function go(name, el) {
+        const targetPage = document.getElementById('p-' + name);
+        if (!targetPage || targetPage.classList.contains('active')) return;
+
+        document.querySelectorAll('.nav-item, .footer-btn').forEach(n => n.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+        targetPage.classList.add('active');
+
+        // Show default preview if available
+        if (PAGE_DEFAULTS[name]) {
+            showPreview('p-' + name, ...PAGE_DEFAULTS[name]);
+        }
+
+        // Hide update badge when entering the about page
+        if (name === 'about') {
+            const badge = document.getElementById('update-badge');
+            if (badge) badge.style.display = 'none';
+        }
+    }
+
+    // Slider ↔ Input sync
+    function syncSlider(id, ss) {
+        document.getElementById(id).value = document.getElementById(id + '_r').value;
+        save(ss)
+    }
+
+    function syncInput(id, ss) {
+        document.getElementById(id + '_r').value = document.getElementById(id).value;
+        save(ss)
+    }
+
+    function setDual(id, val) {
+        document.getElementById(id).value = val;
+        document.getElementById(id + '_r').value = val
+    }
+
+    let invoke;
+
+    async function waitForTauri() {
+        function check() {
+            if (window.__TAURI_INTERNALS__ && typeof window.__TAURI_INTERNALS__.invoke === 'function') {
+                invoke = window.__TAURI_INTERNALS__.invoke;
+                return true
+            }
+            if (window.__TAURI__ && window.__TAURI__.core && typeof window.__TAURI__.core.invoke === 'function') {
+                invoke = window.__TAURI__.core.invoke;
+                return true
+            }
+            return false
+        }
+
+        if (check()) return;
+        await new Promise(r => {
+            let t = 0;
+            const p = setInterval(() => {
+                if (check() || t++ > 50) {
+                    clearInterval(p);
+                    r()
+                }
+            }, 100)
+        })
+    }
+
+
+    // ── Key Recorder System ──
+    const GESTURE_CUSTOM_KEYS = {
+        tap: 'three_finger_tap',
+        g4u: 'four_finger_swipe_up',
+        g4d: 'four_finger_swipe_down',
+        g4l: 'four_finger_swipe_left',
+        g4r: 'four_finger_swipe_right',
+        g4sp: 'four_finger_spread',
+        g4pi: 'four_finger_pinch'
+    };
+
+    function getKeyDisplayName(e) {
+        const key = e.key;
+        if (key === 'Control' || key === 'Shift' || key === 'Alt' || key === 'Meta') return '';
+        const special = {
+            ' ': 'Space', 'ArrowUp': 'Up', 'ArrowDown': 'Down',
+            'ArrowLeft': 'Left', 'ArrowRight': 'Right',
+            'Escape': 'Esc', 'Backspace': 'Backspace', 'Delete': 'Delete',
+            'Enter': 'Enter', 'Tab': 'Tab', 'Insert': 'Insert',
+            'Home': 'Home', 'End': 'End', 'PageUp': 'PageUp', 'PageDown': 'PageDown',
+        };
+        if (special[key]) return special[key];
+        if (key.length === 1) return key.toUpperCase();
+        return key;
+    }
+
+    function buildComboString(e) {
+        const parts = [];
+        if (e.ctrlKey) parts.push('Ctrl');
+        if (e.altKey) parts.push('Alt');
+        if (e.shiftKey) parts.push('Shift');
+        if (e.metaKey) parts.push('Win');
+        const main = getKeyDisplayName(e);
+        if (main) parts.push(main);
+        return parts.join('+');
+    }
+
+    function initKeyRecorder(inputId, configKey) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        input.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (input.classList.contains('recording')) return;
+            input.classList.add('recording');
+            input.value = '...';
+            invoke('record_shortcut_cmd').then(combo => {
+                input.classList.remove('recording');
+                if (combo) {
+                    input.value = combo;
+                    input._combo = combo;
+                    invoke('save_config', {args: buildSaveArgsWithCustom(configKey, combo)});
+                } else {
+                    input.value = input._combo || '';
+                }
+            }).catch(() => {
+                input.classList.remove('recording');
+                input.value = input._combo || '';
+            });
+        });
+    }
+
+    function buildSaveArgsWithCustom(configKey, combo) {
+        const args = buildCurrentSaveArgs();
+        const customs = {};
+        document.querySelectorAll('.key-recorder-input').forEach(inp => {
+            const id = inp.id.replace('kr-input-', '');
+            const ck = GESTURE_CUSTOM_KEYS[id];
+            if (ck && inp._combo) customs[ck] = inp._combo;
+        });
+        customs[configKey] = combo;
+        args.custom_shortcuts = customs;
+        return args;
+    }
+
+    function clearKeyRecorder(slotKey) {
+        const input = document.getElementById('kr-input-' + slotKey);
+        if (input) {
+            input.value = '';
+            input._combo = '';
+            input.classList.remove('recording');
+        }
+        if (invoke) {
+            const configKey = GESTURE_CUSTOM_KEYS[slotKey];
+            if (configKey) {
+                const args = buildCurrentSaveArgs();
+                const customs = {};
+                Object.assign(customs, args.custom_shortcuts || {});
+                delete customs[configKey];
+                args.custom_shortcuts = customs;
+                invoke('save_config', {args: args});
+            }
+        }
+    }
+
+    function showKeyRecorder(slotKey, show) {
+        const el = document.getElementById('kr-' + slotKey);
+        if (el) {
+            if (show) el.classList.add('show');
+            else el.classList.remove('show');
+        }
+    }
+
+    function onTapActionChange() {
+        const val = document.getElementById('tap_action').value;
+        showKeyRecorder('tap', val === 'Custom');
+    }
+
+    function onGestureActionChange(selectId, configKey) {
+        const val = document.getElementById(selectId).value;
+        showKeyRecorder(configKey, val === 'Custom');
+    }
+
+    function openSystemTouchpad() {
+        if (invoke) {
+            invoke('open_url', {url: 'ms-settings:devices-touchpad'});
+        }
+    }
+
+    let currentBlacklist = [];
+    let currentWhitelist = [];
+
+    function buildCurrentSaveArgs() {
+        const args = {
+            three_finger_drag: document.getElementById('drag').checked,
+            allow_release_and_restart: document.getElementById('restart').checked,
+            three_finger_tap_enabled: document.getElementById('tap_action').value !== 'None',
+            three_finger_tap_action: document.getElementById('tap_action').value,
+            edge_slide_enabled: document.getElementById('edge').checked,
+            run_at_startup: document.getElementById('auto').checked,
+            close_to_tray: document.getElementById('tray').checked,
+            invert_volume: document.getElementById('inv_vol').checked,
+            smooth_scroll_enabled: document.getElementById('smooth').checked,
+            smooth_scroll_speed: +document.getElementById('scroll_speed').value,
+            smooth_scroll_smoothing: +document.getElementById('scroll_smooth').value,
+            smooth_scroll_deceleration: +document.getElementById('scroll_decel').value,
+            smooth_scroll_base_scale: +document.getElementById('scroll_bscale').value,
+            smooth_scroll_max_delta: +document.getElementById('scroll_maxd').value,
+            smooth_scroll_deadzone: +document.getElementById('scroll_dz').value,
+            smooth_scroll_tick_ms: +document.getElementById('scroll_tick').value,
+            natural_scroll: document.getElementById('natural').checked,
+            // Scroll policy (生效策略 4 项)
+            scroll_policy_enabled: document.getElementById('scroll_policy_enabled').checked,
+            scroll_policy_fullscreen_disabled: document.getElementById('scroll_policy_fullscreen').checked,
+            scroll_policy_blacklist_enabled: document.getElementById('scroll_policy_blacklist_enabled').checked,
+            scroll_policy_browser_only: document.getElementById('scroll_policy_browser_only').checked,
+            scroll_policy_whitelist_enabled: document.getElementById('scroll_policy_whitelist_enabled').checked,
+            scroll_policy_blacklist: currentBlacklist,
+            scroll_policy_whitelist: currentWhitelist,
+            cursor_speed: +document.getElementById('speed').value,
+            cursor_acceleration: +document.getElementById('accel').value,
+            start_threshold: +document.getElementById('stt').value,
+            stop_threshold: +document.getElementById('spt').value,
+            release_delay_ms: +document.getElementById('rel').value,
+        };
+        Object.entries(SELS).forEach(([elId, key]) => {
+            args[key] = document.getElementById(elId).value;
+        });
+        // Collect custom shortcuts from all key recorders
+        const customs = {};
+        document.querySelectorAll('.key-recorder-input').forEach(inp => {
+            const id = inp.id.replace('kr-input-', '');
+            const ck = GESTURE_CUSTOM_KEYS[id];
+            if (ck && inp._combo) customs[ck] = inp._combo;
+        });
+        args.custom_shortcuts = customs;
+        return args;
+    }
+
+    async function loadConfig() {
+        await waitForTauri();
+        if (!invoke) {
+            document.querySelector('h2').textContent = '⚠️ Tauri API 未加载';
+            return
+        }
+        try {
+            const cfg = await invoke('get_config');
+            document.getElementById('drag').checked = cfg.three_finger_drag;
+            document.getElementById('restart').checked = cfg.allow_release_and_restart;
+            document.getElementById('edge').checked = cfg.edge_slide_enabled;
+            document.getElementById('auto').checked = cfg.run_at_startup;
+            document.getElementById('tray').checked = cfg.close_to_tray;
+            document.getElementById('inv_vol').checked = cfg.invert_volume;
+            document.getElementById('smooth').checked = cfg.smooth_scroll_enabled;
+            document.getElementById('natural').checked = cfg.natural_scroll;
+
+            // Scroll policy (生效策略 4 项)
+            document.getElementById('scroll_policy_enabled').checked = cfg.scroll_policy_enabled !== false;
+            document.getElementById('scroll_policy_fullscreen').checked = cfg.scroll_policy_fullscreen_disabled !== false;
+            document.getElementById('scroll_policy_blacklist_enabled').checked = cfg.scroll_policy_blacklist_enabled !== false;
+            document.getElementById('scroll_policy_browser_only').checked = !!cfg.scroll_policy_browser_only;
+            document.getElementById('scroll_policy_whitelist_enabled').checked = !!cfg.scroll_policy_whitelist_enabled;
+
+            currentBlacklist = (cfg.scroll_policy_blacklist || []).map(x => typeof x === 'string' ? {
+                path: '',
+                name: x,
+                description: x,
+                icon: ''
+            } : x);
+            currentWhitelist = (cfg.scroll_policy_whitelist || []).map(x => typeof x === 'string' ? {
+                path: '',
+                name: x,
+                description: x,
+                icon: ''
+            } : x);
+
+            renderPolicyAppList('blacklist');
+            renderPolicyAppList('whitelist');
+            onScrollPolicyChange();
+
+            const dc = Object.values(cfg.device_configs || {})[0] || {cursor_speed: 60, cursor_acceleration: 10};
+            setDual('speed', Math.round(dc.cursor_speed));
+            setDual('accel', Math.round(dc.cursor_acceleration));
+            setDual('stt', Math.round(cfg.start_threshold));
+            setDual('spt', Math.round(cfg.stop_threshold));
+            setDual('rel', cfg.release_delay_ms);
+            setDual('scroll_speed', cfg.smooth_scroll_speed || 1.0);
+            setDual('scroll_smooth', cfg.smooth_scroll_smoothing || 0.3);
+            setDual('scroll_decel', cfg.smooth_scroll_deceleration || 0.92);
+            setDual('scroll_bscale', cfg.smooth_scroll_base_scale || 0.2);
+            setDual('scroll_maxd', cfg.smooth_scroll_max_delta || 20);
+            setDual('scroll_dz', cfg.smooth_scroll_deadzone || 1.0);
+            setDual('scroll_tick', cfg.smooth_scroll_tick_ms || 4);
+
+            Object.entries(SELS).forEach(([elId, key]) => {
+                document.getElementById(elId).value = cfg[key] || 'None'
+            });
+
+            // Load tap action
+            const tapVal = cfg.three_finger_tap_action || 'Search';
+            document.getElementById('tap_action').value = tapVal;
+            onTapActionChange();
+
+            // Load custom shortcuts into key recorder inputs
+            const customs = cfg.custom_shortcuts || {};
+            const reverseMap = {};
+            Object.entries(GESTURE_CUSTOM_KEYS).forEach(([k, v]) => reverseMap[v] = k);
+            Object.entries(customs).forEach(([configKey, combo]) => {
+                const slotKey = reverseMap[configKey];
+                if (slotKey) {
+                    const inp = document.getElementById('kr-input-' + slotKey);
+                    if (inp) {
+                        inp.value = combo;
+                        inp._combo = combo;
+                    }
+                    showKeyRecorder(slotKey, true);
+                }
+            });
+
+            // Show/hide key recorders for gesture selects
+            Object.entries(SELS).forEach(([elId, configKey]) => {
+                const val = document.getElementById(elId).value;
+                showKeyRecorder(configKey, val === 'Custom');
+            });
+
+            // Load version info
+            try {
+                const info = await invoke('get_version');
+                document.getElementById('ver').textContent = info.version;
+                document.getElementById('author').textContent = info.author;
+                if (info.repo) document.getElementById('repo').href = info.repo;
+                const navVerEl = document.querySelector('.nav-ver');
+                if (navVerEl) {
+                    let displayVer = info.version;
+                    if (!displayVer.startsWith('v') && !displayVer.startsWith('V')) {
+                        displayVer = 'v' + displayVer;
+                    }
+                    navVerEl.textContent = `${displayVer} · Tauri`;
+                }
+            } catch (e) {
+            }
+        } catch (e) {
+            console.error('loadConfig:', e)
+        }
+    }
+
+    function onScrollPolicyChange() {
+        const policyEnabled = document.getElementById('scroll_policy_enabled').checked;
+        const browserOnly = document.getElementById('scroll_policy_browser_only').checked;
+
+        const detailsEl = document.getElementById('scroll-policy-details');
+        if (detailsEl) {
+            detailsEl.style.display = policyEnabled ? '' : 'none';
+        }
+
+        // 当开启“仅在浏览器生效”时，将其余三个选项禁用或置灰
+        const extraGroup = document.getElementById('scroll-policy-extra-rules');
+        if (extraGroup) {
+            if (browserOnly) {
+                extraGroup.classList.add('disabled');
+            } else {
+                extraGroup.classList.remove('disabled');
+            }
+        }
+    }
+
+    async function addAppToPolicy(type) {
+        if (!invoke) return;
+        try {
+            const item = await invoke('browse_and_get_exe_info');
+            if (!item) return; // User cancelled dialog
+
+            const list = type === 'blacklist' ? currentBlacklist : currentWhitelist;
+            const exists = list.some(x =>
+                (x.path && item.path && x.path.toLowerCase() === item.path.toLowerCase()) ||
+                (x.name && item.name && x.name.toLowerCase() === item.name.toLowerCase())
+            );
+            if (!exists) {
+                list.push(item);
+                renderPolicyAppList(type);
+                save('ss3');
+            }
+        } catch (e) {
+            console.error('Failed to add app to ' + type + ':', e);
+        }
+    }
+
+    function removeAppFromPolicy(type, index) {
+        const list = type === 'blacklist' ? currentBlacklist : currentWhitelist;
+        if (index >= 0 && index < list.length) {
+            list.splice(index, 1);
+            renderPolicyAppList(type);
+            save('ss3');
+        }
+    }
+
+    function renderPolicyAppList(type) {
+        const list = type === 'blacklist' ? currentBlacklist : currentWhitelist;
+        const container = document.getElementById(type + '-app-list');
+        if (!container) return;
+
+        if (list.length === 0) {
+            container.innerHTML = `<div class="app-policy-empty">暂未添加${type === 'blacklist' ? '黑名单' : '白名单'}应用，点击上方“浏览...”添加</div>`;
+            return;
+        }
+
+        const defaultIconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;margin:5px;opacity:0.6"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>`;
+
+        container.innerHTML = list.map((item, idx) => {
+            const iconHtml = item.icon
+                ? `<img src="${item.icon}" class="app-policy-icon" alt="icon">`
+                : `<div class="app-policy-icon" style="display:flex;align-items:center;justify-content:center;">${defaultIconSvg}</div>`;
+
+            const title = item.description || item.name || '可执行程序';
+            const sub = item.path || item.name || '';
+
+            return `
+                <div class="app-policy-item">
+                    ${iconHtml}
+                    <div class="app-policy-meta">
+                        <span class="app-policy-title" title="${escapeHtml(title)}">${escapeHtml(title)}</span>
+                        <span class="app-policy-path" title="${escapeHtml(sub)}">${escapeHtml(sub)}</span>
+                    </div>
+                    <button class="app-policy-del" onclick="removeAppFromPolicy('${type}', ${idx})" title="移除此应用">✕</button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    const saveTimers = {};
+
+    function save(statusId) {
+        if (statusId) {
+            const el = document.getElementById(statusId);
             if (el) {
-                el.classList.remove('show', 'saving')
+                el.textContent = '⟳ 保存中…';
+                el.classList.add('show', 'saving');
+            }
+        }
+        clearTimeout(saveTimers[statusId]);
+        saveTimers[statusId] = setTimeout(() => doSave(statusId), 200);
+    }
+
+    async function doSave(statusId) {
+        const el = statusId ? document.getElementById(statusId) : null;
+        if (!invoke) {
+            // Tauri not ready yet — retry once after a delay
+            if (el) {
+                el.classList.remove('show', 'saving');
             }
             return;
         }
-        const args = buildCurrentSaveArgs();
         try {
+            const args = buildCurrentSaveArgs();
             await invoke('save_config', {args});
+            if (el) {
+                el.textContent = '✓ 已保存';
+                el.classList.remove('saving');
+                el.classList.add('show');
+                clearTimeout(el._hideTimer);
+                el._hideTimer = setTimeout(() => el.classList.remove('show'), 2000);
+            }
+        } catch (e) {
+            console.error('save:', e);
+            if (el) {
+                el.textContent = '⚠ 保存失败';
+                el.classList.remove('saving');
+                clearTimeout(el._hideTimer);
+                el._hideTimer = setTimeout(() => el.classList.remove('show'), 3000);
+            }
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    window.doDownload = async function (url) {
+        const container = document.getElementById('update-action-container');
+        if (!container) return;
+
+        container.innerHTML = `
+            <style>
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                .spinner {
+                    display: inline-block;
+                    animation: spin 1s linear infinite;
+                }
+            </style>
+            <span style="font-size: 11px; color: var(--dim); display: inline-flex; align-items: center; gap: 6px;">
+                <span class="spinner">⏳</span>正在下载更新，请稍候...
+            </span>
+        `;
+
+        try {
+            const filePath = await invoke('download_update', {url});
+            container.innerHTML = `
+                <span style="font-size: 11px; color: var(--ok); font-weight: bold; margin-right: 10px;">✓ 下载完成！</span>
+                <button class="btn btn-sm" style="background: var(--ok); color: #000;" onclick="doInstall('${filePath.replace(/\\/g, '\\\\')}')">🚀 立即安装</button>
+            `;
+        } catch (e) {
+            container.innerHTML = `
+                <span style="font-size: 11px; color: var(--warn); margin-right: 10px;">下载失败: ${escapeHtml(e)}</span>
+                <button class="btn btn-sm" onclick="doDownload('${url}')">🔄 重试</button>
+            `;
+        }
+    };
+
+    window.doInstall = async function (path) {
+        try {
+            await invoke('run_installer', {path});
+        } catch (e) {
+            alert('启动安装程序失败: ' + e);
+        }
+    };
+
+    function parseMarkdown(md) {
+        if (!md) return '';
+        let html = md;
+        html = escapeHtml(html);
+
+        // Headers
+        html = html.replace(/^### (.*$)/gim, '<h3 style="margin: 10px 0 4px 0; font-size: 12px; font-weight: 700; color: var(--text);">$1</h3>');
+        html = html.replace(/^## (.*$)/gim, '<h2 style="margin: 12px 0 6px 0; font-size: 13px; font-weight: 700; color: var(--text);">$1</h2>');
+        html = html.replace(/^# (.*$)/gim, '<h1 style="margin: 14px 0 8px 0; font-size: 14px; font-weight: 700; color: var(--text);">$1</h1>');
+
+        // Bold
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--text); font-weight: 600;">$1</strong>');
+
+        // Inline code
+        html = html.replace(/`(.*?)`/g, '<code style="background: rgba(128,128,128,0.15); padding: 1px 4px; border-radius: 4px; font-family: monospace; font-size: 10px;">$1</code>');
+
+        // Links
+        html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color: var(--accent); text-decoration: none;">$1</a>');
+
+        // Unordered lists
+        html = html.replace(/^\s*[-*]\s+(.*$)/gim, '<li style="margin-left: 12px; margin-bottom: 3px; list-style-type: disc;">$1</li>');
+
+        // Newlines
+        html = html.replace(/\n/g, '<br>');
+
+        // Clean up redundant breaks
+        html = html.replace(/(<\/li>|<h[1-3]>|<br>)+<br>/gi, '$1');
+
+        return html;
+    }
+
+    function showUpdateInfo(info) {
+        const el = document.getElementById('update-result');
+        if (!el) return;
+        if (info.has_update) {
+            const formattedBody = parseMarkdown(info.body || '无更新日志说明。');
+            let actionHtml = '';
+            if (info.asset_url) {
+                actionHtml = `<button class="btn btn-sm" onclick="doDownload('${info.asset_url}')">📥 立即下载</button>`;
+            } else {
+                actionHtml = `<a href="${info.download_url}" target="_blank" class="btn btn-sm" style="color:var(--accent); text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">🌐 前往网页下载</a>`;
+            }
+
+            el.innerHTML = `
+                <div style="margin-top: 16px; width: 100%; max-width: 460px; margin-left: auto; margin-right: auto; text-align: left; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            <span style="font-weight: 700; font-size: 13px; color: var(--text);">发现新版本 ${info.latest_version}</span>
+                            <span style="font-size: 11px; color: var(--dim);">当前安装版本: ${info.current_version}</span>
+                        </div>
+                        <span class="tag tag-warn" style="font-size: 10px; padding: 3px 8px; border-radius: 6px;">可更新</span>
+                    </div>
+                    <div style="background: rgba(128,128,128,0.05); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; max-height: 120px; overflow-y: auto; font-size: 11px; color: var(--dim); line-height: 1.5; font-family: inherit;">
+                        <span style="font-weight: 600; color: var(--text); display: inline-block; margin-bottom: 4px;">更新日志：</span><br>${formattedBody}
+                    </div>
+                    <div id="update-action-container" style="display: flex; justify-content: flex-end; gap: 8px; align-items: center; margin-top: 4px;">
+                        ${actionHtml}
+                    </div>
+                </div>
+            `;
+        } else {
+            el.innerHTML = '<span class="tag tag-ok">已是最新版本 ✓</span>';
+        }
+    }
+
+    async function checkUpdate() {
+        const el = document.getElementById('update-result');
+        el.textContent = '检查中...';
+        try {
+            const info = await invoke('check_update');
+            showUpdateInfo(info);
+            const badge = document.getElementById('update-badge');
+            if (badge) badge.style.display = 'none';
+        } catch (e) {
+            el.textContent = '检查失败: ' + e;
+        }
+    }
+
+    function showUpdateToast(info) {
+        const toast = document.getElementById('update-toast');
+        if (!toast) return;
+        const verEl = document.getElementById('update-toast-ver');
+        if (verEl) verEl.textContent = 'v' + info.latest_version;
+        toast.classList.add('show');
+    }
+
+    function dismissUpdateToast() {
+        const toast = document.getElementById('update-toast');
+        if (toast) toast.classList.remove('show');
+    }
+
+    function openUpdatePage() {
+        dismissUpdateToast();
+        const aboutNav = document.querySelector('.nav-item[onclick*="about"]') || document.querySelector('.footer-btn[onclick*="about"]');
+        go('about', aboutNav || document.body);
+    }
+
+    async function checkUpdateSilent() {
+        try {
+            const info = await invoke('check_update');
+            if (info.has_update) {
+                const badge = document.getElementById('update-badge');
+                if (badge) badge.style.display = 'block';
+                showUpdateInfo(info);
+                showUpdateToast(info);
+                // Windows 系统屏幕右下角原生 Toast 通知
+                try {
+                    await invoke('show_system_notification', {
+                        title: 'MacTouchpad 发现新版本',
+                        body: `发现新版本 v${info.latest_version}，点击打开应用查看更新。`
+                    });
+                } catch (ne) {
+                    console.error('System notification failed:', ne);
+                }
+            }
+        } catch (e) {
+            console.error('Silent update check failed:', e);
+        }
+    }
+
+    async function resetDefaults(page) {
+        if (page === 'drag') {
+            document.getElementById('drag').checked = true;
+            document.getElementById('restart').checked = true;
+            document.getElementById('tap_action').value = 'Search';
+            onTapActionChange();
+            clearKeyRecorder('tap');
+            setDual('speed', 30);
+            setDual('accel', 12);
+            setDual('stt', 40);
+            setDual('spt', 5);
+            setDual('rel', 270);
+            save('ss1');
+        } else if (page === 'gestures') {
+            document.getElementById('g4u').value = "WinTab";
+            document.getElementById('g4d').value = "OpenStart";
+            document.getElementById('g4l').value = "AltTab";
+            document.getElementById('g4r').value = "AltTab";
+            document.getElementById('g4sp').value = "ShowDesktop";
+            document.getElementById('g4pi').value = "OpenStart";
+            document.getElementById('edge').checked = true;
+            document.getElementById('inv_vol').checked = true;
+            // Hide and clear all four-finger key recorder inputs
+            Object.entries(SELS).forEach(([elId, configKey]) => {
+                showKeyRecorder(configKey, false);
+                clearKeyRecorder(configKey);
+            });
+            save('ss2');
+        } else if (page === 'scroll') {
+            document.getElementById('smooth').checked = true;
+            setDual('scroll_speed', 0.4);
+            setDual('scroll_smooth', 0.42);
+            setDual('scroll_decel', 0.93);
+            setDual('scroll_bscale', 0.22);
+            setDual('scroll_maxd', 52);
+            setDual('scroll_dz', 1.7);
+            setDual('scroll_tick', 10);
+            document.getElementById('natural').checked = false;
+            document.getElementById('scroll_policy_enabled').checked = true;
+            document.getElementById('scroll_policy_fullscreen').checked = true;
+            document.getElementById('scroll_policy_blacklist_enabled').checked = true;
+            document.getElementById('scroll_policy_browser_only').checked = false;
+            document.getElementById('scroll_policy_whitelist_enabled').checked = false;
+            currentBlacklist = [];
+            currentWhitelist = [];
+            renderPolicyAppList('blacklist');
+            renderPolicyAppList('whitelist');
+            onScrollPolicyChange();
+            save('ss3');
+        } else if (page === 'system') {
+            document.getElementById('auto').checked = false;
+            document.getElementById('tray').checked = true;
+            save('ss4');
+        }
+    }
+
+    function toggleTheme() {
+        const isLight = document.body.classList.toggle('light');
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        updateThemeUI(isLight);
+    }
+
+    function updateThemeUI(isLight) {
+        const icon = document.getElementById('theme-icon');
+        const btn = document.getElementById('theme-toggle-btn');
+        if (isLight) {
+            if (icon) icon.textContent = '🌙';
+            if (btn) btn.title = '切换至深色模式';
+        } else {
+            if (icon) icon.textContent = '☀️';
+            if (btn) btn.title = '切换至浅色模式';
+        }
+    }
+
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+        const isLight = savedTheme === 'light' || (!savedTheme && prefersLight);
+        updateThemeUI(isLight);
+    }
+
+    initTheme();
+
+    loadConfig();
+
+    // Silent background check for updates: run 5 seconds after load, and then every 24 hours
+    setTimeout(checkUpdateSilent, 5000);
+    setInterval(checkUpdateSilent, 24 * 60 * 60 * 1000);
+
+    function openFeedback() {
+        const url = 'https://github.com/xiaolu12-up/Mac-touchpad/issues';
+        if (invoke) {
+            invoke('open_url', {url});
+        } else {
+            window.open(url, '_blank');
+        }
+    }
+
+    // Intercept clicks on external links to open them via Rust (which hides the CMD window)
+    document.addEventListener('click', e => {
+        const a = e.target.closest('a');
+        if (a) {
+            const href = a.getAttribute('href');
+            if (href && href.startsWith('http')) {
+                e.preventDefault();
+                if (invoke) {
+                    invoke('open_url', {url: href});
+                } else {
+                    window.open(href, '_blank');
+                }
+            }
+        }
+    });
+
+    // Listen for notification activation from Rust backend
+    if (window.__TAURI__ && window.__TAURI__.event) {
+        window.__TAURI__.event.listen('navigate-about', () => {
+            const aboutNav = document.querySelector('.nav-item[onclick*="about"]') || document.querySelector('.footer-btn[onclick*="about"]');
+            go('about', aboutNav || document.body);
+        });
+    }
+</script>
+</body>
+
+</html>

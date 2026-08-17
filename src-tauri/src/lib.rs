@@ -1,8 +1,10 @@
-﻿use mac_touchpad_core::config::{Config, DeviceDragConfig, GestureAction};
+mod exe_info;
+
+use mac_touchpad_core::config::{AppPolicyItem, Config, DeviceDragConfig, GestureAction};
 use mac_touchpad_core::window::{CoreCommand, CoreSender};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
 
@@ -15,6 +17,41 @@ struct AppState {
 #[tauri::command]
 fn get_config() -> Result<Config, String> {
     Ok(Config::load())
+}
+
+#[tauri::command]
+fn browse_and_get_exe_info() -> Result<Option<AppPolicyItem>, String> {
+    Ok(exe_info::browse_and_inspect_exe())
+}
+
+#[tauri::command]
+fn inspect_exe_path(path: String) -> Result<AppPolicyItem, String> {
+    Ok(exe_info::inspect_exe_path(&path))
+}
+
+#[tauri::command]
+fn show_system_notification(app: tauri::AppHandle, title: String, body: String) -> Result<(), String> {
+    let app_handle = app.clone();
+    let app_id = if tauri::is_dev() {
+        tauri_winrt_notification::Toast::POWERSHELL_APP_ID.to_string()
+    } else {
+        app.config().identifier.clone()
+    };
+
+    tauri_winrt_notification::Toast::new(&app_id)
+        .title(&title)
+        .text1(&body)
+        .on_activated(move |_action| {
+            if let Some(window) = app_handle.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+                let _ = window.emit("navigate-about", ());
+            }
+            Ok(())
+        })
+        .show()
+        .map_err(|e| e.to_string())
 }
 
 #[derive(Deserialize)]
@@ -43,9 +80,13 @@ struct SaveArgs {
     #[serde(default)] natural_scroll: Option<bool>,
     // Scroll policy (生效策略)
     #[serde(default)] scroll_policy_enabled: Option<bool>,
+    #[serde(default)] scroll_policy_fullscreen_disabled: Option<bool>,
+    #[serde(default)] scroll_policy_blacklist_enabled: Option<bool>,
+    #[serde(default)] scroll_policy_browser_only: Option<bool>,
+    #[serde(default)] scroll_policy_whitelist_enabled: Option<bool>,
     #[serde(default)] scroll_policy_mode: Option<String>,
-    #[serde(default)] scroll_policy_blacklist: Option<Vec<String>>,
-    #[serde(default)] scroll_policy_whitelist: Option<Vec<String>>,
+    #[serde(default)] scroll_policy_blacklist: Option<Vec<AppPolicyItem>>,
+    #[serde(default)] scroll_policy_whitelist: Option<Vec<AppPolicyItem>>,
     #[serde(default)] four_finger_swipe_up: Option<String>,
     #[serde(default)] four_finger_swipe_down: Option<String>,
     #[serde(default)] four_finger_swipe_left: Option<String>,
@@ -83,6 +124,10 @@ fn save_config(args: SaveArgs, state: tauri::State<'_, AppState>) -> Result<Conf
 
     // Scroll policy (生效策略)
     if let Some(v) = args.scroll_policy_enabled { config.scroll_policy_enabled = v; }
+    if let Some(v) = args.scroll_policy_fullscreen_disabled { config.scroll_policy_fullscreen_disabled = v; }
+    if let Some(v) = args.scroll_policy_blacklist_enabled { config.scroll_policy_blacklist_enabled = v; }
+    if let Some(v) = args.scroll_policy_browser_only { config.scroll_policy_browser_only = v; }
+    if let Some(v) = args.scroll_policy_whitelist_enabled { config.scroll_policy_whitelist_enabled = v; }
     if let Some(v) = args.scroll_policy_mode { config.scroll_policy_mode = v; }
     if let Some(v) = args.scroll_policy_blacklist { config.scroll_policy_blacklist = v; }
     if let Some(v) = args.scroll_policy_whitelist { config.scroll_policy_whitelist = v; }
@@ -485,6 +530,15 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            tracing::info!("Another instance attempted to start, focusing existing window.");
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+            }
+        }))
         .manage(AppState {
             core_tx: Mutex::new(Some(core_tx)),
         })
@@ -564,6 +618,9 @@ pub fn run() {
             download_update,
             run_installer,
             record_shortcut_cmd,
+            browse_and_get_exe_info,
+            inspect_exe_path,
+            show_system_notification,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -6,12 +6,12 @@
 //! dedicated message pump thread for out-of-context callbacks, and 300ms
 //! latency is imperceptible for this use case).
 //!
-//! The filter chain is short-circuit evaluated in priority order:
-//!   1. fullscreen (window covers the monitor)
-//!   2. blacklist (process name listed)
-//!   3. browser-only mode (process not a known browser)
-//!   4. whitelist (process not listed)
-//! If any step says "don't apply", evaluation stops immediately.
+//! The filter chain is short-circuit evaluated in priority order (一票否决制):
+//!   1. 全屏检查：若开启“全屏时禁用”且窗口覆盖屏幕，不生效。
+//!   2. 黑名单检查：若开启黑名单且当前应用在黑名单中，不生效（最高拦截权）。
+//!   3. 仅在浏览器生效：若开启“仅在浏览器生效”且当前应用不属于内置浏览器，不生效。
+//!   4. 白名单检查：若开启白名单且列表非空且当前应用不在白名单中，不生效。
+//! 若顺利通过所有启用的校验规则，功能正常生效。
 //!
 //! The hook thread (wheel_hook.rs) reads [`SMOOTH_SCROLL_POLICY_GATE`] with a
 //! relaxed atomic load per scroll event — no locks on the hot path.
@@ -28,7 +28,7 @@ use windows::Win32::System::Threading::{
 };
 use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowRect, GetWindowThreadProcessId};
 
-use crate::config::Config;
+use crate::config::{AppPolicyItem, Config};
 
 /// Gate read by the scroll hook on every wheel event. `false` → the hook
 /// passes native scroll events through untouched (smooth scrolling off).
@@ -42,27 +42,24 @@ static POLICY_CONFIG: Mutex<Option<PolicyConfig>> = Mutex::new(None);
 /// Set by `stop_policy_thread()` to exit the polling loop.
 static POLICY_SHUTDOWN: AtomicBool = AtomicBool::new(false);
 
-/// Polling interval in ms.
-const POLICY_POLL_INTERVAL_MS: u64 = 300;
+/// Polling interval in ms (1s).
+const POLICY_POLL_INTERVAL_MS: u64 = 1000;
 
 /// Tolerance (px) for fullscreen detection — window borders/invisible 1px
 /// edges can slightly overshoot or undershoot the monitor rect.
 const FULLSCREEN_TOLERANCE: i32 = 2;
-
-/// Mode strings, mirrored in the UI (`ui/index.html`).
-pub const MODE_OFF: &str = "off";
-pub const MODE_BLACKLIST: &str = "blacklist";
-pub const MODE_BROWSER_ONLY: &str = "browser_only";
-pub const MODE_WHITELIST: &str = "whitelist";
 
 /// Policy configuration snapshot (plain values, no `Config` dependency so the
 /// filter chain stays a pure function over explicit inputs).
 #[derive(Debug, Clone, Default)]
 pub struct PolicyConfig {
     pub enabled: bool,
-    pub mode: String,
-    pub blacklist: Vec<String>,
-    pub whitelist: Vec<String>,
+    pub fullscreen_disabled: bool,
+    pub blacklist_enabled: bool,
+    pub browser_only: bool,
+    pub whitelist_enabled: bool,
+    pub blacklist: Vec<AppPolicyItem>,
+    pub whitelist: Vec<AppPolicyItem>,
 }
 
 /// Geometry + identity of the foreground window at evaluation time.
@@ -71,6 +68,8 @@ pub struct ForegroundInfo {
     /// Process base name, lowercased, without `.exe` (e.g. `"chrome"`).
     /// Empty if the process name could not be resolved.
     pub process_name: String,
+    /// Process full image path, lowercased (e.g. `"c:\program files\...\chrome.exe"`).
+    pub process_path: String,
     /// Window rect: (left, top, right, bottom).
     pub rect: (i32, i32, i32, i32),
     /// Full monitor rect (`rcMonitor`) of the monitor nearest the window.
@@ -79,7 +78,7 @@ pub struct ForegroundInfo {
     pub monitor_work: (i32, i32, i32, i32),
 }
 
-/// Evaluate the filter chain (short-circuit).
+/// Evaluate the filter chain (short-circuit, 一票否决制).
 ///
 /// Returns `(apply, layer)` where `layer` names the deciding step for logging:
 /// `"disabled" | "fail" | "fullscreen" | "blacklist" | "browser" | "whitelist" | "pass"`.
@@ -94,24 +93,23 @@ pub fn evaluate(cfg: &PolicyConfig, info: &ForegroundInfo) -> (bool, &'static st
     if info.process_name.is_empty() {
         return (true, "fail");
     }
-    // 1. Fullscreen detection
-    if is_fullscreen(info) {
+    // 校验 1（全屏检查）：若开启了“全屏时禁用”，且当前窗口尺寸覆盖了屏幕，不生效。
+    if cfg.fullscreen_disabled && is_fullscreen(info) {
         return (false, "fullscreen");
     }
-    // 2. Blacklist
-    if !cfg.blacklist.is_empty() && in_list(&info.process_name, &cfg.blacklist) {
+    // 校验 2（黑名单检查）：若开启了黑名单且当前应用在黑名单中，不生效（黑名单具有最高优先级的拦截权）。
+    if cfg.blacklist_enabled && !cfg.blacklist.is_empty() && in_app_list(info, &cfg.blacklist) {
         return (false, "blacklist");
     }
-    // 3. Browser-only mode
-    if cfg.mode == MODE_BROWSER_ONLY && !is_browser(&info.process_name) {
+    // 校验 3（仅在浏览器生效）：若开启了“仅在浏览器生效”，且当前应用不属于内置的浏览器进程列表，不生效。
+    if cfg.browser_only && !is_browser(&info.process_name) {
         return (false, "browser");
     }
-    // 4. Whitelist
-    if cfg.mode == MODE_WHITELIST {
-        if cfg.whitelist.is_empty() || !in_list(&info.process_name, &cfg.whitelist) {
-            return (false, "whitelist");
-        }
+    // 校验 4（白名单检查）：若开启了白名单且白名单列表不为空，且当前应用不在白名单中，不生效。
+    if cfg.whitelist_enabled && !cfg.whitelist.is_empty() && !in_app_list(info, &cfg.whitelist) {
+        return (false, "whitelist");
     }
+    // 最终判定：顺利通过所有启用的校验规则后，功能正常生效。
     (true, "pass")
 }
 
@@ -128,7 +126,31 @@ pub fn is_fullscreen(info: &ForegroundInfo) -> bool {
         && b >= mb - FULLSCREEN_TOLERANCE
 }
 
-/// Case-insensitive membership test; `"*"` matches everything.
+/// Case-insensitive match against an AppPolicyItem list.
+/// Matches either exact executable path, process executable stem name, or wildcard `*`.
+pub fn in_app_list(info: &ForegroundInfo, list: &[AppPolicyItem]) -> bool {
+    let p_name = info.process_name.to_lowercase();
+    let p_path = info.process_path.to_lowercase();
+
+    list.iter().any(|entry| {
+        let e_name = entry.name.trim().to_lowercase();
+        let e_path = entry.path.trim().to_lowercase();
+
+        if e_name == "*" || e_path == "*" {
+            return true;
+        }
+        if !e_path.is_empty() && !p_path.is_empty() && e_path == p_path {
+            return true;
+        }
+        let norm = normalize_process(&e_name);
+        if !norm.is_empty() && norm == p_name {
+            return true;
+        }
+        false
+    })
+}
+
+/// Case-insensitive membership test for legacy string slices; `"*"` matches everything.
 pub fn in_list(process: &str, list: &[String]) -> bool {
     let p = process.to_lowercase();
     list.iter().any(|entry| {
@@ -185,7 +207,10 @@ pub fn normalize_process(name: &str) -> String {
 pub fn update_policy_config(config: &Config) {
     let policy = PolicyConfig {
         enabled: config.scroll_policy_enabled,
-        mode: config.scroll_policy_mode.clone(),
+        fullscreen_disabled: config.scroll_policy_fullscreen_disabled,
+        blacklist_enabled: config.scroll_policy_blacklist_enabled,
+        browser_only: config.scroll_policy_browser_only,
+        whitelist_enabled: config.scroll_policy_whitelist_enabled,
         blacklist: config.scroll_policy_blacklist.clone(),
         whitelist: config.scroll_policy_whitelist.clone(),
     };
@@ -219,6 +244,7 @@ fn policy_thread_main() {
     // process-name / monitor lookups when nothing changed.
     let mut last_hwnd: Option<HWND> = None;
     let mut last_process: String = String::new();
+    let mut last_path: String = String::new();
     let mut last_rect: (i32, i32, i32, i32) = (0, 0, 0, 0);
     let mut last_monitor_rect: (i32, i32, i32, i32) = (0, 0, 0, 0);
     let mut last_layer: &'static str = "";
@@ -262,11 +288,14 @@ fn policy_thread_main() {
                 continue;
             }
         } else {
-            // Resolve process name (only when the foreground window changed).
-            last_process = match foreground_process_name(hwnd) {
-                Some(name) => normalize_process(&name),
-                None => String::new(), // failure relaxation: keep applying
-            };
+            // Resolve process path & name (only when the foreground window changed).
+            if let Some(path) = foreground_process_path(hwnd) {
+                last_path = path.to_lowercase();
+                last_process = normalize_process(&path);
+            } else {
+                last_path = String::new();
+                last_process = String::new(); // failure relaxation: keep applying
+            }
             last_hwnd = Some(hwnd);
         }
 
@@ -288,6 +317,7 @@ fn policy_thread_main() {
 
         let info = ForegroundInfo {
             process_name: last_process.clone(),
+            process_path: last_path.clone(),
             rect,
             monitor_rect,
             monitor_work,
@@ -298,11 +328,11 @@ fn policy_thread_main() {
 
         if layer != last_layer {
             tracing::info!(
-                "Scroll policy: foreground={} apply={} layer={} (mode={})",
+                "Scroll policy: foreground={} path={} apply={} layer={}",
                 info.process_name,
+                info.process_path,
                 apply,
                 layer,
-                cfg.mode,
             );
             last_layer = layer;
         }
@@ -311,8 +341,8 @@ fn policy_thread_main() {
     }
 }
 
-/// Resolve the process base name of the window's owner process.
-fn foreground_process_name(hwnd: HWND) -> Option<String> {
+/// Resolve the full executable path of the window's owner process.
+fn foreground_process_path(hwnd: HWND) -> Option<String> {
     unsafe {
         let mut pid: u32 = 0;
         GetWindowThreadProcessId(hwnd, Some(&mut pid));
@@ -345,6 +375,17 @@ mod tests {
     fn info(process: &str, rect: (i32, i32, i32, i32)) -> ForegroundInfo {
         ForegroundInfo {
             process_name: process.into(),
+            process_path: format!("C:\\Apps\\{}.exe", process),
+            rect,
+            monitor_rect: (0, 0, 1920, 1080),
+            monitor_work: (0, 0, 1920, 1040),
+        }
+    }
+
+    fn info_with_path(process: &str, path: &str, rect: (i32, i32, i32, i32)) -> ForegroundInfo {
+        ForegroundInfo {
+            process_name: process.into(),
+            process_path: path.into(),
             rect,
             monitor_rect: (0, 0, 1920, 1080),
             monitor_work: (0, 0, 1920, 1040),
@@ -361,14 +402,19 @@ mod tests {
     }
 
     #[test]
-    fn test_in_list() {
-        let list: Vec<String> = vec!["chrome".into(), "notepad".into()];
-        assert!(in_list("chrome", &list));
-        assert!(in_list("CHROME", &list));
-        assert!(!in_list("firefox", &list));
-        assert!(!in_list("chrome", &[]));
-        let wild: Vec<String> = vec!["*".into()];
-        assert!(in_list("anything", &wild));
+    fn test_in_app_list() {
+        let list = vec![
+            AppPolicyItem::from_name("chrome"),
+            AppPolicyItem::new("C:\\Program Files\\Notepad++\\notepad++.exe", "notepad++.exe", "Notepad++", ""),
+        ];
+        let info1 = info_with_path("chrome", "C:\\Google\\chrome.exe", (0, 0, 100, 100));
+        assert!(in_app_list(&info1, &list));
+
+        let info2 = info_with_path("notepad++", "c:\\program files\\notepad++\\notepad++.exe", (0, 0, 100, 100));
+        assert!(in_app_list(&info2, &list));
+
+        let info3 = info_with_path("code", "c:\\vs code\\code.exe", (0, 0, 100, 100));
+        assert!(!in_app_list(&info3, &list));
     }
 
     #[test]
@@ -397,44 +443,103 @@ mod tests {
     }
 
     #[test]
-    fn test_evaluate_short_circuit() {
-        // Disabled → always apply
-        let cfg = PolicyConfig { enabled: false, mode: MODE_BLACKLIST.into(), blacklist: vec!["game".into()], whitelist: vec![] };
+    fn test_evaluate_short_circuit_chain() {
+        // 0. Master switch disabled → always apply
+        let cfg = PolicyConfig {
+            enabled: false,
+            fullscreen_disabled: true,
+            blacklist_enabled: true,
+            browser_only: false,
+            whitelist_enabled: false,
+            blacklist: vec![AppPolicyItem::from_name("game")],
+            whitelist: vec![],
+        };
         assert_eq!(evaluate(&cfg, &info("game", (0, 0, 1920, 1080))), (true, "disabled"));
 
-        // Fullscreen beats whitelist
-        let cfg = PolicyConfig { enabled: true, mode: MODE_WHITELIST.into(), blacklist: vec![], whitelist: vec!["game".into()] };
+        // 1. Fullscreen disabled check
+        let cfg = PolicyConfig {
+            enabled: true,
+            fullscreen_disabled: true,
+            blacklist_enabled: false,
+            browser_only: false,
+            whitelist_enabled: false,
+            blacklist: vec![],
+            whitelist: vec![],
+        };
         assert_eq!(evaluate(&cfg, &info("game", (0, 0, 1920, 1080))), (false, "fullscreen"));
+        assert_eq!(evaluate(&cfg, &info("game", (10, 10, 800, 600))), (true, "pass"));
 
-        // Blacklist beats browser-only
-        let cfg = PolicyConfig { enabled: true, mode: MODE_BROWSER_ONLY.into(), blacklist: vec!["chrome".into()], whitelist: vec![] };
+        // Fullscreen disabled = false → fullscreen doesn't block
+        let cfg = PolicyConfig {
+            enabled: true,
+            fullscreen_disabled: false,
+            blacklist_enabled: false,
+            browser_only: false,
+            whitelist_enabled: false,
+            blacklist: vec![],
+            whitelist: vec![],
+        };
+        assert_eq!(evaluate(&cfg, &info("game", (0, 0, 1920, 1080))), (true, "pass"));
+
+        // 2. Blacklist check (higher priority than browser-only)
+        let cfg = PolicyConfig {
+            enabled: true,
+            fullscreen_disabled: true,
+            blacklist_enabled: true,
+            browser_only: true,
+            whitelist_enabled: false,
+            blacklist: vec![AppPolicyItem::from_name("chrome")],
+            whitelist: vec![],
+        };
+        // Fullscreen blocks first
+        assert_eq!(evaluate(&cfg, &info("chrome", (0, 0, 1920, 1080))), (false, "fullscreen"));
+        // Windowed chrome blocked by blacklist
         assert_eq!(evaluate(&cfg, &info("chrome", (10, 10, 800, 600))), (false, "blacklist"));
 
-        // Blacklist hit in blacklist mode
-        let cfg = PolicyConfig { enabled: true, mode: MODE_BLACKLIST.into(), blacklist: vec!["notepad".into()], whitelist: vec![] };
-        assert_eq!(evaluate(&cfg, &info("notepad", (10, 10, 800, 600))), (false, "blacklist"));
-
-        // Browser-only: non-browser rejected
-        let cfg = PolicyConfig { enabled: true, mode: MODE_BROWSER_ONLY.into(), blacklist: vec![], whitelist: vec![] };
+        // 3. Browser-only check
+        let cfg = PolicyConfig {
+            enabled: true,
+            fullscreen_disabled: false,
+            blacklist_enabled: true,
+            browser_only: true,
+            whitelist_enabled: false,
+            blacklist: vec![],
+            whitelist: vec![],
+        };
         assert_eq!(evaluate(&cfg, &info("notepad", (10, 10, 800, 600))), (false, "browser"));
         assert_eq!(evaluate(&cfg, &info("chrome", (10, 10, 800, 600))), (true, "pass"));
 
-        // Whitelist: not listed rejected, listed accepted
-        let cfg = PolicyConfig { enabled: true, mode: MODE_WHITELIST.into(), blacklist: vec![], whitelist: vec!["chrome".into()] };
-        assert_eq!(evaluate(&cfg, &info("notepad", (10, 10, 800, 600))), (false, "whitelist"));
-        assert_eq!(evaluate(&cfg, &info("chrome", (10, 10, 800, 600))), (true, "pass"));
-
-        // Empty whitelist → nothing applies
-        let cfg = PolicyConfig { enabled: true, mode: MODE_WHITELIST.into(), blacklist: vec![], whitelist: vec![] };
-        assert_eq!(evaluate(&cfg, &info("notepad", (10, 10, 800, 600))), (false, "whitelist"));
-
-        // Unknown process → relax to apply
-        let cfg = PolicyConfig { enabled: true, mode: MODE_BLACKLIST.into(), blacklist: vec![], whitelist: vec![] };
-        assert_eq!(evaluate(&cfg, &info("", (10, 10, 800, 600))), (true, "fail"));
-
-        // Default blacklist mode with empty list → everything passes (except fullscreen)
-        let cfg = PolicyConfig { enabled: true, mode: MODE_BLACKLIST.into(), blacklist: vec![], whitelist: vec![] };
+        // 4. Whitelist check
+        let cfg = PolicyConfig {
+            enabled: true,
+            fullscreen_disabled: false,
+            blacklist_enabled: false,
+            browser_only: false,
+            whitelist_enabled: true,
+            blacklist: vec![],
+            whitelist: vec![AppPolicyItem::from_name("notepad")],
+        };
+        assert_eq!(evaluate(&cfg, &info("chrome", (10, 10, 800, 600))), (false, "whitelist"));
         assert_eq!(evaluate(&cfg, &info("notepad", (10, 10, 800, 600))), (true, "pass"));
-        assert_eq!(evaluate(&cfg, &info("notepad", (0, 0, 1920, 1080))), (false, "fullscreen"));
+
+        // Multiple rules combined: Fullscreen + Blacklist + Browser Only + Whitelist
+        let cfg = PolicyConfig {
+            enabled: true,
+            fullscreen_disabled: true,
+            blacklist_enabled: true,
+            browser_only: true,
+            whitelist_enabled: true,
+            blacklist: vec![AppPolicyItem::from_name("edge")],
+            whitelist: vec![AppPolicyItem::from_name("chrome"), AppPolicyItem::from_name("edge")],
+        };
+        // chrome (windowed) passes all 4 rules
+        assert_eq!(evaluate(&cfg, &info("chrome", (10, 10, 800, 600))), (true, "pass"));
+        // edge is in whitelist, but blocked by blacklist (veto)
+        assert_eq!(evaluate(&cfg, &info("edge", (10, 10, 800, 600))), (false, "blacklist"));
+        // firefox is browser, but not in whitelist
+        assert_eq!(evaluate(&cfg, &info("firefox", (10, 10, 800, 600))), (false, "whitelist"));
+        // notepad is not browser
+        assert_eq!(evaluate(&cfg, &info("notepad", (10, 10, 800, 600))), (false, "browser"));
     }
 }
+
