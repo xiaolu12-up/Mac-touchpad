@@ -5,6 +5,7 @@ pub mod gesture;
 pub mod input;
 pub mod overlay;
 pub mod recorder;
+pub mod scroll_policy;
 pub mod speed;
 pub mod startup;
 pub mod window;

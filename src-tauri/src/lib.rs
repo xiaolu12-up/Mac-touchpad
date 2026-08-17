@@ -41,6 +41,11 @@ struct SaveArgs {
     #[serde(default)] smooth_scroll_deadzone: Option<f32>,
     #[serde(default)] smooth_scroll_tick_ms: Option<u64>,
     #[serde(default)] natural_scroll: Option<bool>,
+    // Scroll policy (生效策略)
+    #[serde(default)] scroll_policy_enabled: Option<bool>,
+    #[serde(default)] scroll_policy_mode: Option<String>,
+    #[serde(default)] scroll_policy_blacklist: Option<Vec<String>>,
+    #[serde(default)] scroll_policy_whitelist: Option<Vec<String>>,
     #[serde(default)] four_finger_swipe_up: Option<String>,
     #[serde(default)] four_finger_swipe_down: Option<String>,
     #[serde(default)] four_finger_swipe_left: Option<String>,
@@ -75,6 +80,12 @@ fn save_config(args: SaveArgs, state: tauri::State<'_, AppState>) -> Result<Conf
     if let Some(v) = args.smooth_scroll_deadzone { config.smooth_scroll_deadzone = v; }
     if let Some(v) = args.smooth_scroll_tick_ms { config.smooth_scroll_tick_ms = v; }
     if let Some(v) = args.natural_scroll { config.natural_scroll = v; }
+
+    // Scroll policy (生效策略)
+    if let Some(v) = args.scroll_policy_enabled { config.scroll_policy_enabled = v; }
+    if let Some(v) = args.scroll_policy_mode { config.scroll_policy_mode = v; }
+    if let Some(v) = args.scroll_policy_blacklist { config.scroll_policy_blacklist = v; }
+    if let Some(v) = args.scroll_policy_whitelist { config.scroll_policy_whitelist = v; }
 
     if let Some(s) = args.four_finger_swipe_up { config.four_finger_swipe_up = parse_action(&s); }
     if let Some(s) = args.four_finger_swipe_down { config.four_finger_swipe_down = parse_action(&s); }

@@ -131,6 +131,12 @@ pub struct Config {
     pub smooth_scroll_tick_ms: u64,
     pub natural_scroll: bool,
 
+    // Scroll policy (生效策略): 按前台窗口决定平滑滚动是否生效
+    pub scroll_policy_enabled: bool,
+    pub scroll_policy_mode: String, // "off" | "blacklist" | "browser_only" | "whitelist"
+    pub scroll_policy_blacklist: Vec<String>,
+    pub scroll_policy_whitelist: Vec<String>,
+
     // General
     pub run_at_startup: bool,
     pub close_to_tray: bool,
@@ -192,6 +198,14 @@ impl Default for Config {
             smooth_scroll_deadzone: 1.0,
             smooth_scroll_tick_ms: 4,
             natural_scroll: true,
+
+            // Scroll policy — enabled by default: with an empty blacklist this
+            // only disables smooth scroll in fullscreen, which matches the
+            // feature's design intent for existing users.
+            scroll_policy_enabled: true,
+            scroll_policy_mode: "blacklist".into(),
+            scroll_policy_blacklist: Vec::new(),
+            scroll_policy_whitelist: Vec::new(),
 
             run_at_startup: false,
             close_to_tray: true,
