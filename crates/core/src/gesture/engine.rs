@@ -289,19 +289,19 @@ impl GestureEngine {
             self.pinch_detector.reset();
             self.tap_detector.reset();
 
-            // Feed empty contacts — tap detector fires if it saw a valid 3-finger tap
-            let empty: [TouchpadContact; 0] = [];
-            if !self.four_finger_action_triggered
-                && self.config.three_finger_tap_enabled
-                && self.three_finger_tap.feed(
-                    &empty,
-                    now,
-                    self.config.tap_max_duration_ms,
+           // Feed empty contacts — tap detector fires if it saw a valid 3-finger tap
+           let empty: [TouchpadContact; 0] = [];
+           if !self.four_finger_action_triggered
+               && self.config.three_finger_tap_enabled
+               && self.three_finger_tap.feed(
+                   &empty,
+                   now,
+                   self.config.tap_max_duration_ms,
                     self.config.tap_max_distance,
                 )
             {
-                tracing::info!("Three-finger tap detected → Win+S");
-                keyboard::search();
+                tracing::info!("Three-finger tap detected → {:?}", self.config.three_finger_tap_action);
+                self.execute_action_for_slot(self.config.three_finger_tap_action, "three_finger_tap");
             }
             self.drag.force_stop(&self.config, &mut self.mouse);
 
@@ -343,7 +343,13 @@ impl GestureEngine {
             SwipeDirection::Left => self.config.four_finger_swipe_left,
             SwipeDirection::Right => self.config.four_finger_swipe_right,
         };
-        execute_action(action);
+        let slot = match direction {
+            SwipeDirection::Up => "four_finger_swipe_up",
+            SwipeDirection::Down => "four_finger_swipe_down",
+            SwipeDirection::Left => "four_finger_swipe_left",
+            SwipeDirection::Right => "four_finger_swipe_right",
+        };
+        self.execute_action_for_slot(action, slot);
     }
 
     /// Execute the action mapped to a 2-finger swipe direction.
@@ -378,7 +384,11 @@ impl GestureEngine {
             PinchDirection::Spread => self.config.four_finger_spread,
             PinchDirection::Pinch => self.config.four_finger_pinch,
         };
-        execute_action(action);
+        let slot = match direction {
+            PinchDirection::Spread => "four_finger_spread",
+            PinchDirection::Pinch => "four_finger_pinch",
+        };
+        self.execute_action_for_slot(action, slot);
     }
 
     /// Check for timeouts (e.g. lost release reports).
@@ -397,8 +407,8 @@ impl GestureEngine {
                     self.config.tap_max_distance,
                 );
                 if tap_detected {
-                    tracing::info!("Three-finger tap detected via timeout recovery → Win+S");
-                    keyboard::search();
+                    tracing::info!("Three-finger tap detected via timeout recovery → {:?}", self.config.three_finger_tap_action);
+                    self.execute_action_for_slot(self.config.three_finger_tap_action, "three_finger_tap");
                 }
             }
 
@@ -423,6 +433,19 @@ impl GestureEngine {
                     self.three_finger_tap.reset();
                 }
             }
+        }
+    }
+
+    /// Execute a gesture action, resolving Custom from config.custom_shortcuts.
+    fn execute_action_for_slot(&self, action: GestureAction, slot: &str) {
+        if action == GestureAction::Custom {
+            if let Some(combo) = self.config.custom_shortcuts.get(slot) {
+                keyboard::send_custom_combo(combo);
+            } else {
+                tracing::warn!("Custom action for slot '{}' has no shortcut configured", slot);
+            }
+        } else {
+            execute_action(action);
         }
     }
 }
@@ -460,6 +483,7 @@ fn execute_action(action: GestureAction) {
         GestureAction::PageUp => keyboard::page_up(),
         GestureAction::PageDown => keyboard::page_down(),
         GestureAction::Maximize => keyboard::maximize(),
+        GestureAction::Custom => {} // Resolved by execute_action_for_slot
     }
 }
 

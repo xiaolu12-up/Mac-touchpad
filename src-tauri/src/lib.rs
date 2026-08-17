@@ -1,4 +1,4 @@
-use mac_touchpad_core::config::{Config, DeviceDragConfig, GestureAction};
+﻿use mac_touchpad_core::config::{Config, DeviceDragConfig, GestureAction};
 use mac_touchpad_core::window::{CoreCommand, CoreSender};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
@@ -47,6 +47,8 @@ struct SaveArgs {
     #[serde(default)] four_finger_swipe_right: Option<String>,
     #[serde(default)] four_finger_spread: Option<String>,
     #[serde(default)] four_finger_pinch: Option<String>,
+    #[serde(default)] three_finger_tap_action: Option<String>,
+    #[serde(default)] custom_shortcuts: Option<std::collections::HashMap<String, String>>,
 }
 
 #[tauri::command]
@@ -80,6 +82,9 @@ fn save_config(args: SaveArgs, state: tauri::State<'_, AppState>) -> Result<Conf
     if let Some(s) = args.four_finger_swipe_right { config.four_finger_swipe_right = parse_action(&s); }
     if let Some(s) = args.four_finger_spread { config.four_finger_spread = parse_action(&s); }
     if let Some(s) = args.four_finger_pinch { config.four_finger_pinch = parse_action(&s); }
+
+    if let Some(s) = args.three_finger_tap_action { config.three_finger_tap_action = parse_action(&s); }
+    if let Some(m) = args.custom_shortcuts { config.custom_shortcuts = m; }
 
     // Update cursor speed and acceleration independently
     let mut dc = config.device_configs.get("default").cloned()
@@ -130,6 +135,7 @@ fn get_action_list() -> Vec<ActionInfo> {
         ActionInfo { key: "PageUp".into(), label: "Page Up".into() },
         ActionInfo { key: "PageDown".into(), label: "Page Down".into() },
         ActionInfo { key: "Maximize".into(), label: "最大化窗口".into() },
+        ActionInfo { key: "Custom".into(), label: "自定义快捷键".into() },
     ]
 }
 
@@ -426,11 +432,21 @@ fn parse_action(s: &str) -> GestureAction {
         "BrowserBack" => GestureAction::BrowserBack,
         "BrowserForward" => GestureAction::BrowserForward,
         "Maximize" => GestureAction::Maximize,
+        "Custom" => GestureAction::Custom,
         _ => GestureAction::None,
     }
 }
 
 // ── Entry Point ──
+
+#[tauri::command]
+async fn record_shortcut_cmd() -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        mac_touchpad_core::recorder::record_shortcut()
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -536,6 +552,7 @@ pub fn run() {
             open_url,
             download_update,
             run_installer,
+            record_shortcut_cmd,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

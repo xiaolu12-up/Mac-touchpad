@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 
 <head>
@@ -257,7 +257,9 @@
             justify-content: space-between;
             align-items: center;
             padding: 9px 0;
-            border-bottom: 1px solid var(--row-border)
+            border-bottom: 1px solid var(--row-border);
+            flex-wrap: wrap;
+            gap: 6px 0;
         }
 
         .row:last-child {
@@ -1168,6 +1170,71 @@
                 display: none !important;
             }
         }
+    
+        /* Hint banner */
+        .hint-banner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(240, 160, 64, .08);
+            border: 1px solid rgba(240, 160, 64, .2);
+            border-radius: 10px;
+            margin-bottom: 14px;
+            font-size: 12px;
+            color: var(--warn);
+        }
+        .hint-banner .hint-icon { font-size: 16px; flex-shrink: 0; }
+        .hint-banner .hint-text { flex: 1; line-height: 1.4; }
+
+        /* Key recorder */
+        .key-recorder {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding-left: 0;
+            width: 100%;
+        }
+        .key-recorder.show { display: flex; margin-top: 6px; }
+        .key-recorder-input {
+            flex: 1;
+            background: var(--track);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+            transition: border-color .2s;
+        }
+        .key-recorder-input:focus,
+        .key-recorder-input.recording {
+            border-color: var(--accent);
+            box-shadow: 0 0 6px var(--glow);
+        }
+        .key-recorder-input.recording {
+            animation: pulse-border 1.2s infinite;
+        }
+        @keyframes pulse-border {
+            0%, 100% { border-color: var(--accent); }
+            50% { border-color: transparent; }
+        }
+        .btn-clear-key {
+            background: var(--track);
+            color: var(--dim);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: .15s;
+            flex-shrink: 0;
+        }
+        .btn-clear-key:hover {
+            background: var(--track-hover);
+            color: var(--text);
+        }
     </style>
 </head>
 
@@ -1209,6 +1276,11 @@
                 <div style="flex:1"></div>
                 <button class="btn btn-sm btn-sec" onclick="resetDefaults('drag')">恢复默认</button>
             </div>
+            <div class="hint-banner">
+                <span class="hint-icon">⚠️</span>
+                <span class="hint-text">需关闭系统三指/四指手势才能生效</span>
+                <button class="btn btn-sm btn-sec" onclick="openSystemTouchpad()">打开系统手势设置</button>
+            </div>
             <div class="page-body">
                 <div class="settings-column">
                     <div class="sec">
@@ -1231,13 +1303,15 @@
                                                      type="checkbox"><span
                                     class="sl"></span></label>
                         </div>
-                        <div class="row" onmouseenter="showPreview('p-drag', 'three-finger-tap', '三指轻点 → 搜索', '用三根手指快速轻点触控板，可以快速触发 Windows 搜索（Win+S）。')">
-                            <div>
-                                <div class="lbl">三指轻点 → 搜索</div>
-                                <div class="dsc">三指轻触打开 Win+S</div>
+                        <div class="row" onmouseenter="showPreview('p-drag', 'three-finger-tap', '三指轻点', '用三根手指快速轻点触控板，可触发自定义动作。')">
+                            <div style="flex:1">
+                                <div class="lbl">三指轻点</div>
+                                <select id="tap_action" onchange="onTapActionChange();save('ss1')" oninput="save('ss1')" style="margin-top:6px;width:100%;max-width:200px"></select>
+                                <div class="key-recorder" id="kr-tap">
+                                    <input type="text" class="key-recorder-input" id="kr-input-tap" placeholder="点击此处录制快捷键" readonly>
+                                    <button class="btn-clear-key" onclick="event.stopPropagation();clearKeyRecorder('tap')">清除</button>
+                                </div>
                             </div>
-                            <label class="tg"><input id="tap" onchange="save('ss1')" onclick="save('ss1')" type="checkbox"><span
-                                    class="sl"></span></label>
                         </div>
                     </div>
                     <div class="sec">
@@ -1292,27 +1366,51 @@
                         <div class="st">四指手势</div>
                         <div class="row" onmouseenter="showPreview('p-gestures', 'four-finger-up', '四指上滑', '四根手指向上滑动。默认设置为打开任务视图，展示所有运行窗口。')">
                             <div class="lbl">⬆️ 上滑</div>
-                            <select id="g4u" onchange="save('ss2')" oninput="save('ss2')"></select>
+                            <select id="g4u" onchange="onGestureActionChange('g4u','four_finger_swipe_up');save('ss2')" oninput="save('ss2')"></select>
+                                <div class="key-recorder" id="kr-four_finger_swipe_up">
+                                    <input type="text" class="key-recorder-input" id="kr-input-four_finger_swipe_up" placeholder="点击此处录制快捷键" readonly>
+                                    <button class="btn-clear-key" onclick="event.stopPropagation();clearKeyRecorder('four_finger_swipe_up')">清除</button>
+                                </div>
                         </div>
                         <div class="row" onmouseenter="showPreview('p-gestures', 'four-finger-down', '四指下滑', '四根手指向下滑动。默认设置为打开开始菜单或快捷功能。')">
                             <div class="lbl">⬇️ 下滑</div>
-                            <select id="g4d" onchange="save('ss2')" oninput="save('ss2')"></select>
+                            <select id="g4d" onchange="onGestureActionChange('g4d','four_finger_swipe_down');save('ss2')" oninput="save('ss2')"></select>
+                                <div class="key-recorder" id="kr-four_finger_swipe_down">
+                                    <input type="text" class="key-recorder-input" id="kr-input-four_finger_swipe_down" placeholder="点击此处录制快捷键" readonly>
+                                    <button class="btn-clear-key" onclick="event.stopPropagation();clearKeyRecorder('four_finger_swipe_down')">清除</button>
+                                </div>
                         </div>
                         <div class="row" onmouseenter="showPreview('p-gestures', 'four-finger-left', '四指左滑', '四根手指向左滑动。默认设置为向左切换虚拟桌面或活动窗口。')">
                             <div class="lbl">⬅️ 左滑（切换应用）</div>
-                            <select id="g4l" onchange="save('ss2')" oninput="save('ss2')"></select>
+                            <select id="g4l" onchange="onGestureActionChange('g4l','four_finger_swipe_left');save('ss2')" oninput="save('ss2')"></select>
+                                <div class="key-recorder" id="kr-four_finger_swipe_left">
+                                    <input type="text" class="key-recorder-input" id="kr-input-four_finger_swipe_left" placeholder="点击此处录制快捷键" readonly>
+                                    <button class="btn-clear-key" onclick="event.stopPropagation();clearKeyRecorder('four_finger_swipe_left')">清除</button>
+                                </div>
                         </div>
                         <div class="row" onmouseenter="showPreview('p-gestures', 'four-finger-right', '四指右滑', '四根手指向右滑动。默认设置为向右切换虚拟桌面或活动窗口。')">
                             <div class="lbl">➡️ 右滑（切换应用）</div>
-                            <select id="g4r" onchange="save('ss2')" oninput="save('ss2')"></select>
+                            <select id="g4r" onchange="onGestureActionChange('g4r','four_finger_swipe_right');save('ss2')" oninput="save('ss2')"></select>
+                                <div class="key-recorder" id="kr-four_finger_swipe_right">
+                                    <input type="text" class="key-recorder-input" id="kr-input-four_finger_swipe_right" placeholder="点击此处录制快捷键" readonly>
+                                    <button class="btn-clear-key" onclick="event.stopPropagation();clearKeyRecorder('four_finger_swipe_right')">清除</button>
+                                </div>
                         </div>
                         <div class="row" onmouseenter="showPreview('p-gestures', 'four-finger-spread', '四指张开', '拇指与其余三指呈相反方向张开。默认设置为显示桌面，将所有窗口推离屏幕。')">
                             <div class="lbl">🖐️ 张开</div>
-                            <select id="g4sp" onchange="save('ss2')" oninput="save('ss2')"></select>
+                            <select id="g4sp" onchange="onGestureActionChange('g4sp','four_finger_spread');save('ss2')" oninput="save('ss2')"></select>
+                                <div class="key-recorder" id="kr-four_finger_spread">
+                                    <input type="text" class="key-recorder-input" id="kr-input-four_finger_spread" placeholder="点击此处录制快捷键" readonly>
+                                    <button class="btn-clear-key" onclick="event.stopPropagation();clearKeyRecorder('four_finger_spread')">清除</button>
+                                </div>
                         </div>
                         <div class="row" onmouseenter="showPreview('p-gestures', 'four-finger-pinch', '四指捏合', '拇指与其余三指呈相反方向收拢捏合。默认设置为触发开始菜单。')">
                             <div class="lbl">🤏 捏合</div>
-                            <select id="g4pi" onchange="save('ss2')" oninput="save('ss2')"></select>
+                            <select id="g4pi" onchange="onGestureActionChange('g4pi','four_finger_pinch');save('ss2')" oninput="save('ss2')"></select>
+                                <div class="key-recorder" id="kr-four_finger_pinch">
+                                    <input type="text" class="key-recorder-input" id="kr-input-four_finger_pinch" placeholder="点击此处录制快捷键" readonly>
+                                    <button class="btn-clear-key" onclick="event.stopPropagation();clearKeyRecorder('four_finger_pinch')">清除</button>
+                                </div>
                         </div>
                     </div>
                     <div class="sec">
@@ -1528,7 +1626,7 @@
 </div>
 
 <script>
-    const ACTIONS = ['None', 'WinTab', 'AltTab', 'CtrlWinLeft', 'CtrlWinRight', 'ShowDesktop', 'OpenStart', 'Search', 'NotificationCenter', 'VolumeUp', 'VolumeDown', 'PageUp', 'PageDown', 'Maximize'];
+    const ACTIONS = ['None', 'WinTab', 'AltTab', 'CtrlWinLeft', 'CtrlWinRight', 'ShowDesktop', 'OpenStart', 'Search', 'NotificationCenter', 'VolumeUp', 'VolumeDown', 'PageUp', 'PageDown', 'Maximize', 'Custom'];
     const LABELS = {
         'None': '无',
         'WinTab': '任务视图',
@@ -1543,7 +1641,8 @@
         'VolumeDown': '音量-',
         'PageUp': 'Page Up',
         'PageDown': 'Page Down',
-        'Maximize': '最大化窗口'
+        'Maximize': '最大化窗口',
+        'Custom': '自定义快捷键'
     };
     const SELS = {
         g4u: 'four_finger_swipe_up',
@@ -1563,6 +1662,25 @@
             o.textContent = LABELS[k] || k;
             el.appendChild(o)
         })
+    });
+
+    // Init tap action dropdown
+    (function() {
+        const tapSel = document.getElementById('tap_action');
+        if (tapSel) {
+            ACTIONS.forEach(k => {
+                const o = document.createElement('option');
+                o.value = k;
+                o.textContent = LABELS[k] || k;
+                tapSel.appendChild(o);
+            });
+        }
+    })();
+
+    // Init key recorders
+    initKeyRecorder('kr-input-tap', 'three_finger_tap');
+    Object.entries(SELS).forEach(([elId, configKey]) => {
+        initKeyRecorder('kr-input-' + configKey, configKey);
     });
 
     const PREVIEW_TEMPLATE = `
@@ -1811,6 +1929,164 @@
         })
     }
 
+
+    // ── Key Recorder System ──
+    const GESTURE_CUSTOM_KEYS = {
+        tap: 'three_finger_tap',
+        g4u: 'four_finger_swipe_up',
+        g4d: 'four_finger_swipe_down',
+        g4l: 'four_finger_swipe_left',
+        g4r: 'four_finger_swipe_right',
+        g4sp: 'four_finger_spread',
+        g4pi: 'four_finger_pinch'
+    };
+
+    function getKeyDisplayName(e) {
+        const key = e.key;
+        if (key === 'Control' || key === 'Shift' || key === 'Alt' || key === 'Meta') return '';
+        const special = {
+            ' ': 'Space', 'ArrowUp': 'Up', 'ArrowDown': 'Down',
+            'ArrowLeft': 'Left', 'ArrowRight': 'Right',
+            'Escape': 'Esc', 'Backspace': 'Backspace', 'Delete': 'Delete',
+            'Enter': 'Enter', 'Tab': 'Tab', 'Insert': 'Insert',
+            'Home': 'Home', 'End': 'End', 'PageUp': 'PageUp', 'PageDown': 'PageDown',
+        };
+        if (special[key]) return special[key];
+        if (key.length === 1) return key.toUpperCase();
+        return key;
+    }
+
+    function buildComboString(e) {
+        const parts = [];
+        if (e.ctrlKey) parts.push('Ctrl');
+        if (e.altKey) parts.push('Alt');
+        if (e.shiftKey) parts.push('Shift');
+        if (e.metaKey) parts.push('Win');
+        const main = getKeyDisplayName(e);
+        if (main) parts.push(main);
+        return parts.join('+');
+    }
+
+    function initKeyRecorder(inputId, configKey) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        input.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (input.classList.contains('recording')) return;
+            input.classList.add('recording');
+            input.value = '...';
+            invoke('record_shortcut_cmd').then(combo => {
+                input.classList.remove('recording');
+                if (combo) {
+                    input.value = combo;
+                    input._combo = combo;
+                    invoke('save_config', { args: buildSaveArgsWithCustom(configKey, combo) });
+                } else {
+                    input.value = input._combo || '';
+                }
+            }).catch(() => {
+                input.classList.remove('recording');
+                input.value = input._combo || '';
+            });
+        });
+    }
+
+    function buildSaveArgsWithCustom(configKey, combo) {
+        const args = buildCurrentSaveArgs();
+        const customs = {};
+        document.querySelectorAll('.key-recorder-input').forEach(inp => {
+            const id = inp.id.replace('kr-input-', '');
+            const ck = GESTURE_CUSTOM_KEYS[id];
+            if (ck && inp._combo) customs[ck] = inp._combo;
+        });
+        customs[configKey] = combo;
+        args.custom_shortcuts = customs;
+        return args;
+    }
+
+    function clearKeyRecorder(slotKey) {
+        const input = document.getElementById('kr-input-' + slotKey);
+        if (input) {
+            input.value = '';
+            input._combo = '';
+            input.classList.remove('recording');
+        }
+        if (invoke) {
+            const configKey = GESTURE_CUSTOM_KEYS[slotKey];
+            if (configKey) {
+                const args = buildCurrentSaveArgs();
+                const customs = {};
+                Object.assign(customs, args.custom_shortcuts || {});
+                delete customs[configKey];
+                args.custom_shortcuts = customs;
+                invoke('save_config', { args: args });
+            }
+        }
+    }
+
+    function showKeyRecorder(slotKey, show) {
+        const el = document.getElementById('kr-' + slotKey);
+        if (el) {
+            if (show) el.classList.add('show');
+            else el.classList.remove('show');
+        }
+    }
+
+    function onTapActionChange() {
+        const val = document.getElementById('tap_action').value;
+        showKeyRecorder('tap', val === 'Custom');
+    }
+
+    function onGestureActionChange(selectId, configKey) {
+        const val = document.getElementById(selectId).value;
+        showKeyRecorder(configKey, val === 'Custom');
+    }
+
+    function openSystemTouchpad() {
+        if (invoke) {
+            invoke('open_url', { url: 'ms-settings:devices-touchpad' });
+        }
+    }
+
+    function buildCurrentSaveArgs() {
+        const args = {
+            three_finger_drag: document.getElementById('drag').checked,
+            allow_release_and_restart: document.getElementById('restart').checked,
+            three_finger_tap_enabled: document.getElementById('tap_action').value !== 'None',
+            three_finger_tap_action: document.getElementById('tap_action').value,
+            edge_slide_enabled: document.getElementById('edge').checked,
+            run_at_startup: document.getElementById('auto').checked,
+            close_to_tray: document.getElementById('tray').checked,
+            invert_volume: document.getElementById('inv_vol').checked,
+            smooth_scroll_enabled: document.getElementById('smooth').checked,
+            smooth_scroll_speed: +document.getElementById('scroll_speed').value,
+            smooth_scroll_smoothing: +document.getElementById('scroll_smooth').value,
+            smooth_scroll_deceleration: +document.getElementById('scroll_decel').value,
+            smooth_scroll_base_scale: +document.getElementById('scroll_bscale').value,
+            smooth_scroll_max_delta: +document.getElementById('scroll_maxd').value,
+            smooth_scroll_deadzone: +document.getElementById('scroll_dz').value,
+            smooth_scroll_tick_ms: +document.getElementById('scroll_tick').value,
+            natural_scroll: document.getElementById('natural').checked,
+            cursor_speed: +document.getElementById('speed').value,
+            cursor_acceleration: +document.getElementById('accel').value,
+            start_threshold: +document.getElementById('stt').value,
+            stop_threshold: +document.getElementById('spt').value,
+            release_delay_ms: +document.getElementById('rel').value,
+        };
+        Object.entries(SELS).forEach(([elId, key]) => {
+            args[key] = document.getElementById(elId).value;
+        });
+        // Collect custom shortcuts from all key recorders
+        const customs = {};
+        document.querySelectorAll('.key-recorder-input').forEach(inp => {
+            const id = inp.id.replace('kr-input-', '');
+            const ck = GESTURE_CUSTOM_KEYS[id];
+            if (ck && inp._combo) customs[ck] = inp._combo;
+        });
+        args.custom_shortcuts = customs;
+        return args;
+    }
+
     async function loadConfig() {
         await waitForTauri();
         if (!invoke) {
@@ -1821,7 +2097,6 @@
             const cfg = await invoke('get_config');
             document.getElementById('drag').checked = cfg.three_finger_drag;
             document.getElementById('restart').checked = cfg.allow_release_and_restart;
-            document.getElementById('tap').checked = cfg.three_finger_tap_enabled;
             document.getElementById('edge').checked = cfg.edge_slide_enabled;
             document.getElementById('auto').checked = cfg.run_at_startup;
             document.getElementById('tray').checked = cfg.close_to_tray;
@@ -1845,6 +2120,30 @@
 
             Object.entries(SELS).forEach(([elId, key]) => {
                 document.getElementById(elId).value = cfg[key] || 'None'
+            });
+
+            // Load tap action
+            const tapVal = cfg.three_finger_tap_action || 'Search';
+            document.getElementById('tap_action').value = tapVal;
+            onTapActionChange();
+
+            // Load custom shortcuts into key recorder inputs
+            const customs = cfg.custom_shortcuts || {};
+            const reverseMap = {};
+            Object.entries(GESTURE_CUSTOM_KEYS).forEach(([k, v]) => reverseMap[v] = k);
+            Object.entries(customs).forEach(([configKey, combo]) => {
+                const slotKey = reverseMap[configKey];
+                if (slotKey) {
+                    const inp = document.getElementById('kr-input-' + slotKey);
+                    if (inp) { inp.value = combo; inp._combo = combo; }
+                    showKeyRecorder(slotKey, true);
+                }
+            });
+
+            // Show/hide key recorders for gesture selects
+            Object.entries(SELS).forEach(([elId, configKey]) => {
+                const val = document.getElementById(elId).value;
+                showKeyRecorder(configKey, val === 'Custom');
             });
 
             // Load version info
@@ -1892,32 +2191,7 @@
             }
             return;
         }
-        const args = {
-            three_finger_drag: document.getElementById('drag').checked,
-            allow_release_and_restart: document.getElementById('restart').checked,
-            three_finger_tap_enabled: document.getElementById('tap').checked,
-            edge_slide_enabled: document.getElementById('edge').checked,
-            run_at_startup: document.getElementById('auto').checked,
-            close_to_tray: document.getElementById('tray').checked,
-            invert_volume: document.getElementById('inv_vol').checked,
-            smooth_scroll_enabled: document.getElementById('smooth').checked,
-            smooth_scroll_speed: +document.getElementById('scroll_speed').value,
-            smooth_scroll_smoothing: +document.getElementById('scroll_smooth').value,
-            smooth_scroll_deceleration: +document.getElementById('scroll_decel').value,
-            smooth_scroll_base_scale: +document.getElementById('scroll_bscale').value,
-            smooth_scroll_max_delta: +document.getElementById('scroll_maxd').value,
-            smooth_scroll_deadzone: +document.getElementById('scroll_dz').value,
-            smooth_scroll_tick_ms: +document.getElementById('scroll_tick').value,
-            natural_scroll: document.getElementById('natural').checked,
-            cursor_speed: +document.getElementById('speed').value,
-            cursor_acceleration: +document.getElementById('accel').value,
-            start_threshold: +document.getElementById('stt').value,
-            stop_threshold: +document.getElementById('spt').value,
-            release_delay_ms: +document.getElementById('rel').value,
-        };
-        Object.entries(SELS).forEach(([elId, key]) => {
-            args[key] = document.getElementById(elId).value
-        });
+        const args = buildCurrentSaveArgs();
         try {
             await invoke('save_config', {args});
             if (el) {
@@ -2084,7 +2358,9 @@
         if (page === 'drag') {
             document.getElementById('drag').checked = true;
             document.getElementById('restart').checked = true;
-            document.getElementById('tap').checked = true;
+            document.getElementById('tap_action').value = 'Search';
+            onTapActionChange();
+            clearKeyRecorder('tap');
             setDual('speed', 30);
             setDual('accel', 12);
             setDual('stt', 40);
@@ -2100,6 +2376,11 @@
             document.getElementById('g4pi').value = "OpenStart";
             document.getElementById('edge').checked = true;
             document.getElementById('inv_vol').checked = true;
+            // Hide and clear all four-finger key recorder inputs
+            Object.entries(SELS).forEach(([elId, configKey]) => {
+                showKeyRecorder(configKey, false);
+                clearKeyRecorder(configKey);
+            });
             save('ss2');
         } else if (page === 'scroll') {
             document.getElementById('smooth').checked = true;

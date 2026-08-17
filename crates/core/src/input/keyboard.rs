@@ -56,6 +56,77 @@ pub fn page_up() { send_key_combo(&[VK_PRIOR]); }
 pub fn page_down() { send_key_combo(&[VK_NEXT]); }
 pub fn maximize() { send_key_combo(&[VK_LWIN, VK_UP]); }
 
+// ── Custom combo parsing ──
+
+/// Parse a key name string (case-insensitive) into a VIRTUAL_KEY.
+fn parse_key_name(name: &str) -> Option<VIRTUAL_KEY> {
+    match name.to_uppercase().as_str() {
+        // Modifiers
+        "CTRL" | "CONTROL" => Some(VK_CONTROL),
+        "SHIFT" => Some(VK_SHIFT),
+        "ALT" => Some(VK_MENU),
+        "WIN" | "META" => Some(VK_LWIN),
+        // Letters
+        "A" => Some(VK_A), "B" => Some(VK_B), "C" => Some(VK_C), "D" => Some(VK_D),
+        "E" => Some(VK_E), "F" => Some(VK_F), "G" => Some(VK_G), "H" => Some(VK_H),
+        "I" => Some(VK_I), "J" => Some(VK_J), "K" => Some(VK_K), "L" => Some(VK_L),
+        "M" => Some(VK_M), "N" => Some(VK_N), "O" => Some(VK_O), "P" => Some(VK_P),
+        "Q" => Some(VK_Q), "R" => Some(VK_R), "S" => Some(VK_S), "T" => Some(VK_T),
+        "U" => Some(VK_U), "V" => Some(VK_V), "W" => Some(VK_W), "X" => Some(VK_X),
+        "Y" => Some(VK_Y), "Z" => Some(VK_Z),
+        // Numbers
+        "0" => Some(VK_0), "1" => Some(VK_1), "2" => Some(VK_2), "3" => Some(VK_3),
+        "4" => Some(VK_4), "5" => Some(VK_5), "6" => Some(VK_6), "7" => Some(VK_7),
+        "8" => Some(VK_8), "9" => Some(VK_9),
+        // Function keys
+        "F1" => Some(VK_F1), "F2" => Some(VK_F2), "F3" => Some(VK_F3), "F4" => Some(VK_F4),
+        "F5" => Some(VK_F5), "F6" => Some(VK_F6), "F7" => Some(VK_F7), "F8" => Some(VK_F8),
+        "F9" => Some(VK_F9), "F10" => Some(VK_F10), "F11" => Some(VK_F11), "F12" => Some(VK_F12),
+        // Navigation & editing
+        "SPACE" => Some(VK_SPACE),
+        "ENTER" | "RETURN" => Some(VK_RETURN),
+        "TAB" => Some(VK_TAB),
+        "ESCAPE" | "ESC" => Some(VK_ESCAPE),
+        "BACKSPACE" => Some(VK_BACK),
+        "DELETE" | "DEL" => Some(VK_DELETE),
+        "INSERT" | "INS" => Some(VK_INSERT),
+        "HOME" => Some(VK_HOME),
+        "END" => Some(VK_END),
+        "PAGEUP" | "PAGE UP" | "PGUP" => Some(VK_PRIOR),
+        "PAGEDOWN" | "PAGE DOWN" | "PGDN" => Some(VK_NEXT),
+        "UP" => Some(VK_UP), "DOWN" => Some(VK_DOWN),
+        "LEFT" => Some(VK_LEFT), "RIGHT" => Some(VK_RIGHT),
+        // Media / system
+        "VOLUMEUP" | "VOLUME UP" => Some(VK_VOLUME_UP),
+        "VOLUMEDOWN" | "VOLUME DOWN" => Some(VK_VOLUME_DOWN),
+        "MUTE" => Some(VK_VOLUME_MUTE),
+        "PRINTSCREEN" | "PRTSC" => Some(VK_SNAPSHOT),
+        _ => None,
+    }
+}
+
+/// Parse a combo string like "Ctrl+Shift+A" and send it as a key combo.
+/// Logs a warning and no-ops if parsing fails.
+pub fn send_custom_combo(combo_str: &str) {
+    let parts: Vec<&str> = combo_str.split('+').map(|s| s.trim()).filter(|s| !s.is_empty()).collect();
+    if parts.is_empty() {
+        tracing::warn!("Empty custom combo string, ignoring");
+        return;
+    }
+    let mut keys = Vec::with_capacity(parts.len());
+    for part in &parts {
+        match parse_key_name(part) {
+            Some(k) => keys.push(k),
+            None => {
+                tracing::warn!("Unknown key name '{}' in custom combo '{}', ignoring entire combo", part, combo_str);
+                return;
+            }
+        }
+    }
+    tracing::info!("Sending custom combo: {}", combo_str);
+    send_key_combo(&keys);
+}
+
 // ── Volume ──
 
 pub fn volume_up() {
@@ -443,4 +514,3 @@ mod tests {
         }
     }
 }
-

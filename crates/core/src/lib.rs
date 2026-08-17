@@ -4,6 +4,7 @@ pub mod contacts;
 pub mod gesture;
 pub mod input;
 pub mod overlay;
+pub mod recorder;
 pub mod speed;
 pub mod startup;
 pub mod window;

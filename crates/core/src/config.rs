@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 /// Current settings version for migration support.
-const CURRENT_VERSION: u32 = 9;
+const CURRENT_VERSION: u32 = 10;
 
 /// Which mouse button to simulate for 3-finger drag.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -42,6 +42,8 @@ pub enum GestureAction {
     PageUp,
     PageDown,
     Maximize,
+    // Custom keyboard shortcut
+    Custom,
 }
 
 impl Default for GestureAction {
@@ -87,6 +89,10 @@ pub struct Config {
 
     // 3-finger tap
     pub three_finger_tap_enabled: bool,
+    /// Action for three-finger tap (default: Search). Replaces hardcoded Win+S.
+    pub three_finger_tap_action: GestureAction,
+    /// Custom shortcut strings keyed by slot name (e.g. "three_finger_tap", "four_finger_swipe_up").
+    pub custom_shortcuts: HashMap<String, String>,
 
     // 4-finger gestures
     pub four_finger_swipe_up: GestureAction,
@@ -147,6 +153,8 @@ impl Default for Config {
             stop_threshold: 5.0,
 
             three_finger_tap_enabled: true,
+            three_finger_tap_action: GestureAction::Search,
+            custom_shortcuts: HashMap::new(),
 
             four_finger_swipe_up: GestureAction::WinTab,
             four_finger_swipe_down: GestureAction::ShowDesktop,
