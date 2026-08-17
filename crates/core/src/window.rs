@@ -39,6 +39,7 @@ impl CoreSender {
                     *shared = Some(config.clone());
                 }
                 crate::input::wheel_hook::SMOOTH_SCROLL_ENABLED.store(config.smooth_scroll_enabled, Ordering::Relaxed);
+                crate::scroll_policy::update_policy_config(config);
                 CONFIG_DIRTY.store(true, Ordering::Release);
                 // Also send via channel as fallback
                 let _ = self.tx.send(cmd);
@@ -77,6 +78,10 @@ pub fn start_message_loop(config: Config, ready_tx: Option<mpsc::Sender<()>>) ->
     let (hwnd_tx, hwnd_rx) = mpsc::channel::<HWND>();
 
     crate::input::wheel_hook::SMOOTH_SCROLL_ENABLED.store(config.smooth_scroll_enabled, Ordering::Relaxed);
+
+    // Start the scroll policy polling thread
+    crate::scroll_policy::update_policy_config(&config);
+    crate::scroll_policy::start_policy_thread();
 
     std::thread::Builder::new()
         .name("msg-loop".into())
@@ -181,6 +186,7 @@ fn run_message_loop(
                     while let Ok(cmd) = (*sp).command_rx.try_recv() {
                         match cmd {
                             CoreCommand::Shutdown => {
+                                crate::scroll_policy::stop_policy_thread();
                                 drop(Box::from_raw(sp));
                                 return;
                             }

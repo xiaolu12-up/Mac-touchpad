@@ -149,7 +149,10 @@ unsafe extern "system" fn low_level_mouse_proc(
                 }
 
                 // 4. If smooth scroll is enabled and Win11 synthetic device is active, intercept physical scrolls.
-                if SMOOTH_SCROLL_ENABLED.load(Ordering::Relaxed) && SYNTHETIC_DEVICE_ACTIVE.load(Ordering::Relaxed) {
+                if SMOOTH_SCROLL_ENABLED.load(Ordering::Relaxed)
+                    && crate::scroll_policy::SMOOTH_SCROLL_POLICY_GATE.load(Ordering::Relaxed)
+                    && SYNTHETIC_DEVICE_ACTIVE.load(Ordering::Relaxed)
+                {
                     let flags = info_ref.flags;
                     let is_injected = (flags & 1) != 0 || (flags & 2) != 0;
 

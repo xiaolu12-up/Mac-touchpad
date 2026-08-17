@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 /// Current settings version for migration support.
-const CURRENT_VERSION: u32 = 9;
+const CURRENT_VERSION: u32 = 10;
 
 /// Which mouse button to simulate for 3-finger drag.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -42,6 +42,8 @@ pub enum GestureAction {
     PageUp,
     PageDown,
     Maximize,
+    // Custom keyboard shortcut
+    Custom,
 }
 
 impl Default for GestureAction {
@@ -68,6 +70,65 @@ impl Default for DeviceDragConfig {
     }
 }
 
+/// Application item in blacklist or whitelist for scroll policy.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(default)]
+pub struct AppPolicyItem {
+    pub path: String,
+    pub name: String,
+    pub description: String,
+    pub icon: String,
+}
+
+impl AppPolicyItem {
+    pub fn new(path: impl Into<String>, name: impl Into<String>, description: impl Into<String>, icon: impl Into<String>) -> Self {
+        Self {
+            path: path.into(),
+            name: name.into(),
+            description: description.into(),
+            icon: icon.into(),
+        }
+    }
+
+    pub fn from_name(name: impl Into<String>) -> Self {
+        let n = name.into();
+        Self {
+            path: String::new(),
+            name: n.clone(),
+            description: n,
+            icon: String::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum AppPolicyEntry {
+    Item(AppPolicyItem),
+    Legacy(String),
+}
+
+impl From<AppPolicyEntry> for AppPolicyItem {
+    fn from(entry: AppPolicyEntry) -> Self {
+        match entry {
+            AppPolicyEntry::Item(item) => item,
+            AppPolicyEntry::Legacy(s) => AppPolicyItem::from_name(s),
+        }
+    }
+}
+
+fn deserialize_app_policy_list<'de, D>(deserializer: D) -> Result<Vec<AppPolicyItem>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let entries: Vec<AppPolicyEntry> = Vec::deserialize(deserializer)?;
+    Ok(entries.into_iter().map(AppPolicyItem::from).collect())
+}
+
+fn default_true() -> bool {
+    true
+}
+
 /// Main application configuration. Persisted as JSON.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
@@ -87,6 +148,10 @@ pub struct Config {
 
     // 3-finger tap
     pub three_finger_tap_enabled: bool,
+    /// Action for three-finger tap (default: Search). Replaces hardcoded Win+S.
+    pub three_finger_tap_action: GestureAction,
+    /// Custom shortcut strings keyed by slot name (e.g. "three_finger_tap", "four_finger_swipe_up").
+    pub custom_shortcuts: HashMap<String, String>,
 
     // 4-finger gestures
     pub four_finger_swipe_up: GestureAction,
@@ -125,6 +190,24 @@ pub struct Config {
     pub smooth_scroll_tick_ms: u64,
     pub natural_scroll: bool,
 
+    // Scroll policy (生效策略): 按前台窗口决定平滑滚动是否生效
+    #[serde(default = "default_true")]
+    pub scroll_policy_enabled: bool,
+    #[serde(default = "default_true")]
+    pub scroll_policy_fullscreen_disabled: bool,
+    #[serde(default = "default_true")]
+    pub scroll_policy_blacklist_enabled: bool,
+    #[serde(default)]
+    pub scroll_policy_browser_only: bool,
+    #[serde(default)]
+    pub scroll_policy_whitelist_enabled: bool,
+    #[serde(default)]
+    pub scroll_policy_mode: String, // Kept for legacy compatibility
+    #[serde(default, deserialize_with = "deserialize_app_policy_list")]
+    pub scroll_policy_blacklist: Vec<AppPolicyItem>,
+    #[serde(default, deserialize_with = "deserialize_app_policy_list")]
+    pub scroll_policy_whitelist: Vec<AppPolicyItem>,
+
     // General
     pub run_at_startup: bool,
     pub close_to_tray: bool,
@@ -147,6 +230,8 @@ impl Default for Config {
             stop_threshold: 5.0,
 
             three_finger_tap_enabled: true,
+            three_finger_tap_action: GestureAction::Search,
+            custom_shortcuts: HashMap::new(),
 
             four_finger_swipe_up: GestureAction::WinTab,
             four_finger_swipe_down: GestureAction::ShowDesktop,
@@ -184,6 +269,16 @@ impl Default for Config {
             smooth_scroll_deadzone: 1.0,
             smooth_scroll_tick_ms: 4,
             natural_scroll: true,
+
+            // Scroll policy — enabled by default
+            scroll_policy_enabled: true,
+            scroll_policy_fullscreen_disabled: true,
+            scroll_policy_blacklist_enabled: true,
+            scroll_policy_browser_only: false,
+            scroll_policy_whitelist_enabled: false,
+            scroll_policy_mode: "blacklist".into(),
+            scroll_policy_blacklist: Vec::new(),
+            scroll_policy_whitelist: Vec::new(),
 
             run_at_startup: false,
             close_to_tray: true,
@@ -292,4 +387,44 @@ mod tests {
         config.migrate();
         assert_eq!(config.version, CURRENT_VERSION);
     }
+
+    #[test]
+    fn test_app_policy_item_legacy_deserialization() {
+        let json_legacy = r#"{
+            "scroll_policy_enabled": true,
+            "scroll_policy_blacklist": ["chrome", "notepad"],
+            "scroll_policy_whitelist": ["msedge"]
+        }"#;
+        let cfg: Config = serde_json::from_str(json_legacy).unwrap();
+        assert_eq!(cfg.scroll_policy_blacklist.len(), 2);
+        assert_eq!(cfg.scroll_policy_blacklist[0].name, "chrome");
+        assert_eq!(cfg.scroll_policy_blacklist[1].name, "notepad");
+        assert_eq!(cfg.scroll_policy_whitelist.len(), 1);
+        assert_eq!(cfg.scroll_policy_whitelist[0].name, "msedge");
+    }
+
+    #[test]
+    fn test_app_policy_item_structured_deserialization() {
+        let json_struct = r#"{
+            "scroll_policy_enabled": true,
+            "scroll_policy_fullscreen_disabled": true,
+            "scroll_policy_blacklist_enabled": true,
+            "scroll_policy_browser_only": true,
+            "scroll_policy_whitelist_enabled": false,
+            "scroll_policy_blacklist": [
+                {
+                    "path": "C:\\Windows\\notepad.exe",
+                    "name": "notepad.exe",
+                    "description": "记事本",
+                    "icon": "data:image/png;base64,123"
+                }
+            ]
+        }"#;
+        let cfg: Config = serde_json::from_str(json_struct).unwrap();
+        assert!(cfg.scroll_policy_fullscreen_disabled);
+        assert!(cfg.scroll_policy_browser_only);
+        assert_eq!(cfg.scroll_policy_blacklist[0].path, "C:\\Windows\\notepad.exe");
+        assert_eq!(cfg.scroll_policy_blacklist[0].description, "记事本");
+    }
 }
+
