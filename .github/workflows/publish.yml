@@ -27,6 +27,36 @@ jobs:
         with:
           workspaces: "./src-tauri -> target"
 
+      - name: Prepare Release Notes
+        id: release_notes
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $ver = $tag.TrimStart('v')
+          $docPath = "docs/release-notes/$tag.md"
+          if (-not (Test-Path $docPath)) {
+            $docPath = "docs/release-notes/v$ver.md"
+          }
+
+          if (Test-Path $docPath) {
+            Write-Host "Found release notes at $docPath"
+            $body = Get-Content $docPath -Raw -Encoding utf8
+          } elseif (Test-Path "CHANGELOG.md") {
+            Write-Host "Extracting release notes from CHANGELOG.md..."
+            $changelog = Get-Content "CHANGELOG.md" -Raw -Encoding utf8
+            if ($changelog -match "(?ms)## \[$ver\].*?(?=(## \[|$))") {
+              $body = $matches[0]
+            } else {
+              $body = "MacTouchpad $tag 自动构建发布版本。请在下方下载对应资产。"
+            }
+          } else {
+            $body = "MacTouchpad $tag 自动构建发布版本。请在下方下载对应资产。"
+          }
+
+          # Export multiline release body to GITHUB_ENV
+          $delimiter = [System.Guid]::NewGuid().ToString()
+          "RELEASE_BODY<<$delimiter`n$body`n$delimiter" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Build and Publish
         uses: tauri-apps/tauri-action@v0
         env:
@@ -34,6 +64,6 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "MacTouchpad ${{ github.ref_name }}"
-          releaseBody: "MacTouchpad ${{ github.ref_name }} 自动构建发布版本。请在下方下载对应的安装包。"
-          releaseDraft: true
+          releaseBody: ${{ env.RELEASE_BODY }}
+          releaseDraft: false
           prerelease: false
