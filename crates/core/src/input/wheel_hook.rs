@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicBool, AtomicU32, AtomicI32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::mpsc;
 use windows::Win32::Foundation::*;
 use windows::Win32::System::Threading::GetCurrentThreadId;
@@ -100,22 +100,6 @@ unsafe extern "system" fn low_level_mouse_proc(
 ) -> LRESULT {
     if n_code >= 0 {
         let msg = w_param.0 as u32;
-
-        // Block touch-promoted mouse events to prevent cursor jumping and disappearing.
-        // We cast dwExtraInfo to u32 to prevent sign-extension mismatches on 64-bit systems.
-        if msg == WM_MOUSEMOVE || msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP
-            || msg == WM_RBUTTONDOWN || msg == WM_RBUTTONUP || msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP
-        {
-            let info = l_param.0 as *const MSLLHOOKSTRUCT;
-            if !info.is_null() {
-                let info_ref = &*info;
-                let is_touch = ((info_ref.dwExtraInfo as u32) & 0xFFFFFF00) == 0xFF515700;
-                
-                if is_touch {
-                    return LRESULT(1); // Swallow
-                }
-            }
-        }
 
         if msg == WM_MOUSEWHEEL || msg == WM_MOUSEHWHEEL {
             let info = l_param.0 as *const MSLLHOOKSTRUCT;
