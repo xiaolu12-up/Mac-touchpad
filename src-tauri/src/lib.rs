@@ -493,7 +493,136 @@ fn parse_action(s: &str) -> GestureAction {
     }
 }
 
-// ── Entry Point ──
+#[derive(Serialize)]
+struct DiagnosticsReport {
+    app_version: String,
+    os_info: String,
+    is_admin: bool,
+    touchpad: mac_touchpad_core::debug::DeviceDiagnostics,
+    recent_logs: Vec<mac_touchpad_core::debug::DebugLogEntry>,
+}
+
+#[tauri::command]
+fn get_diagnostics_report() -> DiagnosticsReport {
+    let os_info = format!("Windows ({})", std::env::consts::ARCH);
+    let is_admin = is_process_elevated();
+    DiagnosticsReport {
+        app_version: env!("CARGO_PKG_VERSION").to_string(),
+        os_info,
+        is_admin,
+        touchpad: mac_touchpad_core::debug::get_device_diagnostics(),
+        recent_logs: mac_touchpad_core::debug::get_debug_logs(),
+    }
+}
+
+#[tauri::command]
+fn set_debug_mode(enabled: bool) {
+    mac_touchpad_core::debug::set_debug_mode_enabled(enabled);
+}
+
+#[tauri::command]
+fn clear_diagnostics_logs() {
+    mac_touchpad_core::debug::clear_debug_logs();
+}
+
+#[tauri::command]
+fn open_log_dir() -> Result<(), String> {
+    let mut path = dirs::config_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
+    path.push("MacTouchpad");
+    path.push("logs");
+    let _ = std::fs::create_dir_all(&path);
+    std::process::Command::new("explorer.exe")
+        .arg(path)
+        .spawn()
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn export_log_file() -> Result<String, String> {
+    let rep = get_diagnostics_report();
+    let mut dir = dirs::config_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
+    dir.push("MacTouchpad");
+    dir.push("logs");
+    let _ = std::fs::create_dir_all(&dir);
+
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    let file_name = format!("touchpad_diagnostics_{}.log", now);
+    let mut file_path = dir.clone();
+    file_path.push(&file_name);
+
+    let logs_str = rep.recent_logs.iter()
+        .map(|l| format!("[{}] [{}] {}", l.time, l.level, l.message))
+        .collect::<Vec<_>>()
+        .join("\r\n");
+
+    let content = format!(
+        "====================================================\r\n\
+MacTouchpad 诊断与触控日志报告\r\n\
+====================================================\r\n\
+软件版本: v{}\r\n\
+系统架构: {}\r\n\
+管理员权限: {}\r\n\
+触控板检测状态: {}\r\n\
+硬件厂商ID (Vendor ID): {}\r\n\
+产品ID (Product ID): {}\r\n\
+设备哈希 ID: {}\r\n\
+坐标逻辑范围: X[{}, {}], Y[{}, {}]\r\n\
+最近触点数据: {}\r\n\
+====================================================\r\n\
+触控与手势日志流:\r\n\
+====================================================\r\n\
+{}\r\n",
+        rep.app_version,
+        rep.os_info,
+        if rep.is_admin { "是 (Elevated)" } else { "否 (Standard)" },
+        if rep.touchpad.device_detected { "已检测到 (PTP)" } else { "未检测到" },
+        rep.touchpad.vendor_id,
+        rep.touchpad.product_id,
+        rep.touchpad.device_id,
+        rep.touchpad.x_range.0, rep.touchpad.x_range.1,
+        rep.touchpad.y_range.0, rep.touchpad.y_range.1,
+        if rep.touchpad.last_contacts_str.is_empty() { "无" } else { &rep.touchpad.last_contacts_str },
+        logs_str,
+    );
+
+    std::fs::write(&file_path, content).map_err(|e| format!("写入日志文件失败: {}", e))?;
+    let path_str = file_path.to_string_lossy().to_string();
+
+    // Select file in explorer
+    let _ = std::process::Command::new("explorer.exe")
+        .args(["/select,", &path_str])
+        .spawn();
+
+    Ok(path_str)
+}
+
+fn is_process_elevated() -> bool {
+    use windows::Win32::Security::*;
+    use windows::Win32::System::Threading::*;
+    unsafe {
+        let mut token = windows::Win32::Foundation::HANDLE::default();
+        if OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token).is_ok() {
+            let mut elevation = TOKEN_ELEVATION::default();
+            let mut ret_len = 0u32;
+            let res = GetTokenInformation(
+                token,
+                TokenElevation,
+                Some(&mut elevation as *mut _ as *mut _),
+                std::mem::size_of::<TOKEN_ELEVATION>() as u32,
+                &mut ret_len,
+            );
+            let _ = windows::Win32::Foundation::CloseHandle(token);
+            if res.is_ok() {
+                return elevation.TokenIsElevated != 0;
+            }
+        }
+        false
+    }
+}
 
 #[tauri::command]
 async fn record_shortcut_cmd() -> Result<String, String> {
@@ -621,6 +750,11 @@ pub fn run() {
             browse_and_get_exe_info,
             inspect_exe_path,
             show_system_notification,
+            get_diagnostics_report,
+            set_debug_mode,
+            clear_diagnostics_logs,
+            open_log_dir,
+            export_log_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

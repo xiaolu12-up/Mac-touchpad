@@ -6,7 +6,7 @@ use windows::Win32::UI::WindowsAndMessaging::*;
 use windows::core::*;
 
 use crate::config::Config;
-use crate::contacts::manager::{ContactResult, ContactsManager};
+use crate::contacts::manager::ContactsManager;
 use crate::gesture::drag::TimerAction;
 use crate::gesture::engine::GestureEngine;
 use crate::hid::parser;
@@ -116,9 +116,18 @@ fn run_message_loop(
         RegisterClassExW(&wnd_class);
 
         let hwnd = CreateWindowExW(
-            WINDOW_EX_STYLE::default(), class_name, w!("MacTouchpad"),
-            WINDOW_STYLE::default(), 0, 0, 0, 0,
-            HWND_MESSAGE, HMENU(0), instance, None,
+            WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
+            class_name,
+            w!("MacTouchpad"),
+            WS_POPUP,
+            0,
+            0,
+            0,
+            0,
+            HWND(0),
+            HMENU(0),
+            instance,
+            None,
         );
 
         let _ = hwnd_tx.send(hwnd);
@@ -128,8 +137,11 @@ fn run_message_loop(
         wheel_hook::start_hook_thread();
 
         let mut raw_input = RawInputManager::new();
-        tracing::info!("Touchpad detected: {}", raw_input.exists_any());
-        tracing::info!("Raw input registered: {}", raw_input.register_input(hwnd));
+        let exists = raw_input.exists_any();
+        let registered = raw_input.register_input(hwnd);
+        tracing::info!("Touchpad detected: {}", exists);
+        tracing::info!("Raw input registered: {}", registered);
+        crate::debug::log_debug("INIT", format!("Touchpad detected: {}, Raw input registered: {}", exists, registered));
 
         let scroller = crate::input::smooth_scroll::SmoothScroller::new(
             config.smooth_scroll_speed,
@@ -277,12 +289,35 @@ unsafe fn handle_wm_input(state: &mut WindowState, lparam: LPARAM) {
     let result = match parser::parse_input(lparam) { Some(r) => r, None => return };
     let hv = result.device.0 as isize;
     if !state.raw_input.devices.contains_key(&hv) && !state.raw_input.exists(result.device) {
+        crate::debug::log_debug("WARN", format!("Touchpad handle {} ignored (not recognized as PTP)", hv));
         return;
     }
-    let device_id = state.raw_input.get_device_info(hv)
-        .map(|d| d.device_id.clone()).unwrap_or_else(|| "default".into());
+    let dev_info = state.raw_input.get_device_info(hv);
+    let device_id = dev_info.map(|d| d.device_id.clone()).unwrap_or_else(|| "default".into());
+    let vendor_id = dev_info.map(|d| d.vendor_id.clone()).unwrap_or_default();
+    let product_id = dev_info.map(|d| d.product_id.clone()).unwrap_or_default();
 
     if let crate::contacts::manager::ContactResult::Complete(contacts) = state.contacts_manager.receive(result.contacts, result.contact_count) {
+        let contacts_summary: String = contacts.iter()
+            .map(|c| format!("(id:{}, {}, {})", c.contact_id, c.x, c.y))
+            .collect::<Vec<_>>()
+            .join(" ");
+
+        crate::debug::update_device_diagnostics(crate::debug::DeviceDiagnostics {
+            device_detected: true,
+            device_id: device_id.clone(),
+            vendor_id,
+            product_id,
+            x_range: result.x_range,
+            y_range: result.y_range,
+            last_contact_count: contacts.len() as u32,
+            last_contacts_str: contacts_summary.clone(),
+        });
+
+        if !contacts.is_empty() {
+            crate::debug::log_debug("TOUCH", format!("Fingers: {} -> {}", contacts.len(), contacts_summary));
+        }
+
         state.engine.set_touchpad_ranges(result.x_range, result.y_range);
         match state.engine.on_touchpad_contact(&device_id, contacts) {
             TimerAction::StartTimer(ms) => { let _ = SetTimer(state.hwnd, TIMER_DRAG_END, ms, None); }

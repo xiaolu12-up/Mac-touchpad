@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use windows::Win32::Devices::HumanInterfaceDevice::*;
 use windows::Win32::Foundation::*;
 use windows::Win32::UI::Input::*;
 
@@ -43,24 +42,11 @@ impl RawInputManager {
         let handle_val = hdevice.0 as isize;
 
         unsafe {
-            let mut device_info_size = 0u32;
-
-            // Get required size
-            let _ = GetRawInputDeviceInfoA(
-                hdevice,
-                RIDI_DEVICEINFO,
-                None,
-                &mut device_info_size,
-            );
-
-            if device_info_size == 0 {
-                return false;
-            }
-
             let mut device_info = RID_DEVICE_INFO {
-                cbSize: device_info_size,
+                cbSize: std::mem::size_of::<RID_DEVICE_INFO>() as u32,
                 ..Default::default()
             };
+            let mut device_info_size = std::mem::size_of::<RID_DEVICE_INFO>() as u32;
 
             let result = GetRawInputDeviceInfoA(
                 hdevice,
@@ -69,7 +55,7 @@ impl RawInputManager {
                 &mut device_info_size,
             );
 
-            if result == u32::MAX {
+            if result == u32::MAX || result == 0 {
                 return false;
             }
 

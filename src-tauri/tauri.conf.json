@@ -41,7 +41,10 @@
           "TradChinese",
           "Japanese"
         ],
-        "displayLanguageSelector": true
+        "displayLanguageSelector": false,
+        "customLanguageFiles": {
+          "SimpChinese": "nsis/SimpChinese.nsh"
+        }
       }
     }
   }

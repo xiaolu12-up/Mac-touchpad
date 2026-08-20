@@ -171,6 +171,7 @@ impl GestureEngine {
 
                     if action == GestureAction::AltTab && (direction == SwipeDirection::Left || direction == SwipeDirection::Right) {
                         tracing::info!("Alt-Tab triggered by 4F swipe {:?}", direction);
+                        crate::debug::log_debug("GESTURE", format!("4-Finger Swipe {:?} -> Alt-Tab", direction));
                         self.alt_tab_active = true;
                         self.alt_tab_base_centroid = compute_centroid(&contacts);
                         keyboard::key_down(windows::Win32::UI::Input::KeyboardAndMouse::VK_LMENU);
@@ -181,6 +182,7 @@ impl GestureEngine {
                             keyboard::send_key_combo(&[windows::Win32::UI::Input::KeyboardAndMouse::VK_LEFT]);
                         }
                     } else {
+                        crate::debug::log_debug("GESTURE", format!("4-Finger Swipe {:?} -> {:?}", direction, action));
                         self.execute_swipe_action(direction);
                     }
                     self.four_finger_action_triggered = true;
@@ -191,6 +193,7 @@ impl GestureEngine {
                     if let Some(direction) =
                         self.pinch_detector.feed(&contacts, self.config.pinch_spread_threshold)
                     {
+                        crate::debug::log_debug("GESTURE", format!("4-Finger Pinch/Spread: {:?}", direction));
                         self.execute_pinch_action(direction);
                         self.four_finger_action_triggered = true;
                     }
@@ -275,6 +278,7 @@ impl GestureEngine {
                     self.config.edge_slide_threshold,
                 ) {
                     tracing::info!("Edge slide action: {:?}", action);
+                    crate::debug::log_debug("GESTURE", format!("Edge slide triggered: {:?}", action));
                     self.execute_edge_action(action);
                 }
             }
@@ -301,6 +305,7 @@ impl GestureEngine {
                 )
             {
                 tracing::info!("Three-finger tap detected → {:?}", self.config.three_finger_tap_action);
+                crate::debug::log_debug("GESTURE", format!("3-Finger Tap: {:?}", self.config.three_finger_tap_action));
                 self.execute_action_for_slot(self.config.three_finger_tap_action, "three_finger_tap");
             }
             self.drag.force_stop(&self.config, &mut self.mouse);

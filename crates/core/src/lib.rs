@@ -9,6 +9,7 @@ pub mod scroll_policy;
 pub mod speed;
 pub mod startup;
 pub mod window;
+pub mod debug;
 
 // Re-exports for convenience
 pub use config::Config;
