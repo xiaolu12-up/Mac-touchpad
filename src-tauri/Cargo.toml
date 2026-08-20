@@ -1,6 +1,6 @@
 [package]
 name = "mac-touchpad"
-version = "0.1.5"
+version = "0.1.6"
 description = "MacTouchpad - Mac 触控板手势 for Windows"
 edition = "2021"
 
@@ -22,6 +22,7 @@ serde_json = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
+dirs = "5"
 
 # Our core engine
 mac-touchpad-core = { path = "../crates/core" }
@@ -34,5 +35,7 @@ windows = { version = "0.52", features = [
     "Win32_UI_Shell",
     "Win32_Graphics_Gdi",
     "Win32_Storage_FileSystem",
+    "Win32_Security",
+    "Win32_System_Threading",
 ] }
 

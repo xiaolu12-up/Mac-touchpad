@@ -2104,29 +2104,33 @@
             animation: wheel-roll-down 0.8s linear infinite;
         }
 
-        @keyframes edge-fingers {
+        @keyframes edge-f1-slide-up {
             0% {
                 transform: translate(-50%, -50%) scale(0);
                 opacity: 0;
                 left: 10%;
-                top: 75%;
+                top: 68%;
             }
             10% {
                 transform: translate(-50%, -50%) scale(1);
                 opacity: 1;
                 left: 10%;
-                top: 75%;
+                top: 68%;
             }
-            40% {
+            28% {
+                left: 10%;
+                top: 68%;
+            }
+            58% {
                 left: 10%;
                 top: 25%;
             }
-            70% {
+            72% {
                 left: 10%;
                 top: 25%;
                 opacity: 1;
             }
-            80% {
+            82% {
                 opacity: 0;
                 transform: translate(-50%, -50%) scale(0);
                 left: 10%;
@@ -2137,7 +2141,7 @@
             }
         }
 
-        @keyframes edge-fingers-inv {
+        @keyframes edge-f1-slide-down {
             0% {
                 transform: translate(-50%, -50%) scale(0);
                 opacity: 0;
@@ -2150,77 +2154,120 @@
                 left: 10%;
                 top: 25%;
             }
-            40% {
+            28% {
                 left: 10%;
-                top: 75%;
+                top: 25%;
             }
-            70% {
+            58% {
                 left: 10%;
-                top: 75%;
+                top: 68%;
+            }
+            72% {
+                left: 10%;
+                top: 68%;
                 opacity: 1;
             }
-            80% {
+            82% {
                 opacity: 0;
                 transform: translate(-50%, -50%) scale(0);
                 left: 10%;
-                top: 75%;
+                top: 68%;
             }
             100% {
                 opacity: 0;
+            }
+        }
+
+        @keyframes edge-f2-center-lift {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+                left: 52%;
+                top: 55%;
+            }
+            10% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 52%;
+                top: 55%;
+            }
+            22% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                left: 52%;
+                top: 55%;
+            }
+            30% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0;
+                left: 52%;
+                top: 52%;
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
             }
         }
 
         @keyframes volume-pop {
-            0%, 10% {
+            0%, 24% {
                 opacity: 0;
                 transform: translate(-50%, -50%) scale(0.8);
             }
-            20%, 75% {
+            32%, 72% {
                 opacity: 1;
                 transform: translate(-50%, -50%) scale(1);
             }
-            85%, 100% {
+            82%, 100% {
                 opacity: 0;
             }
         }
 
         @keyframes volume-fill-up {
-            0%, 15% {
+            0%, 28% {
                 height: 25%;
             }
-            45%, 75% {
+            58%, 75% {
                 height: 80%;
             }
         }
 
         @keyframes volume-fill-down {
-            0%, 15% {
+            0%, 28% {
                 height: 80%;
             }
-            45%, 75% {
+            58%, 75% {
                 height: 25%;
             }
         }
 
         .mode-edge-volume .f1 {
-            animation: edge-fingers-inv 3s infinite;
+            animation: edge-f1-slide-down 3.2s infinite;
+        }
+
+        .mode-edge-volume .f2 {
+            animation: edge-f2-center-lift 3.2s infinite;
         }
 
         .mode-edge-volume.invert .f1 {
-            animation: edge-fingers 3s infinite;
+            animation: edge-f1-slide-up 3.2s infinite;
+        }
+
+        .mode-edge-volume.invert .f2 {
+            animation: edge-f2-center-lift 3.2s infinite;
         }
 
         .mode-edge-volume .mock-volume-hud {
             display: flex;
-            animation: volume-pop 3s infinite;
+            animation: volume-pop 3.2s infinite;
         }
 
         .mode-edge-volume .vol-fill {
-            animation: volume-fill-up 3s infinite;
+            animation: volume-fill-up 3.2s infinite;
         }
 
         .mode-edge-volume.invert .vol-fill {
-            animation: volume-fill-up 3s infinite;
+            animation: volume-fill-down 3.2s infinite;
         }
 
         @keyframes cursor-finger {
@@ -2658,7 +2705,8 @@
                             <select id="g4u"
                                     onchange="onGestureActionChange('g4u','four_finger_swipe_up');save('ss2')"></select>
                             <div class="key-recorder" id="kr-four_finger_swipe_up">
-                                <input class="key-recorder-input" id="kr-input-four_finger_swipe_up" placeholder="点击此处录制快捷键"
+                                <input class="key-recorder-input" id="kr-input-four_finger_swipe_up"
+                                       placeholder="点击此处录制快捷键"
                                        readonly type="text">
                                 <button class="btn-clear-key"
                                         onclick="event.stopPropagation();clearKeyRecorder('four_finger_swipe_up')">清除
@@ -2671,7 +2719,8 @@
                             <select id="g4d"
                                     onchange="onGestureActionChange('g4d','four_finger_swipe_down');save('ss2')"></select>
                             <div class="key-recorder" id="kr-four_finger_swipe_down">
-                                <input class="key-recorder-input" id="kr-input-four_finger_swipe_down" placeholder="点击此处录制快捷键"
+                                <input class="key-recorder-input" id="kr-input-four_finger_swipe_down"
+                                       placeholder="点击此处录制快捷键"
                                        readonly type="text">
                                 <button class="btn-clear-key"
                                         onclick="event.stopPropagation();clearKeyRecorder('four_finger_swipe_down')">清除
@@ -2684,7 +2733,8 @@
                             <select id="g4l"
                                     onchange="onGestureActionChange('g4l','four_finger_swipe_left');save('ss2')"></select>
                             <div class="key-recorder" id="kr-four_finger_swipe_left">
-                                <input class="key-recorder-input" id="kr-input-four_finger_swipe_left" placeholder="点击此处录制快捷键"
+                                <input class="key-recorder-input" id="kr-input-four_finger_swipe_left"
+                                       placeholder="点击此处录制快捷键"
                                        readonly type="text">
                                 <button class="btn-clear-key"
                                         onclick="event.stopPropagation();clearKeyRecorder('four_finger_swipe_left')">清除
@@ -2697,7 +2747,8 @@
                             <select id="g4r"
                                     onchange="onGestureActionChange('g4r','four_finger_swipe_right');save('ss2')"></select>
                             <div class="key-recorder" id="kr-four_finger_swipe_right">
-                                <input class="key-recorder-input" id="kr-input-four_finger_swipe_right" placeholder="点击此处录制快捷键"
+                                <input class="key-recorder-input" id="kr-input-four_finger_swipe_right"
+                                       placeholder="点击此处录制快捷键"
                                        readonly type="text">
                                 <button class="btn-clear-key"
                                         onclick="event.stopPropagation();clearKeyRecorder('four_finger_swipe_right')">清除
@@ -2710,7 +2761,8 @@
                             <select id="g4sp"
                                     onchange="onGestureActionChange('g4sp','four_finger_spread');save('ss2')"></select>
                             <div class="key-recorder" id="kr-four_finger_spread">
-                                <input class="key-recorder-input" id="kr-input-four_finger_spread" placeholder="点击此处录制快捷键"
+                                <input class="key-recorder-input" id="kr-input-four_finger_spread"
+                                       placeholder="点击此处录制快捷键"
                                        readonly type="text">
                                 <button class="btn-clear-key"
                                         onclick="event.stopPropagation();clearKeyRecorder('four_finger_spread')">清除
@@ -2723,7 +2775,8 @@
                             <select id="g4pi"
                                     onchange="onGestureActionChange('g4pi','four_finger_pinch');save('ss2')"></select>
                             <div class="key-recorder" id="kr-four_finger_pinch">
-                                <input class="key-recorder-input" id="kr-input-four_finger_pinch" placeholder="点击此处录制快捷键"
+                                <input class="key-recorder-input" id="kr-input-four_finger_pinch"
+                                       placeholder="点击此处录制快捷键"
                                        readonly type="text">
                                 <button class="btn-clear-key"
                                         onclick="event.stopPropagation();clearKeyRecorder('four_finger_pinch')">清除
@@ -2734,17 +2787,17 @@
                     <div class="sec">
                         <div class="st">边缘手势</div>
                         <div class="row"
-                             onmouseenter="showPreview('p-gestures', 'edge-volume', '左边缘手势', '在触控板最左侧边缘上下滑动调节系统音量。默认向下滑动增大音量，向上滑动减小音量。')">
+                             onmouseenter="showPreview('p-gestures', 'edge-volume', '左边缘手势', '一指在左侧边缘、一指在中间，松开中间指后在左边缘上下滑动即可调节系统音量。默认向上滑动增大音量，向下滑动减小音量。')">
                             <div>
                                 <div class="lbl">边缘手势</div>
-                                <div class="dsc">左边缘音量 OSD</div>
+                                <div class="dsc">一指在左侧一指中间后松开中间指滑动</div>
                             </div>
                             <label class="tg"><input id="edge" onchange="save('ss2')" onclick="save('ss2')"
                                                      type="checkbox"><span
                                     class="sl"></span></label>
                         </div>
                         <div class="row"
-                             onmouseenter="showPreview('p-gestures', 'edge-volume', '反转音量方向', '启用后：上滑=音量增，下滑=音量减（即向上滑动增大音量，向下滑动减小音量）。')">
+                             onmouseenter="showPreview('p-gestures', 'edge-volume', '反转音量方向', '一指在左侧边缘、一指在中间，松开中间指后在左边缘上下滑动。启用后：下滑=音量增，上滑=音量减。')">
                             <div>
                                 <div class="lbl">反转音量方向</div>
                                 <div class="dsc">开启后：上滑=音量增，下滑=音量减</div>
@@ -3022,14 +3075,17 @@
                     <div class="name">MacTouchpad</div>
                     <div class="desc">在 Windows 上实现 Mac 触控板手势体验</div>
                     <div class="info">
-                        <div>版本: <span id="ver">-</span></div>
+                        <div>版本: <span id="ver" onclick="handleVersionClick()"
+                                         style="cursor: pointer; user-select: none; transition: color 0.2s;"
+                                         title="连续点击开启调试模式">-</span></div>
                         <div>作者: <span id="author">-</span></div>
                         <div style="margin-top:4px">
                             仓库: <a href="#" id="repo" style="color:var(--accent)">GitHub</a> |
                             <a href="https://gitee.com/lu52/Mac-touchpad" style="color:var(--accent)" target="_blank">Gitee</a>
                         </div>
                         <div style="margin-top:4px">
-                            反馈: <a href="https://github.com/xiaolu12-up/Mac-touchpad/issues" style="color:var(--accent)"
+                            反馈: <a href="https://github.com/xiaolu12-up/Mac-touchpad/issues"
+                                     style="color:var(--accent)"
                                      target="_blank">GitHub Issues</a> |
                             <a href="https://gitee.com/lu52/Mac-touchpad/issues" style="color:var(--accent)"
                                target="_blank">Gitee Issues</a>
@@ -3044,6 +3100,83 @@
                         </div>
                         <div id="update-result" style="font-size:12px; min-height: 18px; margin-top: 2px;"></div>
                     </div>
+                </div>
+            </div>
+
+            <!-- ═══ 调试与诊断工具 (隐蔽模式) ═══ -->
+            <div class="sec" id="debug-sec" style="display: none; border-color: var(--accent); margin-top: 14px;">
+                <div class="st" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>🛠️ 触控板硬件诊断与实时监控</span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="debug-live-badge" style="font-size: 10px; color: var(--ok); text-transform: none;">● 实时监控中</span>
+                        <span onclick="closeDebugMode()"
+                              style="cursor: pointer; font-size: 14px; color: var(--dim); padding: 0 4px;"
+                              title="关闭调试模式">✕</span>
+                    </div>
+                </div>
+
+                <!-- 硬件诊断信息 -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 14px;">
+                    <div style="background: var(--bg); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div style="font-size: 11px; color: var(--dim);">触控板硬件状态</div>
+                        <div id="diag-hw-status"
+                             style="font-size: 13px; font-weight: 600; margin-top: 4px; color: var(--ok);">-
+                        </div>
+                    </div>
+                    <div style="background: var(--bg); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div style="font-size: 11px; color: var(--dim);">Vendor / Product ID</div>
+                        <div id="diag-hw-id"
+                             style="font-size: 13px; font-weight: 600; margin-top: 4px; font-family: monospace;">-
+                        </div>
+                    </div>
+                    <div style="background: var(--bg); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div style="font-size: 11px; color: var(--dim);">坐标逻辑范围 (X / Y)</div>
+                        <div id="diag-hw-range"
+                             style="font-size: 13px; font-weight: 600; margin-top: 4px; font-family: monospace;">-
+                        </div>
+                    </div>
+                    <div style="background: var(--bg); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div style="font-size: 11px; color: var(--dim);">系统环境与权限</div>
+                        <div id="diag-os-info" style="font-size: 13px; font-weight: 600; margin-top: 4px;">-</div>
+                    </div>
+                </div>
+
+                <!-- 实时最后触点 -->
+                <div style="background: var(--bg); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 11px; color: var(--dim);">实时触点数据</span>
+                        <span id="diag-contact-count"
+                              style="font-size: 11px; background: rgba(124, 108, 240, 0.15); color: var(--accent); padding: 2px 8px; border-radius: 12px; font-weight: 600;">0 指</span>
+                    </div>
+                    <div id="diag-contacts-data"
+                         style="font-size: 12px; font-family: monospace; color: var(--text); margin-top: 6px; word-break: break-all; min-height: 18px;">
+                        等待触控输入...
+                    </div>
+                </div>
+
+                <!-- 实时日志流 -->
+                <div style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 11px; color: var(--dim);">近期触控与手势日志</span>
+                        <button class="btn btn-sm btn-sec" onclick="clearDiagnosticsLogs()"
+                                style="padding: 2px 8px; font-size: 10px;">清空日志
+                        </button>
+                    </div>
+                    <div id="diag-log-container"
+                         style="background: #090912; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-family: Consolas, monospace; font-size: 11px; height: 140px; overflow-y: auto; color: #a5b4fc; display: flex; flex-direction: column; gap: 3px;">
+                        <div>[系统] 调试监控已就绪...</div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn btn-sm" id="btn-export-diag" onclick="exportLogFile()" style="flex: 1.2;">📄
+                        导出完整诊断日志 (.log)
+                    </button>
+                    <button class="btn btn-sm btn-sec" onclick="openLogDir()" style="flex: 0.8;">📂 打开日志目录</button>
+                    <button class="btn btn-sm btn-sec" id="btn-copy-diag" onclick="copyDiagnosticsReport()"
+                            style="flex: 0.8;">📋 复制简报
+                    </button>
                 </div>
             </div>
         </div>
@@ -3281,7 +3414,7 @@
     function updateVolumePreview() {
         const isInvert = document.getElementById('inv_vol').checked;
         showPreview('p-gestures', 'edge-volume', '反转音量方向',
-            isInvert ? '启用后，在左边缘向上滑动增大音量，向下滑动减小音量。' : '关闭后，在左边缘向下滑动增大音量，向上滑动减小音量。'
+            isInvert ? '一指在左侧边缘、一指在中间，松开中间指后：在左边缘向上滑动增大音量，向下滑动减小音量。' : '一指在左侧边缘、一指在中间，松开中间指后：在左边缘向下滑动增大音量，向上滑动减小音量。'
         );
     }
 
@@ -4059,6 +4192,236 @@
             }
         }
     });
+
+    // ═══ 隐蔽调试模式 (点击版本号 5 次激活) ═══
+    let versionClickCount = 0;
+    let versionClickTimer = null;
+    let debugModeActive = false;
+    let diagnosticsInterval = null;
+    let lastReportData = null;
+
+    function handleVersionClick() {
+        versionClickCount++;
+        const verEl = document.getElementById('ver');
+        if (verEl) {
+            verEl.style.color = 'var(--accent)';
+            setTimeout(() => {
+                if (verEl) verEl.style.color = '';
+            }, 200);
+        }
+
+        clearTimeout(versionClickTimer);
+        versionClickTimer = setTimeout(() => {
+            versionClickCount = 0;
+        }, 2200);
+
+        if (versionClickCount >= 5) {
+            versionClickCount = 0;
+            debugModeActive = !debugModeActive;
+            applyDebugModeState();
+        }
+    }
+
+    function closeDebugMode() {
+        debugModeActive = false;
+        applyDebugModeState();
+    }
+
+    function applyDebugModeState() {
+        const debugSec = document.getElementById('debug-sec');
+        if (debugSec) {
+            debugSec.style.display = debugModeActive ? 'block' : 'none';
+        }
+
+        if (invoke) {
+            invoke('set_debug_mode', {enabled: debugModeActive}).catch(console.error);
+        }
+
+        const updateRes = document.getElementById('update-result');
+        if (updateRes) {
+            updateRes.textContent = debugModeActive ? '🛠️ 开发者调试模式已激活！' : '开发者调试模式已关闭 (已停止记录日志)';
+            updateRes.style.color = debugModeActive ? 'var(--ok)' : 'var(--dim)';
+            setTimeout(() => {
+                if (updateRes) updateRes.textContent = '';
+            }, 3000);
+        }
+
+        if (debugModeActive) {
+            startDiagnosticsPolling();
+        } else {
+            stopDiagnosticsPolling();
+        }
+    }
+
+    function startDiagnosticsPolling() {
+        refreshDiagnostics();
+        if (!diagnosticsInterval) {
+            diagnosticsInterval = setInterval(refreshDiagnostics, 500);
+        }
+    }
+
+    function stopDiagnosticsPolling() {
+        if (diagnosticsInterval) {
+            clearInterval(diagnosticsInterval);
+            diagnosticsInterval = null;
+        }
+    }
+
+    async function refreshDiagnostics() {
+        if (!debugModeActive || !invoke) return;
+        try {
+            const rep = await invoke('get_diagnostics_report');
+            lastReportData = rep;
+
+            // Update UI elements
+            const hwStatus = document.getElementById('diag-hw-status');
+            if (hwStatus) {
+                if (rep.touchpad.device_detected) {
+                    hwStatus.textContent = '🟢 正常识别 (PTP 触控板)';
+                    hwStatus.style.color = 'var(--ok)';
+                } else {
+                    hwStatus.textContent = '🔴 未检测到触控板设备';
+                    hwStatus.style.color = 'var(--warn)';
+                }
+            }
+
+            const hwId = document.getElementById('diag-hw-id');
+            if (hwId) {
+                hwId.textContent = `VID:${rep.touchpad.vendor_id || '-'} / PID:${rep.touchpad.product_id || '-'}`;
+            }
+
+            const hwRange = document.getElementById('diag-hw-range');
+            if (hwRange) {
+                hwRange.textContent = `X[${rep.touchpad.x_range[0]}..${rep.touchpad.x_range[1]}] Y[${rep.touchpad.y_range[0]}..${rep.touchpad.y_range[1]}]`;
+            }
+
+            const osInfo = document.getElementById('diag-os-info');
+            if (osInfo) {
+                osInfo.textContent = `${rep.os_info} · ${rep.is_admin ? '管理员权限' : '标准用户'}`;
+            }
+
+            const contactCount = document.getElementById('diag-contact-count');
+            if (contactCount) {
+                contactCount.textContent = `${rep.touchpad.last_contact_count} 指`;
+            }
+
+            const contactsData = document.getElementById('diag-contacts-data');
+            if (contactsData) {
+                contactsData.textContent = rep.touchpad.last_contacts_str || '无触点输入 (触控板空闲)';
+            }
+
+            const logBox = document.getElementById('diag-log-container');
+            if (logBox && rep.recent_logs) {
+                const isNearBottom = logBox.scrollHeight - logBox.scrollTop - logBox.clientHeight < 30;
+                logBox.innerHTML = rep.recent_logs.map(l => {
+                    let color = '#a5b4fc';
+                    if (l.level === 'GESTURE') color = '#4ade80';
+                    else if (l.level === 'WARN') color = '#fbbf24';
+                    else if (l.level === 'TOUCH') color = '#e2e2f0';
+                    return `<div><span style="color:var(--dim); margin-right:6px;">[${l.time}]</span><span style="color:${color}; font-weight:600; margin-right:6px;">[${l.level}]</span><span>${escapeHtml(l.message)}</span></div>`;
+                }).join('');
+
+                if (isNearBottom) {
+                    logBox.scrollTop = logBox.scrollHeight;
+                }
+            }
+        } catch (e) {
+            console.error('refreshDiagnostics error:', e);
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    async function exportLogFile() {
+        if (!invoke) return;
+        try {
+            const btn = document.getElementById('btn-export-diag');
+            if (btn) btn.textContent = '⏳ 正在生成日志文件...';
+
+            const filePath = await invoke('export_log_file');
+
+            if (btn) {
+                btn.textContent = '✅ 日志已导出并定位！';
+                setTimeout(() => {
+                    if (btn) btn.textContent = '📄 导出完整诊断日志 (.log)';
+                }, 3000);
+            }
+
+            const updateRes = document.getElementById('update-result');
+            if (updateRes) {
+                updateRes.textContent = `📄 日志已保存并选中: ${filePath.split('\\').pop()}`;
+                updateRes.style.color = 'var(--ok)';
+                setTimeout(() => {
+                    if (updateRes) updateRes.textContent = '';
+                }, 4000);
+            }
+        } catch (e) {
+            console.error('exportLogFile error:', e);
+            alert('导出日志失败: ' + e);
+        }
+    }
+
+    async function copyDiagnosticsReport() {
+        if (!lastReportData) {
+            await refreshDiagnostics();
+        }
+        if (!lastReportData) return;
+
+        const rep = lastReportData;
+        const logs = (rep.recent_logs || []).map(l => `[${l.time}] [${l.level}] ${l.message}`).join('\n');
+
+        const md = `### MacTouchpad 诊断报告
+- **软件版本**: v${rep.app_version}
+- **系统环境**: ${rep.os_info} (管理员: ${rep.is_admin})
+- **触控板状态**: ${rep.touchpad.device_detected ? '已检测到' : '未检测到'}
+- **硬件 ID**: VID: ${rep.touchpad.vendor_id}, PID: ${rep.touchpad.product_id} (Device ID: ${rep.touchpad.device_id})
+- **逻辑坐标范围**: X[${rep.touchpad.x_range[0]}, ${rep.touchpad.x_range[1]}], Y[${rep.touchpad.y_range[0]}, ${rep.touchpad.y_range[1]}]
+- **最近触点数据**: ${rep.touchpad.last_contacts_str || '无'}
+
+#### 触控与手势日志
+\`\`\`
+${logs || '暂无日志'}
+\`\`\`
+`;
+
+        try {
+            await navigator.clipboard.writeText(md);
+            const btn = document.getElementById('btn-copy-diag');
+            if (btn) {
+                const orig = btn.textContent;
+                btn.textContent = '✅ 已复制！';
+                setTimeout(() => {
+                    if (btn) btn.textContent = orig;
+                }, 2500);
+            }
+        } catch (e) {
+            console.error('Copy failed:', e);
+        }
+    }
+
+    async function openLogDir() {
+        if (invoke) {
+            try {
+                await invoke('open_log_dir');
+            } catch (e) {
+                console.error('open_log_dir:', e);
+            }
+        }
+    }
+
+    async function clearDiagnosticsLogs() {
+        if (invoke) {
+            try {
+                await invoke('clear_diagnostics_logs');
+                await refreshDiagnostics();
+            } catch (e) {
+                console.error('clear_diagnostics_logs:', e);
+            }
+        }
+    }
 
     // Listen for notification activation from Rust backend
     if (window.__TAURI__ && window.__TAURI__.event) {

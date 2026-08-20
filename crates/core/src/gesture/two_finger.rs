@@ -184,9 +184,14 @@ impl EdgeSlideDetector {
         let contact = &contacts[0];
 
         if let Some(active_edge) = self.active_edge {
-            // We are already tracking a left-edge slide!
             // If the finger drifts too far horizontally into the center, cancel it.
-            if contact.x > x_range.0 + edge_threshold + 200 {
+            let drifted = match active_edge {
+                EdgeZone::Left => contact.x > x_range.0 + edge_threshold + 200,
+                EdgeZone::Right => contact.x < x_range.1 - edge_threshold - 200,
+                EdgeZone::Center => true,
+            };
+
+            if drifted {
                 self.reset();
                 self.is_invalid = true;
                 return None;
@@ -198,9 +203,14 @@ impl EdgeSlideDetector {
             }
 
             if self.total_dy.abs() >= slide_threshold {
-                let action = match (active_edge, self.total_dy > 0) {
+                // In touchpad coordinate system, Y=0 is at top, increasing downwards.
+                // Sliding UP decreases Y (total_dy < 0), which means Up (VolumeUp / BrightnessUp).
+                // Sliding DOWN increases Y (total_dy > 0), which means Down (VolumeDown / BrightnessDown).
+                let action = match (active_edge, self.total_dy < 0) {
                     (EdgeZone::Left, true) => EdgeSlideAction::VolumeUp,
                     (EdgeZone::Left, false) => EdgeSlideAction::VolumeDown,
+                    (EdgeZone::Right, true) => EdgeSlideAction::BrightnessUp,
+                    (EdgeZone::Right, false) => EdgeSlideAction::BrightnessDown,
                     _ => return None,
                 };
                 self.total_dy = 0;
@@ -209,10 +219,16 @@ impl EdgeSlideDetector {
             }
             None
         } else {
-            // First touch on this slide — check if it's on/near the left edge
+            // First touch on this slide — check if it's on/near the left or right edge
             let landing_tolerance = 150;
             if contact.x <= x_range.0 + edge_threshold + landing_tolerance {
                 self.active_edge = Some(EdgeZone::Left);
+                self.start_y = Some(contact.y);
+                self.last_y = Some(contact.y);
+                self.total_dy = 0;
+                None
+            } else if contact.x >= x_range.1 - edge_threshold - landing_tolerance {
+                self.active_edge = Some(EdgeZone::Right);
                 self.start_y = Some(contact.y);
                 self.last_y = Some(contact.y);
                 self.total_dy = 0;

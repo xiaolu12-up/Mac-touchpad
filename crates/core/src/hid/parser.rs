@@ -1,8 +1,6 @@
-use std::io::Write;
 use windows::Win32::Devices::HumanInterfaceDevice::*;
 use windows::Win32::Foundation::*;
 use windows::Win32::UI::Input::*;
-use windows::Win32::UI::WindowsAndMessaging::*;
 
 use crate::hid::types::{TouchpadContact, TouchpadContactCreator};
 
@@ -210,8 +208,11 @@ pub unsafe fn parse_input(lparam: LPARAM) -> Option<ParseResult> {
         }
     }
 
-    // Use contact_count from HID if available, otherwise use detected count
-    let final_count = if contact_count > 0 {
+    let has_contact_count_cap = value_caps
+        .iter()
+        .any(|vc| vc.LinkCollection == 0 && vc.UsagePage == 0x0D && vc.Anonymous.NotRange.Usage == 0x54);
+
+    let final_count = if has_contact_count_cap {
         contact_count
     } else {
         contacts.len() as u32
