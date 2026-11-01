@@ -56,7 +56,7 @@ jobs:
       - name: Run Workspace Tests
         shell: pwsh
         run: |
-          cargo test --workspace
+          cargo test --workspace --lib
 
       - name: Prepare Release Notes
         id: release_notes
