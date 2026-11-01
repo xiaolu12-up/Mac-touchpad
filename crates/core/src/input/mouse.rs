@@ -16,17 +16,32 @@ impl MouseSimulator {
         }
     }
 
+    /// Clear accumulated sub-pixel remainders to prevent delayed 1px creep
+    /// when fingers are stationary or when starting/stopping a drag.
+    pub fn clear_subpixel(&mut self) {
+        self.decimal_x = 0.0;
+        self.decimal_y = 0.0;
+    }
+
     /// Move the cursor by a relative delta (dx, dy) in pixels.
     pub fn shift_cursor_position(&mut self, x: f32, y: f32) {
-        let int_x = (x + self.decimal_x) as i32;
-        let int_y = (y + self.decimal_y) as i32;
-        self.decimal_x = x + self.decimal_x - int_x as f32;
-        self.decimal_y = y + self.decimal_y - int_y as f32;
-        move_mouse(int_x, int_y);
+        if !x.is_finite() || !y.is_finite() {
+            return;
+        }
+        let total_x = x + self.decimal_x;
+        let total_y = y + self.decimal_y;
+        let int_x = total_x.trunc() as i32;
+        let int_y = total_y.trunc() as i32;
+        self.decimal_x = total_x - int_x as f32;
+        self.decimal_y = total_y - int_y as f32;
+        if int_x != 0 || int_y != 0 {
+            move_mouse(int_x, int_y);
+        }
     }
 
     /// Send mouse button down event.
-    pub fn drag_down(&self, button: DragButton) {
+    pub fn drag_down(&mut self, button: DragButton) {
+        self.clear_subpixel();
         let flag = match button {
             DragButton::Left => MOUSEEVENTF_LEFTDOWN,
             DragButton::Right => MOUSEEVENTF_RIGHTDOWN,
@@ -37,7 +52,8 @@ impl MouseSimulator {
     }
 
     /// Send mouse button up event.
-    pub fn drag_up(&self, button: DragButton) {
+    pub fn drag_up(&mut self, button: DragButton) {
+        self.clear_subpixel();
         let flag = match button {
             DragButton::Left => MOUSEEVENTF_LEFTUP,
             DragButton::Right => MOUSEEVENTF_RIGHTUP,

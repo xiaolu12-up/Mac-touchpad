@@ -1,6 +1,6 @@
 [package]
 name = "mac-touchpad"
-version = "0.1.6"
+version = "0.1.7"
 description = "MacTouchpad - Mac 触控板手势 for Windows"
 edition = "2021"
 
@@ -31,6 +31,7 @@ base64 = "0.22"
 windows = { version = "0.52", features = [
     "Win32_Foundation",
     "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Input_KeyboardAndMouse",
     "Win32_UI_Controls_Dialogs",
     "Win32_UI_Shell",
     "Win32_Graphics_Gdi",

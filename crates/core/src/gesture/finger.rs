@@ -30,6 +30,21 @@ impl FingerCounter {
         }
     }
 
+    /// Reset all counters and accumulators (called when drag ends completely).
+    pub fn reset(&mut self) {
+        self.original_fingers_count = 0;
+        self.short_delay_fingers_count = 0;
+        self.short_delay_fingers_move = 0.0;
+        self.long_delay_fingers_count = 0;
+        self.long_delay_fingers_move = 0.0;
+    }
+
+    /// Prepare counter for release-and-restart window (fingers lifted while drag remains active).
+    pub fn on_released_for_restart(&mut self) {
+        self.short_delay_fingers_move = 0.0;
+        self.long_delay_fingers_move = 0.0;
+    }
+
     /// Count moving fingers based on distance thresholds.
     ///
     /// Returns (fingers_count, short_delay_moving, long_delay_moving, original_fingers_count).
@@ -52,6 +67,9 @@ impl FingerCounter {
         if !are_contacts_ids_common || has_fingers_released {
             self.short_delay_fingers_move = 0.0;
             self.long_delay_fingers_move = 0.0;
+            if has_fingers_released {
+                self.long_delay_fingers_count = 0;
+            }
             return (
                 0,
                 self.short_delay_fingers_count,
@@ -63,8 +81,8 @@ impl FingerCounter {
         // Apply speed to the distance (matching reference: ApplySpeed)
         let speed_dist = speed::apply_speed(device_id, config, longest_dist_2d);
 
-        // Only accumulate meaningful distances
-        if speed_dist >= 1.0 {
+        // Accumulate meaningful movement above static noise
+        if speed_dist >= 0.5 {
             self.short_delay_fingers_move += speed_dist;
             self.long_delay_fingers_move += speed_dist;
         }
@@ -75,6 +93,11 @@ impl FingerCounter {
         if self.short_delay_fingers_move >= config.stop_threshold {
             self.short_delay_fingers_count = fingers_count;
             self.short_delay_fingers_move = 0.0;
+            // If resuming an active 3-finger drag during release-and-restart window,
+            // allow 3 fingers crossing stop_threshold to re-establish original_fingers_count = 3
+            if fingers_count == 3 && self.original_fingers_count == 0 {
+                self.original_fingers_count = 3;
+            }
         }
 
         // Long delay: past start threshold -> user intends a gesture

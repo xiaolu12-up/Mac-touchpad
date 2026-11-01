@@ -11,11 +11,12 @@
       {
         "label": "main",
         "title": "MacTouchpad 设置",
-        "width": 880,
-        "height": 640,
+        "width": 900,
+        "height": 650,
         "resizable": true,
-        "minWidth": 700,
-        "minHeight": 500,
+        "minWidth": 720,
+        "minHeight": 520,
+        "decorations": false,
         "visible": false
       }
     ],

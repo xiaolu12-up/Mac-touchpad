@@ -65,90 +65,141 @@
 
         .app {
             display: flex;
-            height: 100vh
+            height: 100vh;
+            width: 100vw;
+            border: 1px solid var(--border);
+            background: radial-gradient(circle at 85% 0%, rgba(124, 108, 240, 0.07), transparent 45%), var(--bg);
+            position: relative;
+            overflow: hidden;
         }
 
         .sidebar {
-            width: 200px;
+            width: 212px;
             background: var(--sidebar);
             border-right: 1px solid var(--border);
-            padding-top: 20px;
+            padding-top: 14px;
             display: flex;
             flex-direction: column;
-            flex-shrink: 0
+            flex-shrink: 0;
+            user-select: none;
         }
 
         .brand {
-            padding: 0 20px 24px;
-            font-size: 18px;
+            padding: 6px 18px 20px;
+            font-size: 17px;
             font-weight: 700;
-            background: linear-gradient(135deg, #a78bfa, #7c6cf0);
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            cursor: default;
+            letter-spacing: 0.2px;
+        }
+
+        .brand-logo {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(124, 108, 240, 0.22), rgba(99, 102, 241, 0.1));
+            border: 1px solid rgba(124, 108, 240, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            box-shadow: 0 2px 10px rgba(124, 108, 240, 0.15);
+            flex-shrink: 0;
+        }
+
+        .brand-text {
+            background: linear-gradient(135deg, #c4b5fd, #7c6cf0);
             -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent
+            -webkit-text-fill-color: transparent;
+        }
+
+        body.light .brand-text {
+            background: linear-gradient(135deg, #5856d6, #4338ca);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .nav-item {
-            padding: 10px 20px;
+            margin: 2px 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
             font-size: 13px;
             font-weight: 500;
             color: var(--dim);
             cursor: pointer;
-            transition: .15s;
+            transition: all .18s cubic-bezier(.4, 0, .2, 1);
             display: flex;
             align-items: center;
             gap: 10px;
-            border-left: 3px solid transparent;
-            user-select: none
+            border: 1px solid transparent;
+            user-select: none;
         }
 
         .nav-item:hover {
             background: var(--hover);
-            color: var(--text)
+            color: var(--text);
+            transform: translateX(2px);
         }
 
         .nav-item:hover .ic {
-            transform: scale(1.1)
+            transform: scale(1.1);
         }
 
         .nav-item.theme-toggle:hover .ic {
-            transform: rotate(20deg) scale(1.15)
+            transform: rotate(20deg) scale(1.15);
         }
 
         .nav-item.active {
             color: var(--accent);
-            background: var(--hover);
-            border-left-color: var(--accent)
+            font-weight: 600;
+            background: linear-gradient(135deg, rgba(124, 108, 240, 0.16), rgba(124, 108, 240, 0.06));
+            border-color: rgba(124, 108, 240, 0.24);
+            box-shadow: 0 2px 12px rgba(124, 108, 240, 0.10);
         }
 
         .nav-item .ic {
             font-size: 16px;
             width: 22px;
             text-align: center;
-            transition: transform 0.2s ease
+            transition: transform 0.2s ease;
         }
 
         .nav-spacer {
-            flex: 1
+            flex: 1;
         }
 
         .nav-ver {
-            padding: 4px 20px 10px;
-            font-size: 10px;
+            margin: 4px 12px 10px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 11px;
             color: var(--dim);
-            text-align: center
+            text-align: center;
+            cursor: pointer;
+            transition: all .15s ease;
+        }
+
+        .nav-ver:hover {
+            color: var(--text);
+            background: var(--hover);
         }
 
         .sidebar-footer {
             display: flex;
             justify-content: space-evenly;
             align-items: center;
-            padding: 2px 12px;
-            border-top: 1px solid var(--border);
+            margin: 0 10px 4px;
+            padding: 4px 6px;
+            background: rgba(128, 128, 160, 0.04);
+            border: 1px solid var(--border);
+            border-radius: 12px;
         }
 
         .footer-btn {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -156,37 +207,426 @@
             cursor: pointer;
             color: var(--dim);
             transition: .15s;
-            user-select: none
+            user-select: none;
         }
 
         .footer-btn:hover {
             background: var(--hover);
-            color: var(--text)
+            color: var(--text);
         }
 
         .footer-btn.active {
             color: var(--accent);
-            background: var(--hover)
+            background: var(--hover);
         }
 
         .footer-btn .ic {
             font-size: 15px;
             text-align: center;
-            transition: transform 0.2s ease
+            transition: transform 0.2s ease;
         }
 
         .footer-btn:hover .ic {
-            transform: scale(1.15)
+            transform: scale(1.15);
         }
 
         .footer-btn.theme-toggle:hover .ic {
-            transform: rotate(20deg) scale(1.15)
+            transform: rotate(20deg) scale(1.15);
+        }
+
+        /* ─── Custom Frameless Window Titlebar ─── */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .custom-titlebar {
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 6px 0 24px;
+            flex-shrink: 0;
+            user-select: none;
+            z-index: 100;
+        }
+
+        .titlebar-drag-area {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+
+        .titlebar-right {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .titlebar-whatsnew-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            margin-right: 6px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--dim);
+            background: rgba(124, 108, 240, 0.08);
+            border: 1px solid rgba(124, 108, 240, 0.18);
+            cursor: pointer;
+            transition: all .15s ease;
+        }
+
+        .titlebar-whatsnew-btn:hover {
+            color: var(--text);
+            background: rgba(124, 108, 240, 0.16);
+            border-color: rgba(124, 108, 240, 0.35);
+            transform: translateY(-0.5px);
+        }
+
+        .titlebar-whatsnew-btn svg {
+            width: 12px;
+            height: 12px;
+            color: var(--accent);
+        }
+
+        .win-ctrl-btn {
+            width: 36px;
+            height: 28px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--dim);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background .15s ease, color .15s ease;
+        }
+
+        .win-ctrl-btn:hover {
+            background: rgba(128, 128, 160, 0.14);
+            color: var(--text);
+        }
+
+        .win-ctrl-btn.close:hover {
+            background: #e81123;
+            color: #ffffff;
+        }
+
+        .win-ctrl-btn svg {
+            width: 11px;
+            height: 11px;
+            stroke: currentColor;
+            stroke-width: 1.6;
+            fill: none;
         }
 
         .main {
             flex: 1;
             overflow-y: auto;
-            padding: 28px 32px
+            padding: 8px 32px 28px;
+        }
+
+        /* ─── Modern Release / What's New Modal (Screenshot Style) ─── */
+        .upd-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.62);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .22s ease;
+        }
+
+        .upd-modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .upd-modal-card {
+            width: 530px;
+            max-width: calc(100vw - 40px);
+            max-height: calc(100vh - 64px);
+            background: #202127;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 20px;
+            padding: 26px 28px 22px;
+            box-shadow: 0 24px 68px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+            display: flex;
+            flex-direction: column;
+            color: #f3f4f6;
+            transform: translateY(12px) scale(0.96);
+            transition: transform .26s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body.light .upd-modal-overlay {
+            background: rgba(0, 0, 0, 0.40);
+        }
+
+        body.light .upd-modal-card {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.20), 0 4px 16px rgba(0, 0, 0, 0.05);
+            color: #1f2937;
+        }
+
+        body.light .upd-title-row {
+            color: #111827;
+        }
+
+        body.light .upd-sparkle-icon {
+            color: #4b5563;
+        }
+
+        body.light .upd-subtitle {
+            color: #6b7280;
+        }
+
+        body.light .upd-body::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.18);
+        }
+
+        body.light .upd-ver-name {
+            color: #111827;
+        }
+
+        body.light .upd-ver-detail-link {
+            color: #6b7280;
+        }
+
+        body.light .upd-ver-detail-link:hover {
+            color: #111827;
+        }
+
+        body.light .upd-badge {
+            background: #f3f4f6;
+            color: #4b5563;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        body.light .upd-item-text {
+            color: #374151;
+        }
+
+        body.light .upd-strong {
+            color: #111827;
+        }
+
+        body.light .upd-btn-secondary {
+            background: #f9fafb;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        body.light .upd-btn-secondary:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+            color: #111827;
+        }
+
+        body.light .upd-footer-status {
+            color: #6b7280;
+        }
+
+        .upd-modal-overlay.show .upd-modal-card {
+            transform: translateY(0) scale(1);
+        }
+
+        .upd-header {
+            margin-bottom: 18px;
+            flex-shrink: 0;
+        }
+
+        .upd-title-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.2px;
+        }
+
+        .upd-sparkle-icon {
+            width: 24px;
+            height: 24px;
+            color: #e5e7eb;
+            flex-shrink: 0;
+        }
+
+        .upd-subtitle {
+            margin-top: 6px;
+            font-size: 13.5px;
+            color: #8e929f;
+            font-weight: 400;
+        }
+
+        .upd-body {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .upd-body::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .upd-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.16);
+            border-radius: 3px;
+        }
+
+        .upd-version-block {
+            display: flex;
+            flex-direction: column;
+            gap: 11px;
+        }
+
+        .upd-ver-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+
+        .upd-ver-name {
+            font-size: 15.5px;
+            font-weight: 700;
+            color: #f3f4f6;
+            letter-spacing: 0.2px;
+        }
+
+        .upd-ver-detail-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: #8e929f;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .upd-ver-detail-link:hover {
+            color: #d1d5db;
+        }
+
+        .upd-ver-detail-link svg {
+            width: 13px;
+            height: 13px;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            fill: none;
+        }
+
+        .upd-item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .upd-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 11px;
+        }
+
+        .upd-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 11.5px;
+            font-weight: 500;
+            line-height: 1.45;
+            background: #2c2d35;
+            color: #9ca3af;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            flex-shrink: 0;
+            margin-top: 2px;
+            user-select: none;
+        }
+
+        .upd-item-text {
+            font-size: 14px;
+            line-height: 1.58;
+            color: #e2e4ec;
+            word-break: break-word;
+        }
+
+        .upd-footer {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 22px;
+            padding-top: 6px;
+            flex-shrink: 0;
+        }
+
+        .upd-footer-status {
+            margin-right: auto;
+            font-size: 12px;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .upd-btn-secondary {
+            background: rgba(255, 255, 255, 0.02);
+            color: #d6d8e1;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 10px;
+            padding: 9px 18px;
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .15s ease;
+        }
+
+        .upd-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.28);
+            color: #ffffff;
+        }
+
+        .upd-btn-primary {
+            background: linear-gradient(135deg, #ff6326, #eb4e12);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 9px 22px;
+            font-size: 13.5px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(240, 82, 24, 0.35);
+            transition: all .15s ease;
+        }
+
+        .upd-btn-primary:hover {
+            background: linear-gradient(135deg, #ff7138, #f5571b);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(240, 82, 24, 0.48);
+        }
+
+        .upd-btn-primary:active {
+            transform: translateY(0);
         }
 
         .main::-webkit-scrollbar {
@@ -2571,14 +3011,18 @@
 </script>
 <div class="app">
     <nav class="sidebar">
-        <div class="brand">🍎 MacTouchpad</div>
-        <div class="nav-item active" onclick="go('drag',this)"><span class="ic">🖱️</span>三指拖移</div>
-        <div class="nav-item" onclick="go('gestures',this)"><span class="ic">🖐️</span>手势设置</div>
-        <div class="nav-item" onclick="go('scroll',this)"><span class="ic">📜</span>滚动设置</div>
-        <div class="nav-spacer"></div>
+        <div class="brand" data-tauri-drag-region onmousedown="startWindowDrag(event)" ondblclick="toggleWindowMaximize()">
+            <div class="brand-logo" data-tauri-drag-region>🍎</div>
+            <span class="brand-text" data-tauri-drag-region>MacTouchpad</span>
+        </div>
+        <div class="nav-item active" onclick="go('drag',this)"><span class="ic">🖱️</span><span data-i18n="nav_drag">三指拖移</span></div>
+        <div class="nav-item" onclick="go('gestures',this)"><span class="ic">🖐️</span><span data-i18n="nav_gestures">手势设置</span></div>
+        <div class="nav-item" onclick="go('scroll',this)"><span class="ic">📜</span><span data-i18n="nav_scroll">滚动设置</span></div>
+        <div class="nav-spacer" data-tauri-drag-region onmousedown="startWindowDrag(event)"></div>
         <div class="sidebar-footer">
             <div class="footer-btn theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="切换主题"><span
                     class="ic" id="theme-icon">☀️</span></div>
+            <div class="footer-btn" onclick="openChangelogModal()" title="查看更新内容"><span class="ic">✨</span></div>
             <div class="footer-btn" onclick="go('system',this)" title="系统设置"><span class="ic">⚙️</span></div>
             <div class="footer-btn" id="about-btn" onclick="go('about',this)" style="position: relative;" title="关于">
                 <span class="ic">ℹ️</span>
@@ -2586,32 +3030,54 @@
                       style="display: none; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background-color: #ff4d4f; border-radius: 50%;"></span>
             </div>
         </div>
-        <div class="nav-ver">v0.0.0 · Tauri</div>
+        <div class="nav-ver" onclick="openChangelogModal()" title="点击查看版本更新内容">v0.0.0 · Tauri</div>
     </nav>
 
-    <main class="main">
+    <div class="main-wrapper">
+        <header class="custom-titlebar" data-tauri-drag-region="deep">
+            <div class="titlebar-drag-area" data-tauri-drag-region="deep"></div>
+            <div class="titlebar-right" data-tauri-drag-region="false" onmousedown="event.stopPropagation()" ondblclick="event.stopPropagation()">
+                <button class="titlebar-whatsnew-btn" onclick="openChangelogModal()" title="查看版本更新记录">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/>
+                    </svg>
+                    <span id="titlebar-ver-text">更新内容</span>
+                </button>
+                <button class="win-ctrl-btn" onclick="minimizeWindow()" title="最小化">
+                    <svg viewBox="0 0 12 12"><line x1="2" y1="6" x2="10" y2="6"/></svg>
+                </button>
+                <button class="win-ctrl-btn" id="win-max-btn" onclick="toggleWindowMaximize()" title="最大化 / 还原">
+                    <svg viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" rx="1.2"/></svg>
+                </button>
+                <button class="win-ctrl-btn close" onclick="closeWindow()" title="关闭">
+                    <svg viewBox="0 0 12 12"><line x1="2.5" y1="2.5" x2="9.5" y2="9.5"/><line x1="9.5" y1="2.5" x2="2.5" y2="9.5"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <main class="main">
 
         <!-- ═══ 三指拖移 ═══ -->
         <div class="page active" id="p-drag">
             <div class="page-header">
-                <h2>三指拖移</h2><span class="save-status" id="ss1">✓ 已保存</span>
+                <h2 data-i18n="p_drag_title">三指拖移</h2><span class="save-status" id="ss1">✓ 已保存</span>
                 <div style="flex:1"></div>
-                <button class="btn btn-sm btn-sec" onclick="resetDefaults('drag')">恢复默认</button>
+                <button class="btn btn-sm btn-sec" onclick="resetDefaults('drag')" data-i18n="btn_restore_default">恢复默认</button>
             </div>
             <div class="hint-banner">
                 <span class="hint-icon">⚠️</span>
-                <span class="hint-text">需关闭系统三指/四指手势才能生效</span>
-                <button class="btn btn-sm btn-sec" onclick="openSystemTouchpad()">打开系统手势设置</button>
+                <span class="hint-text" data-i18n="hint_system_gestures">需关闭系统三指/四指手势才能生效</span>
+                <button class="btn btn-sm btn-sec" onclick="openSystemTouchpad()" data-i18n="btn_open_system_touchpad">打开系统手势设置</button>
             </div>
             <div class="page-body">
                 <div class="settings-column">
                     <div class="sec">
-                        <div class="st">设置</div>
+                        <div class="st" data-i18n="sec_settings">设置</div>
                         <div class="row"
                              onmouseenter="showPreview('p-drag', 'three-finger-drag', '三指拖移', '在触控板上使用三根手指滑动，可以轻松移动窗口或在屏幕上选择文本。')">
                             <div>
-                                <div class="lbl">启用三指拖移</div>
-                                <div class="dsc">三根手指拖动来移动窗口/选择文本</div>
+                                <div class="lbl" data-i18n="lbl_enable_drag">启用三指拖移</div>
+                                <div class="dsc" data-i18n="dsc_enable_drag">三根手指拖动来移动窗口/选择文本</div>
                             </div>
                             <label class="tg"><input id="drag" onchange="save('ss1')" onclick="save('ss1')"
                                                      type="checkbox"><span
@@ -2620,8 +3086,8 @@
                         <div class="row"
                              onmouseenter="showPreview('p-drag', 'three-finger-drag', '释放后重新开始', '在您抬起手指的短时间内，可以重新放回手指并继续拖移，避免因触控板边缘中断拖移。')">
                             <div>
-                                <div class="lbl">释放后重新开始</div>
-                                <div class="dsc">抬起手指后可继续拖移</div>
+                                <div class="lbl" data-i18n="lbl_allow_restart">释放后重新开始</div>
+                                <div class="dsc" data-i18n="dsc_allow_restart">抬起手指后可继续拖移</div>
                             </div>
                             <label class="tg"><input id="restart" onchange="save('ss1')" onclick="save('ss1')"
                                                      type="checkbox"><span
@@ -2630,7 +3096,7 @@
                         <div class="row"
                              onmouseenter="showPreview('p-drag', 'three-finger-tap', '三指轻点', '用三根手指快速轻点触控板，可触发自定义动作。')">
                             <div style="flex:1">
-                                <div class="lbl">三指轻点</div>
+                                <div class="lbl" data-i18n="lbl_tap_action">三指轻点</div>
                                 <select id="tap_action" onchange="onTapActionChange();save('ss1')" oninput="save('ss1')"
                                         style="margin-top:6px;width:100%;max-width:200px"></select>
                                 <div class="key-recorder" id="kr-tap">
@@ -2644,10 +3110,10 @@
                         </div>
                     </div>
                     <div class="sec">
-                        <div class="st">光标参数</div>
+                        <div class="st" data-i18n="sec_cursor_params">光标参数</div>
                         <div class="row"
                              onmouseenter="showPreview('p-drag', 'cursor-move', '光标速度', '调整三指拖移时的光标移动速度，使其更符合您的个人使用习惯。')">
-                            <div class="lbl">光标速度</div>
+                            <div class="lbl" data-i18n="lbl_cursor_speed">光标速度</div>
                             <div class="sg"><input id="speed_r" max="150" min="10" oninput="syncSlider('speed','ss1')"
                                                    type="range"><input id="speed" max="150" min="10"
                                                                        onchange="syncInput('speed','ss1')"
@@ -2656,28 +3122,28 @@
                         </div>
                         <div class="row"
                              onmouseenter="showPreview('p-drag', 'cursor-move', '光标加速度', '调节光标的加速度，滑得越快光标移动越远，能进行更精准的定位。')">
-                            <div class="lbl">加速度</div>
+                            <div class="lbl" data-i18n="lbl_cursor_accel">加速度</div>
                             <div class="sg"><input id="accel_r" max="30" min="0" oninput="syncSlider('accel','ss1')"
                                                    type="range"><input
                                     id="accel" max="30" min="0" onchange="syncInput('accel','ss1')" type="number"></div>
                         </div>
                         <div class="row"
                              onmouseenter="showPreview('p-drag', 'cursor-move', '开始阈值', '手指需要移动多少距离才开始触发拖移，防止轻微抖动导致误操作。')">
-                            <div class="lbl">开始阈值</div>
+                            <div class="lbl" data-i18n="lbl_start_threshold">开始阈值</div>
                             <div class="sg"><input id="stt_r" max="200" min="10" oninput="syncSlider('stt','ss1')"
                                                    type="range"><input
                                     id="stt" max="200" min="10" onchange="syncInput('stt','ss1')" type="number"></div>
                         </div>
                         <div class="row"
                              onmouseenter="showPreview('p-drag', 'cursor-move', '停止阈值', '手指抬起或减速到多少以下时停止拖移。')">
-                            <div class="lbl">停止阈值</div>
+                            <div class="lbl" data-i18n="lbl_stop_threshold">停止阈值</div>
                             <div class="sg"><input id="spt_r" max="30" min="1" oninput="syncSlider('spt','ss1')"
                                                    type="range"><input
                                     id="spt" max="30" min="1" onchange="syncInput('spt','ss1')" type="number"></div>
                         </div>
                         <div class="row"
                              onmouseenter="showPreview('p-drag', 'three-finger-drag', '释放延迟', '手指抬起后保留拖移状态的延迟时间。在这段时间内放回手指可以继续拖移。')">
-                            <div class="lbl">释放延迟(ms)</div>
+                            <div class="lbl" data-i18n="lbl_release_delay">释放延迟(ms)</div>
                             <div class="sg"><input id="rel_r" max="2000" min="50" oninput="syncSlider('rel','ss1')"
                                                    type="range"><input
                                     id="rel" max="2000" min="50" onchange="syncInput('rel','ss1')" type="number"></div>
@@ -2691,17 +3157,17 @@
         <!-- ═══ 手势设置 ═══ -->
         <div class="page" id="p-gestures">
             <div class="page-header">
-                <h2>手势设置</h2><span class="save-status" id="ss2">✓ 已保存</span>
+                <h2 data-i18n="p_gestures_title">手势设置</h2><span class="save-status" id="ss2">✓ 已保存</span>
                 <div style="flex:1"></div>
-                <button class="btn btn-sm btn-sec" onclick="resetDefaults('gestures')">恢复默认</button>
+                <button class="btn btn-sm btn-sec" onclick="resetDefaults('gestures')" data-i18n="btn_restore_default">恢复默认</button>
             </div>
             <div class="page-body">
                 <div class="settings-column">
                     <div class="sec">
-                        <div class="st">四指手势</div>
+                        <div class="st" data-i18n="sec_four_finger">四指手势</div>
                         <div class="row"
                              onmouseenter="showPreview('p-gestures', 'four-finger-up', '四指上滑', '四根手指向上滑动。默认设置为打开任务视图，展示所有运行窗口。')">
-                            <div class="lbl">⬆️ 上滑</div>
+                            <div class="lbl" data-i18n="lbl_swipe_up">⬆️ 上滑</div>
                             <select id="g4u"
                                     onchange="onGestureActionChange('g4u','four_finger_swipe_up');save('ss2')"></select>
                             <div class="key-recorder" id="kr-four_finger_swipe_up">
@@ -2715,7 +3181,7 @@
                         </div>
                         <div class="row"
                              onmouseenter="showPreview('p-gestures', 'four-finger-down', '四指下滑', '四根手指向下滑动。默认设置为打开开始菜单或快捷功能。')">
-                            <div class="lbl">⬇️ 下滑</div>
+                            <div class="lbl" data-i18n="lbl_swipe_down">⬇️ 下滑</div>
                             <select id="g4d"
                                     onchange="onGestureActionChange('g4d','four_finger_swipe_down');save('ss2')"></select>
                             <div class="key-recorder" id="kr-four_finger_swipe_down">
@@ -2771,7 +3237,7 @@
                         </div>
                         <div class="row"
                              onmouseenter="showPreview('p-gestures', 'four-finger-pinch', '四指捏合', '拇指与其余三指呈相反方向收拢捏合。默认设置为触发开始菜单。')">
-                            <div class="lbl">🤏 捏合</div>
+                            <div class="lbl" data-i18n="lbl_pinch">🤏 捏合</div>
                             <select id="g4pi"
                                     onchange="onGestureActionChange('g4pi','four_finger_pinch');save('ss2')"></select>
                             <div class="key-recorder" id="kr-four_finger_pinch">
@@ -2785,7 +3251,7 @@
                         </div>
                     </div>
                     <div class="sec">
-                        <div class="st">边缘手势</div>
+                        <div class="st" data-i18n="sec_edge">边缘手势</div>
                         <div class="row"
                              onmouseenter="showPreview('p-gestures', 'edge-volume', '左边缘手势', '一指在左侧边缘、一指在中间，松开中间指后在左边缘上下滑动即可调节系统音量。默认向上滑动增大音量，向下滑动减小音量。')">
                             <div>
@@ -2799,7 +3265,7 @@
                         <div class="row"
                              onmouseenter="showPreview('p-gestures', 'edge-volume', '反转音量方向', '一指在左侧边缘、一指在中间，松开中间指后在左边缘上下滑动。启用后：下滑=音量增，上滑=音量减。')">
                             <div>
-                                <div class="lbl">反转音量方向</div>
+                                <div class="lbl" data-i18n="lbl_invert_volume">反转音量方向</div>
                                 <div class="dsc">开启后：上滑=音量增，下滑=音量减</div>
                             </div>
                             <label class="tg"><input id="inv_vol" onchange="save('ss2'); updateVolumePreview();"
@@ -2815,9 +3281,9 @@
 
         <div class="page" id="p-scroll">
             <div class="page-header">
-                <h2>滚动设置</h2><span class="save-status" id="ss3">✓ 已保存</span>
+                <h2 data-i18n="p_scroll_title">滚动设置</h2><span class="save-status" id="ss3">✓ 已保存</span>
                 <div style="flex:1"></div>
-                <button class="btn btn-sm btn-sec" onclick="resetDefaults('scroll')">恢复默认</button>
+                <button class="btn btn-sm btn-sec" onclick="resetDefaults('scroll')" data-i18n="btn_restore_default">恢复默认</button>
             </div>
             <div class="page-body">
                 <div class="settings-column">
@@ -2826,7 +3292,7 @@
                         <span class="tip-text">提示：该功能仅 Windows 11 系统可用</span>
                     </div>
                     <div class="sec">
-                        <div class="st">鼠标滚轮平滑滚动</div>
+                        <div class="st" data-i18n="sec_smooth_scroll">鼠标滚轮平滑滚动</div>
                         <div class="row"
                              onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '鼠标滚轮平滑滚动', '开启鼠标滚轮的平滑滚动。拦截原生鼠标滚动事件，转换为高频平顺的惯性滚动效果。')">
                             <div>
@@ -2929,7 +3395,7 @@
                         <div class="row"
                              onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '自然滚动', '更改鼠标滚轮的滚动方向。开启时，向下滑动滚轮内容向下移动（macOS 风格）；关闭时为传统滚动方向。')">
                             <div>
-                                <div class="lbl">自然滚动</div>
+                                <div class="lbl" data-i18n="lbl_natural_scroll">自然滚动</div>
                                 <div class="dsc">向下滚动滚轮 → 内容向下移动（macOS 风格）</div>
                             </div>
                             <label class="tg"><input id="natural" onchange="save('ss3'); updateScrollPreview();"
@@ -2943,7 +3409,7 @@
                         <div class="row"
                              onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '启用生效策略', '根据当前前台窗口及规则一票否决制链式判定平滑滚动是否生效。')">
                             <div>
-                                <div class="lbl">启用生效策略</div>
+                                <div class="lbl" data-i18n="lbl_policy_enabled">启用生效策略</div>
                                 <div class="dsc">按窗口及规则判定是否启用平滑滚动（一票否决制）</div>
                             </div>
                             <label class="tg"><input id="scroll_policy_enabled"
@@ -2957,7 +3423,7 @@
                             <div class="row"
                                  onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '仅在浏览器生效', '仅对系统已知的浏览器应用（如 Chrome、Edge、Firefox 等）启用平滑滚动。开启此项时其余规则置灰禁用。')">
                                 <div>
-                                    <div class="lbl">仅在浏览器生效</div>
+                                    <div class="lbl" data-i18n="lbl_browser_only">仅在浏览器生效</div>
                                     <div class="dsc">仅在内置浏览器列表（Chrome、Edge、Firefox
                                         等）中启用平滑滚动（开启时其余规则置灰禁用）
                                     </div>
@@ -2975,8 +3441,8 @@
                                 <div class="row"
                                      onmouseenter="showPreview('p-scroll', 'mouse-wheel-scroll', '全屏应用禁用', '当当前窗口全屏显示（覆盖整个屏幕）时，自动禁用平滑滚动。')">
                                     <div>
-                                        <div class="lbl">全屏应用禁用</div>
-                                        <div class="dsc">当前窗口全屏显示（覆盖屏幕）时自动禁用平滑滚动</div>
+                                        <div class="lbl" data-i18n="lbl_fullscreen_disabled">全屏应用禁用</div>
+                                        <div class="dsc" data-i18n="dsc_fullscreen_disabled">当前窗口全屏显示（覆盖屏幕）时自动禁用平滑滚动</div>
                                     </div>
                                     <label class="tg"><input id="scroll_policy_fullscreen"
                                                              onchange="onScrollPolicyChange(); save('ss3')"
@@ -2989,8 +3455,8 @@
                                 <div class="policy-card-sec">
                                     <div class="row policy-card-header">
                                         <div>
-                                            <div class="lbl">黑名单规则</div>
-                                            <div class="dsc">黑名单中的应用不启用平滑滚动（最高拦截权）</div>
+                                            <div class="lbl" data-i18n="lbl_blacklist">黑名单规则</div>
+                                            <div class="dsc" data-i18n="dsc_blacklist">黑名单中的应用不启用平滑滚动（最高拦截权）</div>
                                         </div>
                                         <div style="display:flex; align-items:center; gap:10px;">
                                             <button class="btn btn-sm" id="btn-add-blacklist"
@@ -3010,8 +3476,8 @@
                                 <div class="policy-card-sec">
                                     <div class="row policy-card-header">
                                         <div>
-                                            <div class="lbl">白名单规则</div>
-                                            <div class="dsc">若开启且列表不为空，仅白名单中的应用启用平滑滚动</div>
+                                            <div class="lbl" data-i18n="lbl_whitelist">白名单规则</div>
+                                            <div class="dsc" data-i18n="dsc_whitelist">若开启且列表不为空，仅白名单中的应用启用平滑滚动</div>
                                         </div>
                                         <div style="display:flex; align-items:center; gap:10px;">
                                             <button class="btn btn-sm" id="btn-add-whitelist"
@@ -3037,16 +3503,35 @@
         <!-- ═══ 系统 ═══ -->
         <div class="page" id="p-system">
             <div class="page-header">
-                <h2>系统设置</h2><span class="save-status" id="ss4">✓ 已保存</span>
+                <h2 data-i18n="p_system_title">系统设置</h2><span class="save-status" id="ss4">✓ 已保存</span>
                 <div style="flex:1"></div>
-                <button class="btn btn-sm btn-sec" onclick="resetDefaults('system')">恢复默认</button>
+                <button class="btn btn-sm btn-sec" onclick="resetDefaults('system')" data-i18n="btn_restore_default">恢复默认</button>
             </div>
             <div class="sec">
-                <div class="st">通用</div>
+                <div class="st" data-i18n="sec_general">通用与偏好</div>
                 <div class="row">
                     <div>
-                        <div class="lbl">开机自启动</div>
-                        <div class="dsc">Windows 登录时自动启动</div>
+                        <div class="lbl" data-i18n="lbl_language">界面语言</div>
+                        <div class="dsc" data-i18n="dsc_language">选择界面语言（支持自动跟随 Windows 系统）</div>
+                    </div>
+                    <select id="app_lang" onchange="onLanguageChange(); save('ss4')" style="min-width: 180px;">
+                        <option value="auto">🌐 自动 (跟随系统) / Auto</option>
+                        <option value="zh-CN">🇨🇳 简体中文 (Simplified Chinese)</option>
+                        <option value="zh-TW">🇭🇰/🇹🇼 繁體中文 (Traditional Chinese)</option>
+                        <option value="en-US">🇺🇸 English</option>
+                        <option value="ja-JP">🇯🇵 日本語 (Japanese)</option>
+                        <option value="ko-KR">🇰🇷 한국어 (Korean)</option>
+                        <option value="de-DE">🇩🇪 Deutsch (German)</option>
+                        <option value="fr-FR">🇫🇷 Français (French)</option>
+                        <option value="es-ES">🇪🇸 Español (Spanish)</option>
+                        <option value="ru-RU">🇷🇺 Русский (Russian)</option>
+                        <option value="pt-BR">🇧🇷 Português (Portuguese)</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <div>
+                        <div class="lbl" data-i18n="lbl_autostart">开机自启动</div>
+                        <div class="dsc" data-i18n="dsc_autostart">Windows 登录时自动启动</div>
                     </div>
                     <label class="tg"><input id="auto" onchange="save('ss4')" onclick="save('ss4')"
                                              type="checkbox"><span
@@ -3054,8 +3539,8 @@
                 </div>
                 <div class="row">
                     <div>
-                        <div class="lbl">关闭时最小化到托盘</div>
-                        <div class="dsc">关闭窗口后继续在后台运行</div>
+                        <div class="lbl" data-i18n="lbl_tray">关闭时最小化到托盘</div>
+                        <div class="dsc" data-i18n="dsc_tray">关闭窗口后继续在后台运行</div>
                     </div>
                     <label class="tg"><input id="tray" onchange="save('ss4')" onclick="save('ss4')"
                                              type="checkbox"><span
@@ -3067,13 +3552,13 @@
         <!-- ═══ 关于 ═══ -->
         <div class="page" id="p-about">
             <div class="page-header">
-                <h2>关于</h2>
+                <h2 data-i18n="p_about_title">关于</h2>
             </div>
             <div class="sec">
                 <div class="about-card">
                     <div class="logo">🍎</div>
                     <div class="name">MacTouchpad</div>
-                    <div class="desc">在 Windows 上实现 Mac 触控板手势体验</div>
+                    <div class="desc" data-i18n="about_desc">在 Windows 上实现 Mac 触控板手势体验</div>
                     <div class="info">
                         <div>版本: <span id="ver" onclick="handleVersionClick()"
                                          style="cursor: pointer; user-select: none; transition: color 0.2s;"
@@ -3095,8 +3580,9 @@
                     <div class="update-btn"
                          style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
                         <div style="display: flex; gap: 10px; justify-content: center; width: 100%;">
-                            <button class="btn btn-sm" onclick="checkUpdate()">🔄 检查更新</button>
-                            <button class="btn btn-sm btn-sec" onclick="openFeedback()">💬 问题反馈</button>
+                            <button class="btn btn-sm" onclick="checkUpdate()" data-i18n="btn_check_update">🔄 检查更新</button>
+                            <button class="btn btn-sm btn-sec" onclick="openChangelogModal()" data-i18n="btn_whats_new">✨ 更新内容</button>
+                            <button class="btn btn-sm btn-sec" onclick="openFeedback()" data-i18n="btn_feedback">💬 问题反馈</button>
                         </div>
                         <div id="update-result" style="font-size:12px; min-height: 18px; margin-top: 2px;"></div>
                     </div>
@@ -3180,7 +3666,30 @@
                 </div>
             </div>
         </div>
-    </main>
+        </main>
+    </div>
+</div>
+
+<!-- ═══ Release / Update Modal (Screenshot Style) ═══ -->
+<div class="upd-modal-overlay" id="upd-modal-overlay" onclick="if(event.target===this)closeChangelogModal()">
+    <div class="upd-modal-card" role="dialog" aria-modal="true">
+        <div class="upd-header">
+            <div class="upd-title-row">
+                <svg class="upd-sparkle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 3.5l1.8 5.2a2 2 0 0 0 1.25 1.25L18.25 11.75l-5.2 1.8a2 2 0 0 0-1.25 1.25L10 20l-1.8-5.2a2 2 0 0 0-1.25-1.25L1.75 11.75l5.2-1.8A2 2 0 0 0 8.2 8.7L10 3.5z"/>
+                    <path d="M19 3v4M17 5h4"/>
+                </svg>
+                <span id="upd-modal-title">已更新到 v0.1.6</span>
+            </div>
+            <div class="upd-subtitle" id="upd-modal-subtitle">自 v0.1.0 以来的更新</div>
+        </div>
+        <div class="upd-body" id="upd-modal-body"></div>
+        <div class="upd-footer">
+            <div class="upd-footer-status" id="upd-modal-status"></div>
+            <button class="upd-btn-secondary" onclick="openFullChangelog()">查看完整更新内容</button>
+            <button class="upd-btn-primary" id="upd-modal-primary-btn" onclick="onUpdateModalPrimaryClick()">知道了</button>
+        </div>
+    </div>
 </div>
 
 <!-- ═══ Update Toast Notification ═══ -->
@@ -3715,7 +4224,7 @@
             renderPolicyAppList('whitelist');
             onScrollPolicyChange();
 
-            const dc = Object.values(cfg.device_configs || {})[0] || {cursor_speed: 60, cursor_acceleration: 10};
+            const dc = Object.values(cfg.device_configs || {})[0] || {cursor_speed: 70, cursor_acceleration: 10};
             setDual('speed', Math.round(dc.cursor_speed));
             setDual('accel', Math.round(dc.cursor_acceleration));
             setDual('stt', Math.round(cfg.start_threshold));
@@ -3763,6 +4272,7 @@
             // Load version info
             try {
                 const info = await invoke('get_version');
+                currentAppVersion = info.version;
                 document.getElementById('ver').textContent = info.version;
                 document.getElementById('author').textContent = info.author;
                 if (info.repo) document.getElementById('repo').href = info.repo;
@@ -3774,6 +4284,19 @@
                     }
                     navVerEl.textContent = `${displayVer} · Tauri`;
                 }
+                const titlebarVer = document.getElementById('titlebar-ver-text');
+                if (titlebarVer) {
+                    let displayVer = info.version;
+                    if (!displayVer.startsWith('v') && !displayVer.startsWith('V')) {
+                        displayVer = 'v' + displayVer;
+                    }
+                    titlebarVer.textContent = `${displayVer} 更新内容`;
+                }
+                // Check maximized state
+                try {
+                    const isMax = await invoke('window_is_maximized');
+                    updateMaximizeIcon(isMax);
+                } catch (we) {}
             } catch (e) {
             }
         } catch (e) {
@@ -3990,35 +4513,1518 @@
         return html;
     }
 
+    // ─── Frameless Window Controls ───
+    function handleDragMouseDown(e) {
+        if (e.button !== 0) return;
+        if (e.target.closest('button, input, select, .footer-btn, .nav-item, .tg, a, .app-policy-del, .win-ctrl-btn, .key-recorder, .titlebar-right')) {
+            return;
+        }
+        const dragArea = e.target.closest('.custom-titlebar, .brand, .titlebar-drag-area');
+        if (!dragArea) return;
+
+        if (e.detail === 2) {
+            toggleWindowMaximize();
+            return;
+        }
+
+        if (invoke) {
+            invoke('window_start_dragging').catch(() => {});
+        }
+    }
+
+    document.addEventListener('mousedown', handleDragMouseDown, true);
+
+    function startWindowDrag(e) {
+        handleDragMouseDown(e);
+    }
+
+    function minimizeWindow() {
+        if (invoke) {
+            invoke('window_minimize').catch(console.error);
+        }
+    }
+
+    async function toggleWindowMaximize() {
+        if (invoke) {
+            try {
+                const isMax = await invoke('window_toggle_maximize');
+                updateMaximizeIcon(isMax);
+            } catch (e) {
+                console.error('toggleWindowMaximize error:', e);
+            }
+        }
+    }
+
+    function updateMaximizeIcon(isMax) {
+        const btn = document.getElementById('win-max-btn');
+        if (!btn) return;
+        if (isMax) {
+            btn.innerHTML = `<svg viewBox="0 0 12 12"><path d="M3.5 1.5H9.5V7.5M1.5 3.5H7.5V9.5H1.5Z" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>`;
+            btn.title = '还原';
+        } else {
+            btn.innerHTML = `<svg viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" rx="1.2" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>`;
+            btn.title = '最大化';
+        }
+    }
+
+    function closeWindow() {
+        if (invoke) {
+            invoke('window_close').catch(console.error);
+        }
+    }
+
+    // ─── i18n Multi-Language Internationalization Engine ───
+    const I18N_DICTS = {
+        "zh-CN": {
+                "brand_subtitle": "Mac 触控板手势体验",
+                "nav_drag": "三指拖移",
+                "nav_gestures": "手势设置",
+                "nav_scroll": "滚动设置",
+                "nav_system": "系统设置",
+                "nav_about": "关于",
+                "titlebar_whatsnew": "更新内容",
+                "btn_restore_default": "恢复默认",
+                "hint_system_gestures": "需关闭系统三指/四指手势才能生效",
+                "btn_open_system_touchpad": "打开系统手势设置",
+                "p_drag_title": "三指拖移",
+                "sec_settings": "设置",
+                "lbl_enable_drag": "启用三指拖移",
+                "dsc_enable_drag": "三根手指拖动来移动窗口/选择文本",
+                "lbl_allow_restart": "释放后重新开始",
+                "dsc_allow_restart": "抬起手指后可继续拖移",
+                "lbl_tap_action": "三指轻点",
+                "sec_cursor_params": "光标参数",
+                "lbl_cursor_speed": "光标速度",
+                "lbl_cursor_accel": "加速度",
+                "lbl_start_threshold": "开始阈值",
+                "lbl_stop_threshold": "停止阈值",
+                "lbl_release_delay": "释放延迟(ms)",
+                "p_gestures_title": "手势设置",
+                "sec_four_finger": "四指手势",
+                "lbl_swipe_up": "⬆️ 上滑",
+                "lbl_swipe_down": "⬇️ 下滑",
+                "lbl_swipe_left": "⬅️ 左滑",
+                "lbl_swipe_right": "➡️ 右滑",
+                "lbl_spread": "👐 张开",
+                "lbl_pinch": "🤏 捏合",
+                "lbl_swipe_threshold": "滑动阈值",
+                "lbl_pinch_threshold": "缩放阈值",
+                "sec_edge": "边缘手势",
+                "lbl_edge_slide": "边缘滑动",
+                "dsc_edge_slide": "调节音量（一指在左边缘，一指在中间，松开中间指后滑动）",
+                "lbl_invert_volume": "反转音量方向",
+                "dsc_invert_volume": "反转边缘滑动的音量调节方向",
+                "lbl_edge_threshold": "边缘判定范围",
+                "lbl_edge_slide_threshold": "滑动触发阈值",
+                "p_scroll_title": "滚动设置",
+                "tip_win11_scroll": "ℹ️ 该功能仅 Windows 11 系统支持",
+                "sec_smooth_scroll": "鼠标滚轮平滑滚动",
+                "lbl_enable_scroll": "启用鼠标滚轮平滑滚动",
+                "dsc_enable_scroll": "拦截普通外接鼠标滚轮事件，提供阻尼平滑滑动（触控板自动放行）",
+                "lbl_scroll_speed": "滚动速度",
+                "lbl_scroll_smooth": "平滑阻尼",
+                "lbl_scroll_decel": "惯性衰减",
+                "lbl_scroll_bscale": "基础步长",
+                "lbl_scroll_maxd": "最大位移",
+                "lbl_scroll_dz": "死区过滤",
+                "lbl_scroll_tick": "调度周期(ms)",
+                "lbl_natural_scroll": "自然滚动",
+                "dsc_natural_scroll": "类似触控板的内容跟随手指滑动方向",
+                "sec_scroll_policy": "滚动生效策略",
+                "lbl_policy_enabled": "启用生效策略",
+                "dsc_policy_enabled": "根据当前前台活动窗口灵活控制平滑滚动是否生效",
+                "lbl_browser_only": "仅在浏览器生效",
+                "dsc_browser_only": "仅在内置主流浏览器列表中启用平滑滚动（开启时其余规则置灰禁用）",
+                "lbl_fullscreen_disabled": "全屏应用禁用",
+                "dsc_fullscreen_disabled": "当前窗口全屏显示（覆盖屏幕）时自动禁用平滑滚动",
+                "lbl_blacklist": "黑名单规则",
+                "dsc_blacklist": "黑名单中的应用不启用平滑滚动（最高拦截权）",
+                "lbl_whitelist": "白名单规则",
+                "dsc_whitelist": "若开启且列表不为空，仅白名单中的应用启用平滑滚动",
+                "btn_browse": "📂 浏览...",
+                "p_system_title": "系统设置",
+                "sec_general": "通用与偏好",
+                "lbl_language": "界面语言",
+                "dsc_language": "选择界面语言（支持自动跟随 Windows 系统）",
+                "lbl_autostart": "开机自启动",
+                "dsc_autostart": "Windows 登录时自动启动",
+                "lbl_tray": "关闭时最小化到托盘",
+                "dsc_tray": "关闭窗口后继续在后台运行",
+                "p_about_title": "关于",
+                "about_desc": "在 Windows 上实现 Mac 触控板手势体验",
+                "btn_check_update": "🔄 检查更新",
+                "btn_whats_new": "✨ 更新内容",
+                "btn_feedback": "💬 问题反馈",
+                "upd_modal_title_prefix": "已更新到 ",
+                "upd_modal_new_prefix": "发现新版本 ",
+                "upd_modal_sub": "自 v0.1.0 以来的更新",
+                "upd_modal_cur": "当前安装版本: ",
+                "upd_btn_full": "查看完整更新内容",
+                "upd_btn_ok": "知道了",
+                "upd_btn_download": "📥 立即下载升级",
+                "upd_btn_install": "🚀 立即安装",
+                "upd_detail_link": "详情",
+                "save_saving": "⟳ 保存中…",
+                "save_saved": "✓ 已保存",
+                "save_failed": "⚠ 保存失败"
+        },
+        "zh-TW": {
+                "brand_subtitle": "Mac 觸控板手勢體驗",
+                "nav_drag": "三指拖移",
+                "nav_gestures": "手勢設定",
+                "nav_scroll": "捲動設定",
+                "nav_system": "系統設定",
+                "nav_about": "關於",
+                "titlebar_whatsnew": "更新內容",
+                "btn_restore_default": "回復預設值",
+                "hint_system_gestures": "需關閉系統三指/四指手勢方可生效",
+                "btn_open_system_touchpad": "開啟系統手勢設定",
+                "p_drag_title": "三指拖移",
+                "sec_settings": "設定",
+                "lbl_enable_drag": "啟用三指拖移",
+                "dsc_enable_drag": "使用三指拖曳以移動視窗或選取文字",
+                "lbl_allow_restart": "放開後重新開始",
+                "dsc_allow_restart": "手指抬起後短時間內放回可繼續拖移",
+                "lbl_tap_action": "三指輕點",
+                "sec_cursor_params": "游標參數",
+                "lbl_cursor_speed": "游標速度",
+                "lbl_cursor_accel": "加速度",
+                "lbl_start_threshold": "起始門檻",
+                "lbl_stop_threshold": "停止門檻",
+                "lbl_release_delay": "放開延遲(ms)",
+                "p_gestures_title": "手勢設定",
+                "sec_four_finger": "四指手勢",
+                "lbl_swipe_up": "⬆️ 向上滑動",
+                "lbl_swipe_down": "⬇️ 向下滑動",
+                "lbl_swipe_left": "⬅️ 向左滑動",
+                "lbl_swipe_right": "➡️ 向右滑動",
+                "lbl_spread": "👐 張開",
+                "lbl_pinch": "🤏 捏合",
+                "lbl_swipe_threshold": "滑動門檻",
+                "lbl_pinch_threshold": "縮放門檻",
+                "sec_edge": "邊緣手勢",
+                "lbl_edge_slide": "邊緣滑動",
+                "dsc_edge_slide": "調整音量（一指在左側邊緣，一指在中間，放開中間指後滑動）",
+                "lbl_invert_volume": "反轉音量方向",
+                "dsc_invert_volume": "反轉邊緣滑動的音量增減方向",
+                "lbl_edge_threshold": "邊緣判定範圍",
+                "lbl_edge_slide_threshold": "滑動觸發門檻",
+                "p_scroll_title": "捲動設定",
+                "tip_win11_scroll": "ℹ️ 此功能僅 Windows 11 系統支援",
+                "sec_smooth_scroll": "滑鼠滾輪平滑捲動",
+                "lbl_enable_scroll": "啟用滑鼠滾輪平滑捲動",
+                "dsc_enable_scroll": "攔截外接滑鼠滾輪事件，提供物理阻尼平滑滾動（觸控板自動放行）",
+                "lbl_scroll_speed": "捲動速度",
+                "lbl_scroll_smooth": "平滑阻尼",
+                "lbl_scroll_decel": "慣性衰減",
+                "lbl_scroll_bscale": "基準步長",
+                "lbl_scroll_maxd": "最大單次位移",
+                "lbl_scroll_dz": "死區過濾",
+                "lbl_scroll_tick": "排程週期(ms)",
+                "lbl_natural_scroll": "自然捲動",
+                "dsc_natural_scroll": "類似觸控板之內容跟隨手指滑動方向",
+                "sec_scroll_policy": "捲動生效策略",
+                "lbl_policy_enabled": "啟用生效策略",
+                "dsc_policy_enabled": "依前景作用視窗彈性控制平滑捲動是否生效",
+                "lbl_browser_only": "僅在瀏覽器生效",
+                "dsc_browser_only": "僅在內建主流瀏覽器中啟用平滑捲動（開啟時其餘規則停用）",
+                "lbl_fullscreen_disabled": "全螢幕應用程式停用",
+                "dsc_fullscreen_disabled": "當前視窗全螢幕覆蓋時自動停用平滑捲動",
+                "lbl_blacklist": "黑名單規則",
+                "dsc_blacklist": "黑名單內應用程式不啟用平滑捲動（最優先攔截）",
+                "lbl_whitelist": "白名單規則",
+                "dsc_whitelist": "若啟用且清單非空，僅白名單內應用程式啟用平滑捲動",
+                "btn_browse": "📂 瀏覽...",
+                "p_system_title": "系統設定",
+                "sec_general": "一般與偏好設定",
+                "lbl_language": "介面語言",
+                "dsc_language": "選擇介面語言（支援自動跟隨 Windows 系統）",
+                "lbl_autostart": "開機自動啟動",
+                "dsc_autostart": "Windows 登入時自動於背景執行",
+                "lbl_tray": "關閉時縮小至系統匣",
+                "dsc_tray": "關閉視窗後繼續於背景執行",
+                "p_about_title": "關於",
+                "about_desc": "在 Windows 上實現 Mac 觸控板手勢體驗",
+                "btn_check_update": "🔄 檢查更新",
+                "btn_whats_new": "✨ 更新內容",
+                "btn_feedback": "💬 問題回報",
+                "upd_modal_title_prefix": "已更新至 ",
+                "upd_modal_new_prefix": "發現新版本 ",
+                "upd_modal_sub": "自 v0.1.0 以來的更新",
+                "upd_modal_cur": "目前安裝版本: ",
+                "upd_btn_full": "檢視完整更新內容",
+                "upd_btn_ok": "知道了",
+                "upd_btn_download": "📥 立即下載升級",
+                "upd_btn_install": "🚀 立即安裝",
+                "upd_detail_link": "詳情",
+                "save_saving": "⟳ 儲存中…",
+                "save_saved": "✓ 已儲存",
+                "save_failed": "⚠ 儲存失敗"
+        },
+        "en-US": {
+                "brand_subtitle": "Mac Touchpad Gestures on Windows",
+                "nav_drag": "Three-Finger Drag",
+                "nav_gestures": "Gestures",
+                "nav_scroll": "Smooth Scroll",
+                "nav_system": "System Settings",
+                "nav_about": "About",
+                "titlebar_whatsnew": "What's New",
+                "btn_restore_default": "Restore Defaults",
+                "hint_system_gestures": "System three/four finger gestures must be set to \"None\"",
+                "btn_open_system_touchpad": "Open System Touchpad Settings",
+                "p_drag_title": "Three-Finger Drag",
+                "sec_settings": "Settings",
+                "lbl_enable_drag": "Enable Three-Finger Drag",
+                "dsc_enable_drag": "Move windows or select text with three fingers",
+                "lbl_allow_restart": "Release and Restart",
+                "dsc_allow_restart": "Continue dragging if fingers are replaced within a short delay",
+                "lbl_tap_action": "Three-Finger Tap",
+                "sec_cursor_params": "Cursor Parameters",
+                "lbl_cursor_speed": "Cursor Speed",
+                "lbl_cursor_accel": "Acceleration",
+                "lbl_start_threshold": "Start Threshold",
+                "lbl_stop_threshold": "Stop Threshold",
+                "lbl_release_delay": "Release Delay (ms)",
+                "p_gestures_title": "Gesture Settings",
+                "sec_four_finger": "Four-Finger Gestures",
+                "lbl_swipe_up": "⬆️ Swipe Up",
+                "lbl_swipe_down": "⬇️ Swipe Down",
+                "lbl_swipe_left": "⬅️ Swipe Left",
+                "lbl_swipe_right": "➡️ Swipe Right",
+                "lbl_spread": "👐 Spread",
+                "lbl_pinch": "🤏 Pinch",
+                "lbl_swipe_threshold": "Swipe Threshold",
+                "lbl_pinch_threshold": "Pinch Threshold",
+                "sec_edge": "Edge Gestures",
+                "lbl_edge_slide": "Edge Slide Volume",
+                "dsc_edge_slide": "One finger on left edge, one in center; release center finger and slide",
+                "lbl_invert_volume": "Invert Volume Direction",
+                "dsc_invert_volume": "Invert the edge slide volume adjustment direction",
+                "lbl_edge_threshold": "Edge Zone Size",
+                "lbl_edge_slide_threshold": "Slide Trigger Distance",
+                "p_scroll_title": "Scroll Settings",
+                "tip_win11_scroll": "ℹ️ Smooth scrolling requires Windows 11",
+                "sec_smooth_scroll": "Mouse Smooth Scroll",
+                "lbl_enable_scroll": "Enable Mouse Smooth Scroll",
+                "dsc_enable_scroll": "Intercept physical notched mouse wheel events with physics damping",
+                "lbl_scroll_speed": "Scroll Speed",
+                "lbl_scroll_smooth": "Smoothness",
+                "lbl_scroll_decel": "Deceleration",
+                "lbl_scroll_bscale": "Base Step Scale",
+                "lbl_scroll_maxd": "Max Delta",
+                "lbl_scroll_dz": "Deadzone",
+                "lbl_scroll_tick": "Timer Tick (ms)",
+                "lbl_natural_scroll": "Natural Scrolling",
+                "dsc_natural_scroll": "Content tracks finger movement direction like touchpad",
+                "sec_scroll_policy": "Application Policies",
+                "lbl_policy_enabled": "Enable Application Policies",
+                "dsc_policy_enabled": "Dynamically toggle smooth scroll based on foreground window",
+                "lbl_browser_only": "Browser Only Mode",
+                "dsc_browser_only": "Only enable smooth scroll in known browsers (Chrome, Edge, etc.)",
+                "lbl_fullscreen_disabled": "Disable in Fullscreen Apps",
+                "dsc_fullscreen_disabled": "Automatically disable smooth scroll when foreground app is fullscreen",
+                "lbl_blacklist": "Blacklist Rules",
+                "dsc_blacklist": "Applications in blacklist will not use smooth scroll",
+                "lbl_whitelist": "Whitelist Rules",
+                "dsc_whitelist": "When enabled, only whitelisted applications will use smooth scroll",
+                "btn_browse": "📂 Browse...",
+                "p_system_title": "System Settings",
+                "sec_general": "General & Preferences",
+                "lbl_language": "Interface Language",
+                "dsc_language": "Choose interface language (Auto follows Windows system)",
+                "lbl_autostart": "Launch at Startup",
+                "dsc_autostart": "Start automatically when Windows logs in",
+                "lbl_tray": "Minimize to System Tray on Close",
+                "dsc_tray": "Keep running in the background when closed",
+                "p_about_title": "About",
+                "about_desc": "Mac Touchpad Gestures on Windows",
+                "btn_check_update": "🔄 Check Updates",
+                "btn_whats_new": "✨ What's New",
+                "btn_feedback": "💬 Feedback",
+                "upd_modal_title_prefix": "Updated to ",
+                "upd_modal_new_prefix": "New Version: ",
+                "upd_modal_sub": "Updates since v0.1.0",
+                "upd_modal_cur": "Installed Version: ",
+                "upd_btn_full": "View Full Changelog",
+                "upd_btn_ok": "Got it",
+                "upd_btn_download": "📥 Download & Update",
+                "upd_btn_install": "🚀 Install Now",
+                "upd_detail_link": "Details",
+                "save_saving": "⟳ Saving…",
+                "save_saved": "✓ Saved",
+                "save_failed": "⚠ Save failed"
+        },
+        "ja-JP": {
+                "brand_subtitle": "WindowsでMacタッチパッド操作",
+                "nav_drag": "3本指ドラッグ",
+                "nav_gestures": "ジェスチャー設定",
+                "nav_scroll": "スクロール設定",
+                "nav_system": "システム設定",
+                "nav_about": "このアプリについて",
+                "titlebar_whatsnew": "更新履歴",
+                "btn_restore_default": "初期値に戻す",
+                "hint_system_gestures": "Windowsの3本指/4本指ジェスチャーを「なし」に設定してください",
+                "btn_open_system_touchpad": "タッチパッド設定を開く",
+                "p_drag_title": "3本指ドラッグ",
+                "sec_settings": "基本設定",
+                "lbl_enable_drag": "3本指ドラッグを有効化",
+                "dsc_enable_drag": "3本指でウィンドウの移動やテキスト選択を行います",
+                "lbl_allow_restart": "指を離して再開",
+                "dsc_allow_restart": "指を離しても少しの間ドラッグ状態を維持します",
+                "lbl_tap_action": "3本指タップ",
+                "sec_cursor_params": "カーソル調整",
+                "lbl_cursor_speed": "カーソル速度",
+                "lbl_cursor_accel": "加速度",
+                "lbl_start_threshold": "開始しきい値",
+                "lbl_stop_threshold": "停止しきい値",
+                "lbl_release_delay": "解放遅延 (ms)",
+                "p_gestures_title": "ジェスチャー設定",
+                "sec_four_finger": "4本指ジェスチャー",
+                "lbl_swipe_up": "⬆️ 上スワイプ",
+                "lbl_swipe_down": "⬇️ 下スワイプ",
+                "lbl_swipe_left": "⬅️ 左スワイプ",
+                "lbl_swipe_right": "➡️ 右スワイプ",
+                "lbl_spread": "👐 ピンチアウト",
+                "lbl_pinch": "🤏 ピンチイン",
+                "lbl_swipe_threshold": "スワイプ距離",
+                "lbl_pinch_threshold": "ピンチしきい値",
+                "sec_edge": "エッジジェスチャー",
+                "lbl_edge_slide": "エッジ音量スライド",
+                "dsc_edge_slide": "左端に1本、中央に1本置き、中央指を離してスライド",
+                "lbl_invert_volume": "音量方向を反転",
+                "dsc_invert_volume": "エッジスライドでの音量調節の向きを反転",
+                "lbl_edge_threshold": "エッジ検知幅",
+                "lbl_edge_slide_threshold": "スライド開始距離",
+                "p_scroll_title": "スクロール設定",
+                "tip_win11_scroll": "ℹ️ スムーズスクロールはWindows 11が必要です",
+                "sec_smooth_scroll": "マウスホイール スムーズスクロール",
+                "lbl_enable_scroll": "スムーズスクロールを有効化",
+                "dsc_enable_scroll": "外付けマウスのホイールを慣性物理シミュレーションで滑らかにします",
+                "lbl_scroll_speed": "スクロール速度",
+                "lbl_scroll_smooth": "滑らかさ",
+                "lbl_scroll_decel": "減速係数",
+                "lbl_scroll_bscale": "基本ステップ",
+                "lbl_scroll_maxd": "最大移動量",
+                "lbl_scroll_dz": "デッドゾーン",
+                "lbl_scroll_tick": "タイマー周期 (ms)",
+                "lbl_natural_scroll": "ナチュラルスクロール",
+                "dsc_natural_scroll": "トラックパッドのように指の向きに合わせて移動",
+                "sec_scroll_policy": "アプリケーション動作ポリシー",
+                "lbl_policy_enabled": "ポリシー制御を有効化",
+                "dsc_policy_enabled": "アクティブウィンドウに応じてスムーズスクロールを柔軟に制御",
+                "lbl_browser_only": "ブラウザ限定モード",
+                "dsc_browser_only": "主要ブラウザでのみスムーズスクロールを有効にします",
+                "lbl_fullscreen_disabled": "フルスクリーンアプリで無効化",
+                "dsc_fullscreen_disabled": "全画面表示中に自動でスムーズスクロールを一時停止します",
+                "lbl_blacklist": "ブラックリスト",
+                "dsc_blacklist": "指定アプリではスムーズスクロールを適用しません",
+                "lbl_whitelist": "ホワイトリスト",
+                "dsc_whitelist": "指定アプリでのみスムーズスクロールを適用します",
+                "btn_browse": "📂 参照...",
+                "p_system_title": "システム設定",
+                "sec_general": "一般・環境設定",
+                "lbl_language": "表示言語",
+                "dsc_language": "言語を選択（Windowsシステム言語への自動追従に対応）",
+                "lbl_autostart": "システム起動時に自動開始",
+                "dsc_autostart": "Windowsサインイン時にバックグラウンドで開始",
+                "lbl_tray": "閉じた時にトレイに常駐",
+                "dsc_tray": "ウィンドウを閉じてもバックグラウンドで実行し続けます",
+                "p_about_title": "このアプリについて",
+                "about_desc": "WindowsでMacのようなタッチパッドジェスチャーを実現",
+                "btn_check_update": "🔄 更新を確認",
+                "btn_whats_new": "✨ 更新履歴",
+                "btn_feedback": "💬 フィードバック",
+                "upd_modal_title_prefix": "バージョン ",
+                "upd_modal_new_prefix": "新しいバージョン: ",
+                "upd_modal_sub": "v0.1.0 からの主な変更点",
+                "upd_modal_cur": "現在のバージョン: ",
+                "upd_btn_full": "すべての更新履歴を表示",
+                "upd_btn_ok": "了解",
+                "upd_btn_download": "📥 今すぐダウンロード",
+                "upd_btn_install": "🚀 インストール",
+                "upd_detail_link": "詳細",
+                "save_saving": "⟳ 保存中…",
+                "save_saved": "✓ 保存完了",
+                "save_failed": "⚠ 保存失敗"
+        },
+        "ko-KR": {
+                "brand_subtitle": "Windows에서 즐기는 Mac 터치패드 제스처",
+                "nav_drag": "세 손가락 드래그",
+                "nav_gestures": "제스처 설정",
+                "nav_scroll": "스크롤 설정",
+                "nav_system": "시스템 설정",
+                "nav_about": "정보",
+                "titlebar_whatsnew": "업데이트 소식",
+                "btn_restore_default": "기본값 복원",
+                "hint_system_gestures": "Windows 시스템 터치패드 세/네 손가락 제스처를 \"없음\"으로 설정하세요",
+                "btn_open_system_touchpad": "터치패드 설정 열기",
+                "p_drag_title": "세 손가락 드래그",
+                "sec_settings": "설정",
+                "lbl_enable_drag": "세 손가락 드래그 활성화",
+                "dsc_enable_drag": "세 손가락으로 창 이동 및 텍스트 선택",
+                "lbl_allow_restart": "손을 뗀 후 이어가기",
+                "dsc_allow_restart": "손가락을 뗐다가 잠시 내에 다시 올려 계속 드래그",
+                "lbl_tap_action": "세 손가락 탭",
+                "sec_cursor_params": "커서 감도 조정",
+                "lbl_cursor_speed": "커서 속도",
+                "lbl_cursor_accel": "가속도",
+                "lbl_start_threshold": "시작 임계값",
+                "lbl_stop_threshold": "정지 임계값",
+                "lbl_release_delay": "해제 대기시간 (ms)",
+                "p_gestures_title": "제스처 설정",
+                "sec_four_finger": "네 손가락 제스처",
+                "lbl_swipe_up": "⬆️ 위로 쓸기",
+                "lbl_swipe_down": "⬇️ 아래로 쓸기",
+                "lbl_swipe_left": "⬅️ 왼쪽으로 쓸기",
+                "lbl_swipe_right": "➡️ 오른쪽으로 쓸기",
+                "lbl_spread": "👐 펴기 (핀치 아웃)",
+                "lbl_pinch": "🤏 모으기 (핀치 인)",
+                "lbl_swipe_threshold": "쓸기 거리 임계값",
+                "lbl_pinch_threshold": "핀치 임계값",
+                "sec_edge": "가장자리 제스처",
+                "lbl_edge_slide": "가장자리 볼륨 조절",
+                "dsc_edge_slide": "왼쪽 가장자리에 한 손가락, 중앙에 한 손가락을 댄 후 중앙 손가락을 떼고 이동",
+                "lbl_invert_volume": "볼륨 방향 반전",
+                "dsc_invert_volume": "가장자리 쓸기 시 볼륨 조절 방향 반전",
+                "lbl_edge_threshold": "가장자리 감지 폭",
+                "lbl_edge_slide_threshold": "동작 시작 거리",
+                "p_scroll_title": "스크롤 설정",
+                "tip_win11_scroll": "ℹ️ 부드러운 스크롤은 Windows 11 이상을 지원합니다",
+                "sec_smooth_scroll": "마우스 휠 부드러운 스크롤",
+                "lbl_enable_scroll": "부드러운 스크롤 사용",
+                "dsc_enable_scroll": "물리 마우스 휠 입력을 부드러운 관성 스크롤로 변환 (터치패드는 자동 패스)",
+                "lbl_scroll_speed": "스크롤 속도",
+                "lbl_scroll_smooth": "부드러움",
+                "lbl_scroll_decel": "감속 계수",
+                "lbl_scroll_bscale": "기본 보폭",
+                "lbl_scroll_maxd": "최대 이동량",
+                "lbl_scroll_dz": "데드존",
+                "lbl_scroll_tick": "타이머 주기 (ms)",
+                "lbl_natural_scroll": "자연스러운 스크롤",
+                "dsc_natural_scroll": "터치패드처럼 손가락 방향을 따라 화면 스크롤",
+                "sec_scroll_policy": "응용 프로그램 정책",
+                "lbl_policy_enabled": "정책 활성화",
+                "dsc_policy_enabled": "현재 포그라운드 창에 따라 부드러운 스크롤 동작을 유연하게 제어",
+                "lbl_browser_only": "브라우저 전용 모드",
+                "dsc_browser_only": "주요 웹 브라우저에서만 부드러운 스크롤 적용",
+                "lbl_fullscreen_disabled": "전체 화면 앱에서 끄기",
+                "dsc_fullscreen_disabled": "창이 전체 화면일 때 부드러운 스크롤을 자동으로 일시 중지",
+                "lbl_blacklist": "블랙리스트",
+                "dsc_blacklist": "지정된 프로그램에서는 부드러운 스크롤을 사용하지 않음",
+                "lbl_whitelist": "화이트리스트",
+                "dsc_whitelist": "지정된 프로그램에서만 부드러운 스크롤 사용",
+                "btn_browse": "📂 찾아보기...",
+                "p_system_title": "시스템 설정",
+                "sec_general": "일반 및 환경설정",
+                "lbl_language": "인터페이스 언어",
+                "dsc_language": "언어 선택 (Windows 시스템 언어 자동 감지 지원)",
+                "lbl_autostart": "시작 시 자동 실행",
+                "dsc_autostart": "Windows 로그인 시 백그라운드로 자동 실행",
+                "lbl_tray": "닫을 때 트레이로 최소화",
+                "dsc_tray": "창을 닫아도 백그라운드에서 계속 실행",
+                "p_about_title": "정보",
+                "about_desc": "Windows에서 완벽하게 작동하는 Mac 터치패드 제스처",
+                "btn_check_update": "🔄 업데이트 확인",
+                "btn_whats_new": "✨ 업데이트 내용",
+                "btn_feedback": "💬 피드백",
+                "upd_modal_title_prefix": "업데이트 완료: ",
+                "upd_modal_new_prefix": "새 버전 발견: ",
+                "upd_modal_sub": "v0.1.0 이후 변경 내역",
+                "upd_modal_cur": "현재 버전: ",
+                "upd_btn_full": "전체 변경 내역 보기",
+                "upd_btn_ok": "확인",
+                "upd_btn_download": "📥 다운로드 및 업데이트",
+                "upd_btn_install": "🚀 지금 설치",
+                "upd_detail_link": "자세히",
+                "save_saving": "⟳ 저장 중…",
+                "save_saved": "✓ 저장 완료",
+                "save_failed": "⚠ 저장 실패"
+        },
+        "de-DE": {
+                "brand_subtitle": "Mac-Touchpad-Gesten unter Windows",
+                "nav_drag": "Drei-Finger-Ziehen",
+                "nav_gestures": "Gesten",
+                "nav_scroll": "Sanftes Scrollen",
+                "nav_system": "System",
+                "nav_about": "Über",
+                "titlebar_whatsnew": "Neuigkeiten",
+                "btn_restore_default": "Standardwerte",
+                "hint_system_gestures": "System-Gesten für drei/vier Finger bitte deaktivieren",
+                "btn_open_system_touchpad": "Touchpad-Einstellungen öffnen",
+                "p_drag_title": "Drei-Finger-Ziehen",
+                "sec_settings": "Einstellungen",
+                "lbl_enable_drag": "Drei-Finger-Ziehen aktivieren",
+                "dsc_enable_drag": "Fenster verschieben oder Text mit 3 Fingern markieren",
+                "lbl_allow_restart": "Loslassen und Fortsetzen",
+                "dsc_allow_restart": "Ziehen nach kurzem Anheben der Finger nahtlos fortsetzen",
+                "lbl_tap_action": "Drei-Finger-Tippen",
+                "sec_cursor_params": "Zeigerparameter",
+                "lbl_cursor_speed": "Geschwindigkeit",
+                "lbl_cursor_accel": "Beschleunigung",
+                "lbl_start_threshold": "Start-Schwellenwert",
+                "lbl_stop_threshold": "Stopp-Schwellenwert",
+                "lbl_release_delay": "Loslass-Verzögerung (ms)",
+                "p_gestures_title": "Gesten-Einstellungen",
+                "sec_four_finger": "Vier-Finger-Gesten",
+                "lbl_swipe_up": "⬆️ Nach oben wischen",
+                "lbl_swipe_down": "⬇️ Nach unten wischen",
+                "lbl_swipe_left": "⬅️ Nach links wischen",
+                "lbl_swipe_right": "➡️ Nach rechts wischen",
+                "lbl_spread": "👐 Auseinanderziehen",
+                "lbl_pinch": "🤏 Zusammenziehen",
+                "lbl_swipe_threshold": "Wisch-Schwellenwert",
+                "lbl_pinch_threshold": "Zoom-Schwellenwert",
+                "sec_edge": "Rand-Gesten",
+                "lbl_edge_slide": "Lautstärke am Rand",
+                "dsc_edge_slide": "Ein Finger am linken Rand, einer in der Mitte; Mitte loslassen und wischen",
+                "lbl_invert_volume": "Lautstärkerichtung umkehren",
+                "dsc_invert_volume": "Richtung der Lautstärkeregelung umkehren",
+                "lbl_edge_threshold": "Rand-Zone",
+                "lbl_edge_slide_threshold": "Auslöse-Distanz",
+                "p_scroll_title": "Scroll-Einstellungen",
+                "tip_win11_scroll": "ℹ️ Sanftes Scrollen erfordert Windows 11",
+                "sec_smooth_scroll": "Sanftes Mausrad-Scrollen",
+                "lbl_enable_scroll": "Sanftes Scrollen aktivieren",
+                "dsc_enable_scroll": "Physikalisches Scrollen mit Dämpfung für Mausrad",
+                "lbl_scroll_speed": "Scroll-Geschwindigkeit",
+                "lbl_scroll_smooth": "Glättung",
+                "lbl_scroll_decel": "Abbremsung",
+                "lbl_scroll_bscale": "Basisschritt",
+                "lbl_scroll_maxd": "Max. Delta",
+                "lbl_scroll_dz": "Totzone",
+                "lbl_scroll_tick": "Intervall (ms)",
+                "lbl_natural_scroll": "Natürliches Scrollen",
+                "dsc_natural_scroll": "Inhalt folgt wie beim Touchpad der Fingerbewegung",
+                "sec_scroll_policy": "Anwendungs-Richtlinien",
+                "lbl_policy_enabled": "Richtlinien aktivieren",
+                "dsc_policy_enabled": "Sanftes Scrollen je nach aktivem Fenster steuern",
+                "lbl_browser_only": "Nur im Browser",
+                "dsc_browser_only": "Sanftes Scrollen nur in bekannten Webbrowsern aktivieren",
+                "lbl_fullscreen_disabled": "In Vollbild deaktivieren",
+                "dsc_fullscreen_disabled": "Bei Vollbildanwendungen automatisch pausieren",
+                "lbl_blacklist": "Blacklist",
+                "dsc_blacklist": "Gesperrte Anwendungen scrollen nativ",
+                "lbl_whitelist": "Whitelist",
+                "dsc_whitelist": "Nur für eingetragene Anwendungen aktivieren",
+                "btn_browse": "📂 Durchsuchen...",
+                "p_system_title": "System-Einstellungen",
+                "sec_general": "Allgemein & Sprache",
+                "lbl_language": "Sprache",
+                "dsc_language": "Sprache wählen (Automatische Systemerkennung unterstützt)",
+                "lbl_autostart": "Mit Windows starten",
+                "dsc_autostart": "Automatisch beim Windows-Start im Hintergrund ausführen",
+                "lbl_tray": "Beim Schließen ins Tray minimieren",
+                "dsc_tray": "Läuft nach dem Schließen im Hintergrund weiter",
+                "p_about_title": "Über",
+                "about_desc": "Mac-Touchpad-Gesten nahtlos unter Windows nutzen",
+                "btn_check_update": "🔄 Updates suchen",
+                "btn_whats_new": "✨ Neuigkeiten",
+                "btn_feedback": "💬 Feedback",
+                "upd_modal_title_prefix": "Aktualisiert auf ",
+                "upd_modal_new_prefix": "Neue Version: ",
+                "upd_modal_sub": "Änderungen seit v0.1.0",
+                "upd_modal_cur": "Installierte Version: ",
+                "upd_btn_full": "Vollständiges Änderungsprotokoll",
+                "upd_btn_ok": "Verstanden",
+                "upd_btn_download": "📥 Herunterladen & Aktualisieren",
+                "upd_btn_install": "🚀 Jetzt installieren",
+                "upd_detail_link": "Details",
+                "save_saving": "⟳ Speichern…",
+                "save_saved": "✓ Gespeichert",
+                "save_failed": "⚠ Fehler beim Speichern"
+        },
+        "fr-FR": {
+                "brand_subtitle": "Gestes du pavé tactile Mac sur Windows",
+                "nav_drag": "Glissement à 3 doigts",
+                "nav_gestures": "Gestes",
+                "nav_scroll": "Défilement fluide",
+                "nav_system": "Système",
+                "nav_about": "À propos",
+                "titlebar_whatsnew": "Nouveautés",
+                "btn_restore_default": "Valeurs par défaut",
+                "hint_system_gestures": "Veuillez désactiver les gestes à 3/4 doigts de Windows",
+                "btn_open_system_touchpad": "Paramètres du pavé tactile",
+                "p_drag_title": "Glissement à 3 doigts",
+                "sec_settings": "Paramètres",
+                "lbl_enable_drag": "Activer le glissement à 3 doigts",
+                "dsc_enable_drag": "Déplacer les fenêtres ou sélectionner du texte avec 3 doigts",
+                "lbl_allow_restart": "Relâcher et reprendre",
+                "dsc_allow_restart": "Reprendre le glissement après avoir brièvement levé les doigts",
+                "lbl_tap_action": "Toucher à 3 doigts",
+                "sec_cursor_params": "Curseur",
+                "lbl_cursor_speed": "Vitesse",
+                "lbl_cursor_accel": "Accélération",
+                "lbl_start_threshold": "Seuil de départ",
+                "lbl_stop_threshold": "Seuil d’arrêt",
+                "lbl_release_delay": "Délai de relâchement (ms)",
+                "p_gestures_title": "Paramètres des gestes",
+                "sec_four_finger": "Gestes à 4 doigts",
+                "lbl_swipe_up": "⬆️ Balayer vers le haut",
+                "lbl_swipe_down": "⬇️ Balayer vers le bas",
+                "lbl_swipe_left": "⬅️ Balayer vers la gauche",
+                "lbl_swipe_right": "➡️ Balayer vers la droite",
+                "lbl_spread": "👐 Écarter",
+                "lbl_pinch": "🤏 Pincer",
+                "lbl_swipe_threshold": "Seuil de balayage",
+                "lbl_pinch_threshold": "Seuil de pincement",
+                "sec_edge": "Gestes de bordure",
+                "lbl_edge_slide": "Volume sur le bord gauche",
+                "dsc_edge_slide": "Un doigt sur le bord gauche, un au centre ; relâcher le centre et glisser",
+                "lbl_invert_volume": "Inverser le sens du volume",
+                "dsc_invert_volume": "Inverser la direction du réglage du volume",
+                "lbl_edge_threshold": "Zone du bord",
+                "lbl_edge_slide_threshold": "Distance de déclenchement",
+                "p_scroll_title": "Défilement",
+                "tip_win11_scroll": "ℹ️ Le défilement fluide nécessite Windows 11",
+                "sec_smooth_scroll": "Défilement fluide de la molette",
+                "lbl_enable_scroll": "Activer le défilement fluide",
+                "dsc_enable_scroll": "Appliquer un amorti physique inertiel à la molette de la souris",
+                "lbl_scroll_speed": "Vitesse de défilement",
+                "lbl_scroll_smooth": "Fluidité",
+                "lbl_scroll_decel": "Décélération",
+                "lbl_scroll_bscale": "Échelle de pas",
+                "lbl_scroll_maxd": "Delta maximal",
+                "lbl_scroll_dz": "Zone morte",
+                "lbl_scroll_tick": "Intervalle (ms)",
+                "lbl_natural_scroll": "Défilement naturel",
+                "dsc_natural_scroll": "Le contenu suit le mouvement des doigts comme sur Mac",
+                "sec_scroll_policy": "Règles par application",
+                "lbl_policy_enabled": "Activer les règles",
+                "dsc_policy_enabled": "Contrôler le défilement selon l’application active",
+                "lbl_browser_only": "Navigateurs uniquement",
+                "dsc_browser_only": "Activer uniquement dans les navigateurs connus",
+                "lbl_fullscreen_disabled": "Désactiver en plein écran",
+                "dsc_fullscreen_disabled": "Désactiver automatiquement quand une appli est en plein écran",
+                "lbl_blacklist": "Liste noire",
+                "dsc_blacklist": "Applications exclues du défilement fluide",
+                "lbl_whitelist": "Liste blanche",
+                "dsc_whitelist": "Activer uniquement pour ces applications",
+                "btn_browse": "📂 Parcourir...",
+                "p_system_title": "Paramètres système",
+                "sec_general": "Général & Langue",
+                "lbl_language": "Langue de l’interface",
+                "dsc_language": "Choisir la langue (Détection automatique du système)",
+                "lbl_autostart": "Lancer au démarrage",
+                "dsc_autostart": "Démarrer automatiquement avec Windows en arrière-plan",
+                "lbl_tray": "Réduire dans la barre des tâches à la fermeture",
+                "dsc_tray": "Continue de fonctionner en arrière-plan à la fermeture",
+                "p_about_title": "À propos",
+                "about_desc": "Expérience fluide des gestes Mac sur Windows",
+                "btn_check_update": "🔄 Rechercher des mises à jour",
+                "btn_whats_new": "✨ Nouveautés",
+                "btn_feedback": "💬 Retour d’expérience",
+                "upd_modal_title_prefix": "Mis à jour vers ",
+                "upd_modal_new_prefix": "Nouvelle version : ",
+                "upd_modal_sub": "Modifications depuis v0.1.0",
+                "upd_modal_cur": "Version actuelle : ",
+                "upd_btn_full": "Journal complet des modifications",
+                "upd_btn_ok": "Compris",
+                "upd_btn_download": "📥 Télécharger et mettre à jour",
+                "upd_btn_install": "🚀 Installer maintenant",
+                "upd_detail_link": "Détails",
+                "save_saving": "⟳ Enregistrement…",
+                "save_saved": "✓ Enregistré",
+                "save_failed": "⚠ Échec de l’enregistrement"
+        },
+        "es-ES": {
+                "brand_subtitle": "Gestos del panel táctil de Mac en Windows",
+                "nav_drag": "Arrastre con 3 dedos",
+                "nav_gestures": "Gestos",
+                "nav_scroll": "Desplazamiento suave",
+                "nav_system": "Sistema",
+                "nav_about": "Acerca de",
+                "titlebar_whatsnew": "Novedades",
+                "btn_restore_default": "Restaurar valores",
+                "hint_system_gestures": "Desactive los gestos de 3/4 dedos en la configuración de Windows",
+                "btn_open_system_touchpad": "Abrir configuración del panel táctil",
+                "p_drag_title": "Arrastre con 3 dedos",
+                "sec_settings": "Ajustes",
+                "lbl_enable_drag": "Activar arrastre con 3 dedos",
+                "dsc_enable_drag": "Mueva ventanas o seleccione texto con tres dedos",
+                "lbl_allow_restart": "Soltar y reanudar",
+                "dsc_allow_restart": "Continúe arrastrando al volver a colocar los dedos rápidamente",
+                "lbl_tap_action": "Toque con 3 dedos",
+                "sec_cursor_params": "Parámetros del cursor",
+                "lbl_cursor_speed": "Velocidad del cursor",
+                "lbl_cursor_accel": "Aceleración",
+                "lbl_start_threshold": "Umbral de inicio",
+                "lbl_stop_threshold": "Umbral de detención",
+                "lbl_release_delay": "Retardo de soltado (ms)",
+                "p_gestures_title": "Ajustes de gestos",
+                "sec_four_finger": "Gestos con 4 dedos",
+                "lbl_swipe_up": "⬆️ Deslizar arriba",
+                "lbl_swipe_down": "⬇️ Deslizar abajo",
+                "lbl_swipe_left": "⬅️ Deslizar izquierda",
+                "lbl_swipe_right": "➡️ Deslizar derecha",
+                "lbl_spread": "👐 Separar",
+                "lbl_pinch": "🤏 Pellizcar",
+                "lbl_swipe_threshold": "Umbral de deslizamiento",
+                "lbl_pinch_threshold": "Umbral de pellizco",
+                "sec_edge": "Gestos de borde",
+                "lbl_edge_slide": "Volumen en borde izquierdo",
+                "dsc_edge_slide": "Un dedo en el borde izquierdo y otro en el centro; suelte el centro y deslice",
+                "lbl_invert_volume": "Invertir dirección de volumen",
+                "dsc_invert_volume": "Invertir el sentido del ajuste de volumen",
+                "lbl_edge_threshold": "Zona del borde",
+                "lbl_edge_slide_threshold": "Distancia de activación",
+                "p_scroll_title": "Desplazamiento",
+                "tip_win11_scroll": "ℹ️ El desplazamiento suave requiere Windows 11",
+                "sec_smooth_scroll": "Desplazamiento suave de rueda",
+                "lbl_enable_scroll": "Activar desplazamiento suave",
+                "dsc_enable_scroll": "Aplica amortiguación física inercial a la rueda del ratón",
+                "lbl_scroll_speed": "Velocidad",
+                "lbl_scroll_smooth": "Fluidez",
+                "lbl_scroll_decel": "Deceleración",
+                "lbl_scroll_bscale": "Paso base",
+                "lbl_scroll_maxd": "Desplazamiento máximo",
+                "lbl_scroll_dz": "Zona muerta",
+                "lbl_scroll_tick": "Intervalo (ms)",
+                "lbl_natural_scroll": "Desplazamiento natural",
+                "dsc_natural_scroll": "El contenido sigue la dirección de los dedos como en Mac",
+                "sec_scroll_policy": "Reglas de aplicaciones",
+                "lbl_policy_enabled": "Activar reglas",
+                "dsc_policy_enabled": "Controla el desplazamiento según la ventana activa",
+                "lbl_browser_only": "Solo en navegadores",
+                "dsc_browser_only": "Activar únicamente en navegadores conocidos",
+                "lbl_fullscreen_disabled": "Desactivar en pantalla completa",
+                "dsc_fullscreen_disabled": "Pausar automáticamente cuando una app esté en pantalla completa",
+                "lbl_blacklist": "Lista negra",
+                "dsc_blacklist": "Aplicaciones excluidas del desplazamiento suave",
+                "lbl_whitelist": "Lista blanca",
+                "dsc_whitelist": "Activar únicamente en estas aplicaciones",
+                "btn_browse": "📂 Examinar...",
+                "p_system_title": "Ajustes del sistema",
+                "sec_general": "General e Idioma",
+                "lbl_language": "Idioma de la interfaz",
+                "dsc_language": "Elegir idioma (Detección automática del sistema compatible)",
+                "lbl_autostart": "Iniciar con Windows",
+                "dsc_autostart": "Iniciar automáticamente en segundo plano al iniciar sesión",
+                "lbl_tray": "Minimizar a la bandeja al cerrar",
+                "dsc_tray": "Continuar en segundo plano al cerrar la ventana",
+                "p_about_title": "Acerca de",
+                "about_desc": "Gestos fluidos de Mac en Windows",
+                "btn_check_update": "🔄 Buscar actualizaciones",
+                "btn_whats_new": "✨ Novedades",
+                "btn_feedback": "💬 Comentarios",
+                "upd_modal_title_prefix": "Actualizado a ",
+                "upd_modal_new_prefix": "Nueva versión: ",
+                "upd_modal_sub": "Cambios desde v0.1.0",
+                "upd_modal_cur": "Versión instalada: ",
+                "upd_btn_full": "Ver registro de cambios completo",
+                "upd_btn_ok": "Entendido",
+                "upd_btn_download": "📥 Descargar y actualizar",
+                "upd_btn_install": "🚀 Instalar ahora",
+                "upd_detail_link": "Detalles",
+                "save_saving": "⟳ Guardando…",
+                "save_saved": "✓ Guardado",
+                "save_failed": "⚠ Error al guardar"
+        },
+        "ru-RU": {
+                "brand_subtitle": "Жесты трекпада Mac в Windows",
+                "nav_drag": "Перетаскивание 3 пальцами",
+                "nav_gestures": "Жесты",
+                "nav_scroll": "Плавная прокрутка",
+                "nav_system": "Система",
+                "nav_about": "О программе",
+                "titlebar_whatsnew": "Что нового",
+                "btn_restore_default": "По умолчанию",
+                "hint_system_gestures": "Отключите системные жесты 3 и 4 пальцами в Windows",
+                "btn_open_system_touchpad": "Открыть параметры сенсорной панели",
+                "p_drag_title": "Перетаскивание тремя пальцами",
+                "sec_settings": "Настройки",
+                "lbl_enable_drag": "Включить перетаскивание",
+                "dsc_enable_drag": "Перемещение окон или выделение текста тремя пальцами",
+                "lbl_allow_restart": "Возобновление после отрыва",
+                "dsc_allow_restart": "Возможность продолжить движение при быстром возвращении пальцев",
+                "lbl_tap_action": "Касание тремя пальцами",
+                "sec_cursor_params": "Параметры курсора",
+                "lbl_cursor_speed": "Скорость курсора",
+                "lbl_cursor_accel": "Ускорение",
+                "lbl_start_threshold": "Порог начала движения",
+                "lbl_stop_threshold": "Порог остановки",
+                "lbl_release_delay": "Задержка отрыва (мс)",
+                "p_gestures_title": "Настройки жестов",
+                "sec_four_finger": "Жесты четырьмя пальцами",
+                "lbl_swipe_up": "⬆️ Смахивание вверх",
+                "lbl_swipe_down": "⬇️ Смахивание вниз",
+                "lbl_swipe_left": "⬅️ Смахивание влево",
+                "lbl_swipe_right": "➡️ Смахивание вправо",
+                "lbl_spread": "👐 Разведение",
+                "lbl_pinch": "🤏 Сведение",
+                "lbl_swipe_threshold": "Порог смахивания",
+                "lbl_pinch_threshold": "Порог сведения",
+                "sec_edge": "Жесты по краю",
+                "lbl_edge_slide": "Громкость на левом краю",
+                "dsc_edge_slide": "Один палец на левом краю, второй в центре; отпустите центр и ведите",
+                "lbl_invert_volume": "Инвертировать громкость",
+                "dsc_invert_volume": "Инвертировать направление регулировки звука",
+                "lbl_edge_threshold": "Ширина краевой зоны",
+                "lbl_edge_slide_threshold": "Дистанция срабатывания",
+                "p_scroll_title": "Параметры прокрутки",
+                "tip_win11_scroll": "ℹ️ Плавная прокрутка колесиком доступна только в Windows 11",
+                "sec_smooth_scroll": "Плавная прокрутка колесиком мыши",
+                "lbl_enable_scroll": "Включить плавную прокрутку",
+                "dsc_enable_scroll": "Инерционная физическая плавная прокрутка для обычного колесика мыши",
+                "lbl_scroll_speed": "Скорость",
+                "lbl_scroll_smooth": "Плавность",
+                "lbl_scroll_decel": "Замедление",
+                "lbl_scroll_bscale": "Базовый шаг",
+                "lbl_scroll_maxd": "Максимальный сдвиг",
+                "lbl_scroll_dz": "Мертвая зона",
+                "lbl_scroll_tick": "Интервал таймера (мс)",
+                "lbl_natural_scroll": "Естественная прокрутка",
+                "dsc_natural_scroll": "Контент следует за направлением пальцев, как на Mac",
+                "sec_scroll_policy": "Политики приложений",
+                "lbl_policy_enabled": "Включить правила для приложений",
+                "dsc_policy_enabled": "Гибкое включение плавной прокрутки в зависимости от активного окна",
+                "lbl_browser_only": "Только в браузерах",
+                "dsc_browser_only": "Применять плавную прокрутку только в популярных браузерах",
+                "lbl_fullscreen_disabled": "Отключать в полноэкранном режиме",
+                "dsc_fullscreen_disabled": "Автоматически приостанавливать, когда окно развернуто на весь экран",
+                "lbl_blacklist": "Черный список",
+                "dsc_blacklist": "Приложения из списка используют обычную прокрутку",
+                "lbl_whitelist": "Белый список",
+                "dsc_whitelist": "Включать плавную прокрутку только в выбранных приложениях",
+                "btn_browse": "📂 Обзор...",
+                "p_system_title": "Параметры системы",
+                "sec_general": "Основные и язык",
+                "lbl_language": "Язык интерфейса",
+                "dsc_language": "Выбор языка (поддерживается автоопределение языка Windows)",
+                "lbl_autostart": "Автозапуск при входе",
+                "dsc_autostart": "Запуск в фоновом режиме при входе в систему",
+                "lbl_tray": "Сворачивать в трей при закрытии",
+                "dsc_tray": "Продолжать работу в фоне при закрытии окна",
+                "p_about_title": "О программе",
+                "about_desc": "Удобные жесты Mac на тачпаде в Windows",
+                "btn_check_update": "🔄 Проверить обновления",
+                "btn_whats_new": "✨ Что нового",
+                "btn_feedback": "💬 Обратная связь",
+                "upd_modal_title_prefix": "Обновлено до ",
+                "upd_modal_new_prefix": "Найдена новая версия: ",
+                "upd_modal_sub": "Изменения с версии v0.1.0",
+                "upd_modal_cur": "Установленная версия: ",
+                "upd_btn_full": "Полный список изменений",
+                "upd_btn_ok": "Понятно",
+                "upd_btn_download": "📥 Скачать и обновить",
+                "upd_btn_install": "🚀 Установить сейчас",
+                "upd_detail_link": "Подробнее",
+                "save_saving": "⟳ Сохранение…",
+                "save_saved": "✓ Сохранено",
+                "save_failed": "⚠ Ошибка сохранения"
+        },
+        "pt-BR": {
+                "brand_subtitle": "Gestos do touchpad Mac no Windows",
+                "nav_drag": "Arrastar com 3 dedos",
+                "nav_gestures": "Gestos",
+                "nav_scroll": "Rolagem suave",
+                "nav_system": "Sistema",
+                "nav_about": "Sobre",
+                "titlebar_whatsnew": "Novidades",
+                "btn_restore_default": "Restaurar padrões",
+                "hint_system_gestures": "Desative os gestos de 3/4 dedos no Windows",
+                "btn_open_system_touchpad": "Abrir configurações do touchpad",
+                "p_drag_title": "Arrastar com três dedos",
+                "sec_settings": "Configurações",
+                "lbl_enable_drag": "Ativar arrastar com 3 dedos",
+                "dsc_enable_drag": "Mova janelas ou selecione texto com 3 dedos",
+                "lbl_allow_restart": "Soltar e continuar",
+                "dsc_allow_restart": "Continue arrastando ao recolocar os dedos rapidamente",
+                "lbl_tap_action": "Toque com 3 dedos",
+                "sec_cursor_params": "Parâmetros do cursor",
+                "lbl_cursor_speed": "Velocidade",
+                "lbl_cursor_accel": "Aceleração",
+                "lbl_start_threshold": "Limite de início",
+                "lbl_stop_threshold": "Limite de parada",
+                "lbl_release_delay": "Atraso ao soltar (ms)",
+                "p_gestures_title": "Configurações de gestos",
+                "sec_four_finger": "Gestos com 4 dedos",
+                "lbl_swipe_up": "⬆️ Deslizar para cima",
+                "lbl_swipe_down": "⬇️ Deslizar para baixo",
+                "lbl_swipe_left": "⬅️ Deslizar para a esquerda",
+                "lbl_swipe_right": "➡️ Deslizar para a direita",
+                "lbl_spread": "👐 Afastar",
+                "lbl_pinch": "🤏 Juntar",
+                "lbl_swipe_threshold": "Limite de deslizamento",
+                "lbl_pinch_threshold": "Limite de pinça",
+                "sec_edge": "Gestos de borda",
+                "lbl_edge_slide": "Volume na borda esquerda",
+                "dsc_edge_slide": "Um dedo na borda esquerda e outro no centro; solte o centro e deslize",
+                "lbl_invert_volume": "Inverter direção do volume",
+                "dsc_invert_volume": "Inverter sentido do controle de volume",
+                "lbl_edge_threshold": "Zona da borda",
+                "lbl_edge_slide_threshold": "Distância de acionamento",
+                "p_scroll_title": "Rolagem",
+                "tip_win11_scroll": "ℹ️ A rolagem suave requer o Windows 11",
+                "sec_smooth_scroll": "Rolagem suave com a roda do mouse",
+                "lbl_enable_scroll": "Ativar rolagem suave",
+                "dsc_enable_scroll": "Interpolação física inercial para a roda tradicional do mouse",
+                "lbl_scroll_speed": "Velocidade de rolagem",
+                "lbl_scroll_smooth": "Suavidade",
+                "lbl_scroll_decel": "Desaceleração",
+                "lbl_scroll_bscale": "Passo base",
+                "lbl_scroll_maxd": "Delta máximo",
+                "lbl_scroll_dz": "Zona morta",
+                "lbl_scroll_tick": "Intervalo (ms)",
+                "lbl_natural_scroll": "Rolagem natural",
+                "dsc_natural_scroll": "O conteúdo segue os dedos como no touchpad",
+                "sec_scroll_policy": "Políticas de aplicativos",
+                "lbl_policy_enabled": "Ativar políticas",
+                "dsc_policy_enabled": "Controla a rolagem suave com base na janela ativa",
+                "lbl_browser_only": "Apenas no navegador",
+                "dsc_browser_only": "Ativar apenas em navegadores conhecidos",
+                "lbl_fullscreen_disabled": "Desativar em tela cheia",
+                "dsc_fullscreen_disabled": "Pausar automaticamente quando um app estiver em tela cheia",
+                "lbl_blacklist": "Lista negra",
+                "dsc_blacklist": "Aplicativos excluídos da rolagem suave",
+                "lbl_whitelist": "Lista branca",
+                "dsc_whitelist": "Ativar apenas nestes aplicativos",
+                "btn_browse": "📂 Procurar...",
+                "p_system_title": "Configurações do sistema",
+                "sec_general": "Geral & Idioma",
+                "lbl_language": "Idioma da interface",
+                "dsc_language": "Escolher idioma (Detecção automática do Windows disponível)",
+                "lbl_autostart": "Iniciar com o Windows",
+                "dsc_autostart": "Executar automaticamente em segundo plano ao fazer login",
+                "lbl_tray": "Minimizar para a bandeja ao fechar",
+                "dsc_tray": "Continuar em segundo plano após fechar a janela",
+                "p_about_title": "Sobre",
+                "about_desc": "Gestos fluidos do touchpad Mac no Windows",
+                "btn_check_update": "🔄 Verificar atualizações",
+                "btn_whats_new": "✨ Novidades",
+                "btn_feedback": "💬 Comentários",
+                "upd_modal_title_prefix": "Atualizado para ",
+                "upd_modal_new_prefix": "Nova versão: ",
+                "upd_modal_sub": "Alterações desde a v0.1.0",
+                "upd_modal_cur": "Versão instalada: ",
+                "upd_btn_full": "Ver registro completo de alterações",
+                "upd_btn_ok": "Entendi",
+                "upd_btn_download": "📥 Baixar e atualizar",
+                "upd_btn_install": "🚀 Instalar agora",
+                "upd_detail_link": "Detalhes",
+                "save_saving": "⟳ Salvando…",
+                "save_saved": "✓ Salvo",
+                "save_failed": "⚠ Falha ao salvar"
+        }
+};
+
+    const ACTION_I18N = {
+        "zh-CN": {
+                "None": "无",
+                "WinTab": "任务视图",
+                "AltTab": "Alt+Tab 切换应用",
+                "CtrlWinLeft": "左桌面",
+                "CtrlWinRight": "右桌面",
+                "ShowDesktop": "显示桌面",
+                "OpenStart": "开始菜单",
+                "Search": "搜索 (Win+S)",
+                "NotificationCenter": "通知中心",
+                "VolumeUp": "音量+",
+                "VolumeDown": "音量-",
+                "PageUp": "Page Up",
+                "PageDown": "Page Down",
+                "Maximize": "最大化窗口",
+                "Custom": "自定义快捷键"
+        },
+        "zh-TW": {
+                "None": "無",
+                "WinTab": "工作檢視",
+                "AltTab": "Alt+Tab 切換應用",
+                "CtrlWinLeft": "左桌面",
+                "CtrlWinRight": "右桌面",
+                "ShowDesktop": "顯示桌面",
+                "OpenStart": "開始功能表",
+                "Search": "搜尋 (Win+S)",
+                "NotificationCenter": "控制中心",
+                "VolumeUp": "音量+",
+                "VolumeDown": "音量-",
+                "PageUp": "Page Up",
+                "PageDown": "Page Down",
+                "Maximize": "最大化視窗",
+                "Custom": "自訂快捷鍵"
+        },
+        "en-US": {
+                "None": "None",
+                "WinTab": "Task View",
+                "AltTab": "Alt+Tab App Switcher",
+                "CtrlWinLeft": "Desktop Left",
+                "CtrlWinRight": "Desktop Right",
+                "ShowDesktop": "Show Desktop",
+                "OpenStart": "Start Menu",
+                "Search": "Search (Win+S)",
+                "NotificationCenter": "Action Center",
+                "VolumeUp": "Volume +",
+                "VolumeDown": "Volume -",
+                "PageUp": "Page Up",
+                "PageDown": "Page Down",
+                "Maximize": "Maximize Window",
+                "Custom": "Custom Shortcut"
+        },
+        "ja-JP": {
+                "None": "なし",
+                "WinTab": "タスクビュー",
+                "AltTab": "Alt+Tab アプリ切替",
+                "CtrlWinLeft": "左のデスクトップ",
+                "CtrlWinRight": "右のデスクトップ",
+                "ShowDesktop": "デスクトップを表示",
+                "OpenStart": "スタートメニュー",
+                "Search": "検索 (Win+S)",
+                "NotificationCenter": "アクションセンター",
+                "VolumeUp": "音量+",
+                "VolumeDown": "音量-",
+                "PageUp": "Page Up",
+                "PageDown": "Page Down",
+                "Maximize": "ウィンドウ最大化",
+                "Custom": "カスタムショートカット"
+        },
+        "ko-KR": {
+                "None": "없음",
+                "WinTab": "작업 보기",
+                "AltTab": "Alt+Tab 앱 전환",
+                "CtrlWinLeft": "왼쪽 데스크톱",
+                "CtrlWinRight": "오른쪽 데스크톱",
+                "ShowDesktop": "바탕화면 표시",
+                "OpenStart": "시작 메뉴",
+                "Search": "검색 (Win+S)",
+                "NotificationCenter": "알림 센터",
+                "VolumeUp": "볼륨 +",
+                "VolumeDown": "볼륨 -",
+                "PageUp": "Page Up",
+                "PageDown": "Page Down",
+                "Maximize": "창 최대화",
+                "Custom": "사용자 정의 단축키"
+        },
+        "de-DE": {
+                "None": "Keine",
+                "WinTab": "Aktive Anwendungen (Win+Tab)",
+                "AltTab": "Alt+Tab Fensterwechsel",
+                "CtrlWinLeft": "Desktop links",
+                "CtrlWinRight": "Desktop rechts",
+                "ShowDesktop": "Desktop anzeigen",
+                "OpenStart": "Startmenü",
+                "Search": "Suche (Win+S)",
+                "NotificationCenter": "Benachrichtigungen",
+                "VolumeUp": "Lautstärke +",
+                "VolumeDown": "Lautstärke -",
+                "PageUp": "Bild auf",
+                "PageDown": "Bild ab",
+                "Maximize": "Fenster maximieren",
+                "Custom": "Benutzerdefinierter Shortcut"
+        },
+        "fr-FR": {
+                "None": "Aucun",
+                "WinTab": "Affichage des tâches",
+                "AltTab": "Alt+Tab Changer d’application",
+                "CtrlWinLeft": "Bureau de gauche",
+                "CtrlWinRight": "Bureau de droite",
+                "ShowDesktop": "Afficher le bureau",
+                "OpenStart": "Menu Démarrer",
+                "Search": "Rechercher (Win+S)",
+                "NotificationCenter": "Centre de notifications",
+                "VolumeUp": "Volume +",
+                "VolumeDown": "Volume -",
+                "PageUp": "Page précédente",
+                "PageDown": "Page suivante",
+                "Maximize": "Agrandir la fenêtre",
+                "Custom": "Raccourci personnalisé"
+        },
+        "es-ES": {
+                "None": "Ninguno",
+                "WinTab": "Vista de tareas",
+                "AltTab": "Alt+Tab Cambiar ventana",
+                "CtrlWinLeft": "Escritorio izquierdo",
+                "CtrlWinRight": "Escritorio derecho",
+                "ShowDesktop": "Mostrar escritorio",
+                "OpenStart": "Menú Inicio",
+                "Search": "Buscar (Win+S)",
+                "NotificationCenter": "Centro de actividades",
+                "VolumeUp": "Volumen +",
+                "VolumeDown": "Volumen -",
+                "PageUp": "Retroceder página",
+                "PageDown": "Avanzar página",
+                "Maximize": "Maximizar ventana",
+                "Custom": "Acceso directo personalizado"
+        },
+        "ru-RU": {
+                "None": "Нет",
+                "WinTab": "Представление задач",
+                "AltTab": "Alt+Tab Переключение окон",
+                "CtrlWinLeft": "Рабочий стол влево",
+                "CtrlWinRight": "Рабочий стол вправо",
+                "ShowDesktop": "Показать рабочий стол",
+                "OpenStart": "Меню Пуск",
+                "Search": "Поиск (Win+S)",
+                "NotificationCenter": "Центр уведомлений",
+                "VolumeUp": "Громкость +",
+                "VolumeDown": "Громкость -",
+                "PageUp": "Page Up",
+                "PageDown": "Page Down",
+                "Maximize": "Развернуть окно",
+                "Custom": "Пользовательская клавиша"
+        },
+        "pt-BR": {
+                "None": "Nenhum",
+                "WinTab": "Visão de Tarefas",
+                "AltTab": "Alt+Tab Alternar janelas",
+                "CtrlWinLeft": "Área de trabalho esquerda",
+                "CtrlWinRight": "Área de trabalho direita",
+                "ShowDesktop": "Mostrar área de trabalho",
+                "OpenStart": "Menu Iniciar",
+                "Search": "Pesquisar (Win+S)",
+                "NotificationCenter": "Central de Ações",
+                "VolumeUp": "Volume +",
+                "VolumeDown": "Volume -",
+                "PageUp": "Page Up",
+                "PageDown": "Page Down",
+                "Maximize": "Maximizar janela",
+                "Custom": "Atalho personalizado"
+        }
+};
+
+    function resolveCurrentLang() {
+        const saved = localStorage.getItem('app_language') || 'auto';
+        if (saved !== 'auto' && I18N_DICTS[saved]) {
+            return saved;
+        }
+        const nav = (navigator.language || navigator.userLanguage || 'zh-CN').toLowerCase();
+        if (nav.startsWith('zh-tw') || nav.startsWith('zh-hk') || nav.startsWith('zh-mo') || nav.includes('hant')) {
+            return 'zh-TW';
+        }
+        if (nav.startsWith('zh')) return 'zh-CN';
+        if (nav.startsWith('ja')) return 'ja-JP';
+        if (nav.startsWith('ko')) return 'ko-KR';
+        if (nav.startsWith('de')) return 'de-DE';
+        if (nav.startsWith('fr')) return 'fr-FR';
+        if (nav.startsWith('es')) return 'es-ES';
+        if (nav.startsWith('ru')) return 'ru-RU';
+        if (nav.startsWith('pt')) return 'pt-BR';
+        return 'en-US';
+    }
+
+    function applyLanguage(langKey) {
+        const actual = langKey === 'auto' ? resolveCurrentLang() : langKey;
+        const dict = I18N_DICTS[actual] || I18N_DICTS['zh-CN'];
+        const actDict = ACTION_I18N[actual] || ACTION_I18N['zh-CN'];
+
+        // Translate text nodes with data-i18n
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const k = el.getAttribute('data-i18n');
+            if (dict[k]) {
+                el.textContent = dict[k];
+            }
+        });
+
+        // Update all gesture action dropdown select options
+        const selectIds = ['g4u', 'g4d', 'g4l', 'g4r', 'g4sp', 'g4pi', 'tap_action'];
+        selectIds.forEach(id => {
+            const sel = document.getElementById(id);
+            if (!sel) return;
+            Array.from(sel.options).forEach(opt => {
+                if (actDict[opt.value]) {
+                    opt.textContent = actDict[opt.value];
+                }
+            });
+        });
+
+        // Update titlebar button
+        const titlebarBtnText = document.getElementById('titlebar-ver-text');
+        if (titlebarBtnText) {
+            titlebarBtnText.textContent = (currentAppVersion ? `v${currentAppVersion.replace(/^v/i, '')} ` : '') + dict.titlebar_whatsnew;
+        }
+
+        // Update window control tooltips
+        const minBtn = document.querySelector('.win-ctrl-btn[onclick*="minimizeWindow"]');
+        if (minBtn) minBtn.title = actual.startsWith('zh') ? '最小化' : 'Minimize';
+        const closeBtn = document.querySelector('.win-ctrl-btn.close');
+        if (closeBtn) closeBtn.title = actual.startsWith('zh') ? '关闭' : 'Close';
+
+        // Update select value
+        const langSelect = document.getElementById('app_lang');
+        if (langSelect) langSelect.value = localStorage.getItem('app_language') || 'auto';
+    }
+
+    function onLanguageChange() {
+        const val = document.getElementById('app_lang')?.value || 'auto';
+        localStorage.setItem('app_language', val);
+        applyLanguage(val);
+    }
+    // ─── Modern Release / Update Modal (Screenshot Style) ───
+    let currentAppVersion = '0.1.6';
+    let cachedChangelogMd = '';
+    let activeUpdateInfo = null;
+
+    function parseChangelogToSections(md) {
+        if (!md) return [];
+        const lines = md.split(/\r?\n/);
+        const versions = [];
+        let curVer = null;
+        let curCategory = '';
+
+        for (let rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line) continue;
+
+            const verMatch = line.match(/^##?\s*\[?v?([0-9]+\.[0-9]+(?:\.[0-9]+)?)\]?(?:\s*-\s*([0-9\-]+))?/i);
+            if (verMatch) {
+                if (curVer && curVer.items.length > 0) {
+                    versions.push(curVer);
+                }
+                curVer = {
+                    version: 'v' + verMatch[1],
+                    rawVersion: verMatch[1],
+                    date: verMatch[2] || '',
+                    items: []
+                };
+                curCategory = '';
+                continue;
+            }
+
+            const catMatch = line.match(/^###\s*(.+)/);
+            if (catMatch) {
+                curCategory = catMatch[1].trim();
+                continue;
+            }
+
+            if (line.match(/^[-*+]\s+/)) {
+                const content = line.replace(/^[-*+]\s+/, '').trim();
+                if (!content) continue;
+                if (!curVer) {
+                    curVer = {
+                        version: 'v' + currentAppVersion,
+                        rawVersion: currentAppVersion,
+                        date: '',
+                        items: []
+                    };
+                }
+                const item = parseChangelogItem(content, curCategory);
+                curVer.items.push(item);
+            }
+        }
+
+        if (curVer && curVer.items.length > 0) {
+            versions.push(curVer);
+        }
+        return versions;
+    }
+
+    function parseChangelogItem(content, category) {
+        let badge = '新增';
+        let text = content;
+
+        const explicitMatch = text.match(/^\[(新增|修复|优化|改进|重构|移除|升级)\]\s*/i)
+            || text.match(/^【(新增|修复|优化|改进|重构|移除|升级)】\s*/i)
+            || text.match(/^(新增|修复|优化|改进|重构|移除|升级)[：:]\s*/i);
+
+        if (explicitMatch) {
+            badge = explicitMatch[1];
+            if (badge === '优化') badge = '改进';
+            text = text.substring(explicitMatch[0].length);
+        } else {
+            const lower = text.toLowerCase();
+            const catLower = (category || '').toLowerCase();
+            if (/修复|fix|bug|解决|崩溃|issue|无法/.test(lower) || /修复|fix/.test(catLower)) {
+                badge = '修复';
+            } else if (/优化|改进|提升|加快|重构|打磨|完善|加强|加固|性能/.test(lower) || /优化|改进|性能/.test(catLower)) {
+                badge = '改进';
+            } else if (/新增|添加|支持|增加|feat|add/.test(lower) || /新增|added|feat/.test(catLower)) {
+                badge = '新增';
+            } else if (catLower.includes('修复')) {
+                badge = '修复';
+            } else if (catLower.includes('新增')) {
+                badge = '新增';
+            } else {
+                badge = '改进';
+            }
+        }
+
+        text = text.replace(/\*\*(.*?)\*\*[：:]\s*/g, '<strong class="upd-strong">$1：</strong>');
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong class="upd-strong">$1</strong>');
+        text = text.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color:var(--accent); text-decoration:none;">$1</a>');
+        text = text.replace(/`(.*?)`/g, '<code style="background:rgba(255,255,255,0.08); padding:1px 4px; border-radius:4px; font-size:12px; font-family:monospace;">$1</code>');
+
+        return { badge, html: text };
+    }
+
+    async function openChangelogModal(updateInfo = null) {
+        activeUpdateInfo = updateInfo;
+        const overlay = document.getElementById('upd-modal-overlay');
+        const titleEl = document.getElementById('upd-modal-title');
+        const subtitleEl = document.getElementById('upd-modal-subtitle');
+        const bodyEl = document.getElementById('upd-modal-body');
+        const statusEl = document.getElementById('upd-modal-status');
+        const primaryBtn = document.getElementById('upd-modal-primary-btn');
+
+        if (!overlay || !bodyEl) return;
+
+        if (updateInfo && updateInfo.has_update) {
+            const latestVer = updateInfo.latest_version.startsWith('v') ? updateInfo.latest_version : 'v' + updateInfo.latest_version;
+            const curVer = updateInfo.current_version.startsWith('v') ? updateInfo.current_version : 'v' + updateInfo.current_version;
+            titleEl.textContent = `发现新版本 ${latestVer}`;
+            subtitleEl.textContent = `当前安装版本: ${curVer}`;
+            statusEl.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#f97316;margin-right:4px;"></span>可升级`;
+            primaryBtn.textContent = '📥 立即下载升级';
+
+            let sections = [];
+            if (updateInfo.body && updateInfo.body.trim()) {
+                sections = parseChangelogToSections(updateInfo.body);
+            }
+            if (sections.length === 0) {
+                sections = [{
+                    version: latestVer,
+                    rawVersion: updateInfo.latest_version,
+                    date: '',
+                    items: [{ badge: '新增', html: '点击立即升级体验最新优化与新特性功能。' }]
+                }];
+            }
+            renderChangelogSections(sections, bodyEl);
+        } else {
+            const curVer = currentAppVersion.startsWith('v') ? currentAppVersion : 'v' + currentAppVersion;
+            titleEl.textContent = `已更新到 ${curVer}`;
+            subtitleEl.textContent = `自 v0.1.0 以来的更新`;
+            statusEl.textContent = '';
+            primaryBtn.textContent = '知道了';
+
+            let md = cachedChangelogMd;
+            if (!md && invoke) {
+                try {
+                    md = await invoke('get_changelog');
+                    cachedChangelogMd = md;
+                } catch (e) {
+                    console.warn('Failed to load changelog:', e);
+                }
+            }
+
+            let sections = parseChangelogToSections(md);
+            if (sections.length === 0) {
+                sections = [
+                    {
+                        version: 'v0.1.6',
+                        items: [
+                            { badge: '改进', html: '<strong style="color:#ffffff;">三指拖移动态加速度：</strong>重构非对称 EMA 动态加速度引擎，带来类 macOS 的跟手拖移体验' },
+                            { badge: '优化', html: '<strong style="color:#ffffff;">三指横移防跳动与静止抗抖：</strong>中值滤波与各向同性补偿，彻底消除停顿时指针跳动' },
+                            { badge: '改进', html: '<strong style="color:#ffffff;">鼠标钩子性能大幅优化：</strong>移除冗余的触摸事件过滤逻辑，降低高轮询率鼠标下的 CPU 占用' },
+                            { badge: '优化', html: '<strong style="color:#ffffff;">平滑滚动与触控板旁路互斥加固：</strong>彻底解决鼠标滚轮平滑滚动与触控板原生滑动的互斥冲突' }
+                        ]
+                    },
+                    {
+                        version: 'v0.1.5',
+                        items: [
+                            { badge: '修复', html: '<strong style="color:#ffffff;">多指分包重组修复：</strong>全面修复 Windows PTP 混合/串行分包模式在接收多指分包时的识别丢失' },
+                            { badge: '新增', html: '<strong style="color:#ffffff;">隐蔽开发者调试诊断看板：</strong>在关于页面连点 5 次版本号即可激活实时触点监控与诊断导出' },
+                            { badge: '改进', html: '<strong style="color:#ffffff;">边缘手势与动画修正：</strong>重构矢量预览动画，支持真实双指落点与单指抬起滑移动效' },
+                            { badge: '新增', html: '<strong style="color:#ffffff;">平滑滚动生效策略：</strong>支持全屏应用自动禁用、仅在浏览器模式生效及黑白名单' }
+                        ]
+                    }
+                ];
+            }
+            renderChangelogSections(sections, bodyEl);
+        }
+
+        overlay.classList.add('show');
+    }
+
+    function renderChangelogSections(sections, container) {
+        container.innerHTML = sections.map(sec => {
+            const detailUrl = sec.rawVersion
+                ? `https://github.com/xiaolu12-up/Mac-touchpad/releases/tag/${sec.version}`
+                : `https://github.com/xiaolu12-up/Mac-touchpad/releases`;
+
+            const itemsHtml = sec.items.map(item => `
+                <div class="upd-item">
+                    <span class="upd-badge">${item.badge}</span>
+                    <div class="upd-item-text">${item.html}</div>
+                </div>
+            `).join('');
+
+            return `
+                <div class="upd-version-block">
+                    <div class="upd-ver-header">
+                        <span class="upd-ver-name">${sec.version}</span>
+                        <a class="upd-ver-detail-link" href="${detailUrl}" target="_blank">
+                            详情
+                            <svg viewBox="0 0 12 12"><path d="M2.5 9.5L9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5"/></svg>
+                        </a>
+                    </div>
+                    <div class="upd-item-list">
+                        ${itemsHtml}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function closeChangelogModal() {
+        const overlay = document.getElementById('upd-modal-overlay');
+        if (overlay) overlay.classList.remove('show');
+    }
+
+    function openFullChangelog() {
+        const url = 'https://github.com/xiaolu12-up/Mac-touchpad/releases';
+        if (invoke) {
+            invoke('open_url', { url });
+        } else {
+            window.open(url, '_blank');
+        }
+    }
+
+    async function onUpdateModalPrimaryClick() {
+        if (activeUpdateInfo && activeUpdateInfo.has_update) {
+            if (activeUpdateInfo.asset_url) {
+                const primaryBtn = document.getElementById('upd-modal-primary-btn');
+                const statusEl = document.getElementById('upd-modal-status');
+                if (primaryBtn) {
+                    primaryBtn.disabled = true;
+                    primaryBtn.textContent = '⏳ 正在下载中...';
+                }
+                if (statusEl) {
+                    statusEl.textContent = '正在下载安装包，请稍候...';
+                }
+                try {
+                    const filePath = await invoke('download_update', { url: activeUpdateInfo.asset_url });
+                    if (primaryBtn) {
+                        primaryBtn.disabled = false;
+                        primaryBtn.textContent = '🚀 立即安装';
+                        primaryBtn.onclick = () => doInstall(filePath);
+                    }
+                    if (statusEl) {
+                        statusEl.innerHTML = `<span style="color:var(--ok);">✓ 下载完成</span>`;
+                    }
+                } catch (e) {
+                    if (primaryBtn) {
+                        primaryBtn.disabled = false;
+                        primaryBtn.textContent = '🔄 重新下载';
+                    }
+                    if (statusEl) {
+                        statusEl.innerHTML = `<span style="color:var(--warn);">下载失败: ${escapeHtml(e)}</span>`;
+                    }
+                }
+                return;
+            } else if (activeUpdateInfo.download_url) {
+                openFullChangelog();
+                closeChangelogModal();
+                return;
+            }
+        }
+        closeChangelogModal();
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            closeChangelogModal();
+        }
+    });
+
     function showUpdateInfo(info) {
         const el = document.getElementById('update-result');
         if (!el) return;
         if (info.has_update) {
-            const formattedBody = parseMarkdown(info.body || '无更新日志说明。');
-            let actionHtml = '';
-            if (info.asset_url) {
-                actionHtml = `<button class="btn btn-sm" onclick="doDownload('${info.asset_url}')">📥 立即下载</button>`;
-            } else {
-                actionHtml = `<a href="${info.download_url}" target="_blank" class="btn btn-sm" style="color:var(--accent); text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">🌐 前往网页下载</a>`;
-            }
-
             el.innerHTML = `
-                <div style="margin-top: 16px; width: 100%; max-width: 460px; margin-left: auto; margin-right: auto; text-align: left; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 12px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
-                        <div style="display: flex; flex-direction: column; gap: 2px;">
-                            <span style="font-weight: 700; font-size: 13px; color: var(--text);">发现新版本 ${info.latest_version}</span>
-                            <span style="font-size: 11px; color: var(--dim);">当前安装版本: ${info.current_version}</span>
-                        </div>
-                        <span class="tag tag-warn" style="font-size: 10px; padding: 3px 8px; border-radius: 6px;">可更新</span>
-                    </div>
-                    <div style="background: rgba(128,128,128,0.05); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; max-height: 120px; overflow-y: auto; font-size: 11px; color: var(--dim); line-height: 1.5; font-family: inherit;">
-                        <span style="font-weight: 600; color: var(--text); display: inline-block; margin-bottom: 4px;">更新日志：</span><br>${formattedBody}
-                    </div>
-                    <div id="update-action-container" style="display: flex; justify-content: flex-end; gap: 8px; align-items: center; margin-top: 4px;">
-                        ${actionHtml}
-                    </div>
+                <div style="margin-top: 8px; display: inline-flex; align-items: center; gap: 8px;">
+                    <span class="tag tag-warn">发现新版本 ${info.latest_version}</span>
+                    <button class="btn btn-sm" onclick="openChangelogModal(activeUpdateInfo)">查看详情并升级</button>
                 </div>
             `;
+            activeUpdateInfo = info;
+            openChangelogModal(info);
         } else {
             el.innerHTML = '<span class="tag tag-ok">已是最新版本 ✓</span>';
         }
@@ -4029,9 +6035,10 @@
         el.textContent = '检查中...';
         try {
             const info = await invoke('check_update');
+            activeUpdateInfo = info;
             showUpdateInfo(info);
             const badge = document.getElementById('update-badge');
-            if (badge) badge.style.display = 'none';
+            if (badge) badge.style.display = info.has_update ? 'block' : 'none';
         } catch (e) {
             el.textContent = '检查失败: ' + e;
         }
@@ -4052,8 +6059,12 @@
 
     function openUpdatePage() {
         dismissUpdateToast();
-        const aboutNav = document.querySelector('.nav-item[onclick*="about"]') || document.querySelector('.footer-btn[onclick*="about"]');
-        go('about', aboutNav || document.body);
+        if (activeUpdateInfo && activeUpdateInfo.has_update) {
+            openChangelogModal(activeUpdateInfo);
+        } else {
+            const aboutNav = document.querySelector('.nav-item[onclick*="about"]') || document.querySelector('.footer-btn[onclick*="about"]');
+            go('about', aboutNav || document.body);
+        }
     }
 
     async function checkUpdateSilent() {
@@ -4086,8 +6097,8 @@
             document.getElementById('tap_action').value = 'Search';
             onTapActionChange();
             clearKeyRecorder('tap');
-            setDual('speed', 30);
-            setDual('accel', 12);
+            setDual('speed', 70);
+            setDual('accel', 10);
             setDual('stt', 40);
             setDual('spt', 5);
             setDual('rel', 270);
@@ -4158,6 +6169,7 @@
         const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
         const isLight = savedTheme === 'light' || (!savedTheme && prefersLight);
         updateThemeUI(isLight);
+        applyLanguage(localStorage.getItem('app_language') || 'auto');
     }
 
     initTheme();

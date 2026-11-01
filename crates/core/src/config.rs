@@ -64,7 +64,7 @@ impl Default for DeviceDragConfig {
     fn default() -> Self {
         Self {
             cursor_move: true,
-            cursor_speed: 60.0,
+            cursor_speed: 70.0,
             cursor_acceleration: 10.0,
         }
     }

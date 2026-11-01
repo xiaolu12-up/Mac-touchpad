@@ -20,6 +20,61 @@ fn get_config() -> Result<Config, String> {
 }
 
 #[tauri::command]
+fn window_minimize(window: tauri::WebviewWindow) {
+    let _ = window.minimize();
+}
+
+#[tauri::command]
+fn window_toggle_maximize(window: tauri::WebviewWindow) -> bool {
+    let is_max = window.is_maximized().unwrap_or(false);
+    if is_max {
+        let _ = window.unmaximize();
+        false
+    } else {
+        let _ = window.maximize();
+        true
+    }
+}
+
+#[tauri::command]
+fn window_close(app: tauri::AppHandle, window: tauri::WebviewWindow) {
+    let config = Config::load();
+    if config.close_to_tray {
+        let _ = window.hide();
+    } else {
+        app.exit(0);
+    }
+}
+
+#[tauri::command]
+fn window_start_dragging(window: tauri::WebviewWindow) {
+    if let Ok(hwnd) = window.hwnd() {
+        if let Ok(true) = window.is_maximized() {
+            let _ = window.unmaximize();
+        }
+        unsafe {
+            let _ = windows::Win32::UI::Input::KeyboardAndMouse::ReleaseCapture();
+            let _ = windows::Win32::UI::WindowsAndMessaging::SendMessageW(
+                windows::Win32::Foundation::HWND(hwnd.0 as isize),
+                windows::Win32::UI::WindowsAndMessaging::WM_SYSCOMMAND,
+                windows::Win32::Foundation::WPARAM(0xF012), // SC_MOVE | HTCAPTION
+                windows::Win32::Foundation::LPARAM(0),
+            );
+        }
+    }
+}
+
+#[tauri::command]
+fn window_is_maximized(window: tauri::WebviewWindow) -> bool {
+    window.is_maximized().unwrap_or(false)
+}
+
+#[tauri::command]
+fn get_changelog() -> String {
+    include_str!("../../CHANGELOG.md").to_string()
+}
+
+#[tauri::command]
 fn browse_and_get_exe_info() -> Result<Option<AppPolicyItem>, String> {
     Ok(exe_info::browse_and_inspect_exe())
 }
@@ -651,7 +706,7 @@ pub fn run() {
 
     let config = Config::load();
     tracing::info!("Config: drag={}, speed={}", config.three_finger_drag,
-        config.device_configs.values().next().map(|d| d.cursor_speed as i32).unwrap_or(60));
+        config.device_configs.values().next().map(|d| d.cursor_speed as i32).unwrap_or(70));
 
     // Start core engine
     let core_tx = mac_touchpad_core::window::start_message_loop(config.clone(), None);
@@ -739,6 +794,12 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             get_config,
+            window_minimize,
+            window_toggle_maximize,
+            window_is_maximized,
+            window_close,
+            window_start_dragging,
+            get_changelog,
             save_config,
             get_action_list,
             get_version,

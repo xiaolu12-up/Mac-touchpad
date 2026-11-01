@@ -63,6 +63,11 @@ impl GestureEngine {
     pub fn set_touchpad_ranges(&mut self, x_range: (i32, i32), y_range: (i32, i32)) {
         self.x_range = x_range;
         self.y_range = y_range;
+        let x_span = (x_range.1 - x_range.0) as f32;
+        let y_span = (y_range.1 - y_range.0) as f32;
+        if x_span > 0.0 && y_span > 0.0 {
+            self.drag.set_aspect_ratio(x_span / y_span);
+        }
     }
 
     /// Process a new frame of touchpad contacts.
@@ -85,8 +90,8 @@ impl GestureEngine {
             let x_span = (self.x_range.1 - self.x_range.0) as f32;
             let y_span = (self.y_range.1 - self.y_range.0) as f32;
             for c in &mut contacts {
-                c.x = (((c.x - self.x_range.0) as f32 / x_span) * 4096.0) as i32;
-                c.y = (((c.y - self.y_range.0) as f32 / y_span) * 4096.0) as i32;
+                c.x = (((c.x - self.x_range.0) as f32 / x_span) * 4096.0).round() as i32;
+                c.y = (((c.y - self.y_range.0) as f32 / y_span) * 4096.0).round() as i32;
             }
         }
 
@@ -239,10 +244,12 @@ impl GestureEngine {
                 action
             }
         } else if finger_count == 2 {
-            // 2 fingers — native scroll
-            if self.drag.is_dragging() {
-                self.drag.force_stop(&self.config, &mut self.mouse);
-            }
+            // 2 fingers — native scroll or intermediate lift-off frame from 3-finger drag
+            let drag_action = self.drag.on_non_three_finger_contact(
+                &self.config,
+                &mut self.mouse,
+                &contacts,
+            );
             self.edge_slide.reset();
             self.swipe_detector.reset();
             self.pinch_detector.reset();
@@ -254,12 +261,14 @@ impl GestureEngine {
 
             TOUCHPAD_SCROLLING.store(false, Ordering::Relaxed);
 
-            TimerAction::None
+            drag_action
         } else if finger_count == 1 {
-            // Single finger: edge slide for volume/brightness
-            if self.drag.is_dragging() {
-                self.drag.force_stop(&self.config, &mut self.mouse);
-            }
+            // Single finger: edge slide for volume/brightness or intermediate lift-off frame
+            let drag_action = self.drag.on_non_three_finger_contact(
+                &self.config,
+                &mut self.mouse,
+                &contacts,
+            );
             self.two_finger_swipe.reset();
             self.swipe_detector.reset();
             self.pinch_detector.reset();
@@ -283,7 +292,7 @@ impl GestureEngine {
                 }
             }
 
-            TimerAction::None
+            drag_action
         } else {
             // No fingers — reset position tracking but keep velocity for momentum decay
             TOUCHPAD_SCROLLING.store(false, Ordering::Relaxed);
@@ -293,14 +302,14 @@ impl GestureEngine {
             self.pinch_detector.reset();
             self.tap_detector.reset();
 
-           // Feed empty contacts — tap detector fires if it saw a valid 3-finger tap
-           let empty: [TouchpadContact; 0] = [];
-           if !self.four_finger_action_triggered
-               && self.config.three_finger_tap_enabled
-               && self.three_finger_tap.feed(
-                   &empty,
-                   now,
-                   self.config.tap_max_duration_ms,
+            // Feed empty contacts — tap detector fires if it saw a valid 3-finger tap
+            let empty: [TouchpadContact; 0] = [];
+            if !self.four_finger_action_triggered
+                && self.config.three_finger_tap_enabled
+                && self.three_finger_tap.feed(
+                    &empty,
+                    now,
+                    self.config.tap_max_duration_ms,
                     self.config.tap_max_distance,
                 )
             {
@@ -308,11 +317,15 @@ impl GestureEngine {
                 crate::debug::log_debug("GESTURE", format!("3-Finger Tap: {:?}", self.config.three_finger_tap_action));
                 self.execute_action_for_slot(self.config.three_finger_tap_action, "three_finger_tap");
             }
-            self.drag.force_stop(&self.config, &mut self.mouse);
+            let drag_action = self.drag.on_non_three_finger_contact(
+                &self.config,
+                &mut self.mouse,
+                &empty,
+            );
 
             self.four_finger_action_triggered = false;
 
-            TimerAction::None
+            drag_action
         };
 
         self.last_contact_time = now;
