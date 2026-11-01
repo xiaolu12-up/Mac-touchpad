@@ -110,6 +110,14 @@ jobs:
           releaseDraft: ${{ inputs.draft || false }}
           prerelease: ${{ inputs.prerelease || false }}
 
+      - name: Sync Release and Assets to Gitee
+        if: env.SHOULD_PUBLISH == 'true'
+        shell: pwsh
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        run: |
+          & ./scripts/publish-gitee.ps1 -Tag "${{ github.ref_name }}" -Body "${{ env.RELEASE_BODY }}"
+
       - name: Build Installer (CI / PR / Non-Release)
         if: env.SHOULD_PUBLISH != 'true'
         uses: tauri-apps/tauri-action@v0
