@@ -262,6 +262,13 @@ impl DistanceManager {
         (id, consensus.delta, consensus.dist_2d)
     }
 
+    /// Mark the given contacts as trusted immediately, skipping quarantine.
+    /// Used when a drag resumes on a new set of contacts.
+    pub fn trust_contacts(&mut self, contacts: &[TouchpadContact]) {
+        self.quarantine_contacts.clear();
+        self.trusted_contacts = contacts.iter().map(|c| c.contact_id).collect();
+    }
+
     /// Reset all quarantine and trusted state.
     pub fn reset(&mut self) {
         self.quarantine_contacts.clear();

@@ -45,6 +45,21 @@ impl FingerCounter {
         self.long_delay_fingers_move = 0.0;
     }
 
+    /// Re-anchor all counters for a resumed drag, so the cursor continues moving
+    /// immediately instead of having to re-cross the start threshold.
+    pub fn restore_continuation(&mut self, fingers: i32) {
+        self.original_fingers_count = fingers;
+        self.short_delay_fingers_count = fingers;
+        self.long_delay_fingers_count = fingers;
+        self.short_delay_fingers_move = 0.0;
+        self.long_delay_fingers_move = 0.0;
+    }
+
+    #[cfg(test)]
+    pub fn original_count(&self) -> i32 {
+        self.original_fingers_count
+    }
+
     /// Count moving fingers based on distance thresholds.
     ///
     /// Returns (fingers_count, short_delay_moving, long_delay_moving, original_fingers_count).

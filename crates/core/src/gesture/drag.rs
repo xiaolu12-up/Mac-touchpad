@@ -87,16 +87,29 @@ impl ThreeFingerDrag {
         self.fingers_currently_down = contacts.len();
         self.cancel_anchor = None;
 
-        let are_contacts_ids_common =
+        let mut are_contacts_ids_common =
             FingerCounter::are_contacts_ids_common(old_contacts, contacts);
 
         // If the exact same 3 finger contact IDs remain on the touchpad, holding them
         // stationary (elapsed > 55ms up to STATIONARY_HOLD_MAX_MS) is NOT a finger release.
-        let has_fingers_released = if are_contacts_ids_common && !contacts.is_empty() {
+        let mut has_fingers_released = if are_contacts_ids_common && !contacts.is_empty() {
             elapsed > STATIONARY_HOLD_MAX_MS
         } else {
             elapsed > RELEASE_FINGERS_THRESHOLD_MS || old_contacts.is_empty()
         };
+
+        // Fingers put back on the pad while the release timer still holds the drag:
+        // continue the existing drag instead of restarting it. Without this the
+        // counters are reset by the empty previous frame and the cursor only resumes
+        // after the user moves past the start threshold again.
+        if self.is_dragging && contacts.len() == 3 && !are_contacts_ids_common {
+            are_contacts_ids_common = true;
+            has_fingers_released = false;
+            self.finger_counter
+                .restore_continuation(contacts.len() as i32);
+            self.distance_manager.trust_contacts(contacts);
+            tracing::debug!("RESUME DRAG, click still down");
+        }
 
         let consensus = self.distance_manager.get_consensus_dist_2d(
             old_contacts,
@@ -133,9 +146,7 @@ impl ThreeFingerDrag {
             self.accel_tracker.reset();
             mouse.drag_down(config.drag_button);
             tracing::debug!("START DRAG, click down");
-
-            let delay = self.get_release_delay(config);
-            return TimerAction::StartTimer(delay);
+            return self.arm_release_timer(config);
         }
         // STOP drag
         else if self.is_dragging
@@ -258,13 +269,11 @@ impl ThreeFingerDrag {
             }
 
             // Keep drag-end timer alive whenever 3 fingers are on the touchpad during drag
-            let delay = self.get_release_delay(config);
-            return TimerAction::StartTimer(delay);
+            return self.arm_release_timer(config);
         } else if self.is_dragging && contacts.len() == 3 {
             // 3 fingers just touched back down during release-and-restart window:
             // keep timer running while quarantine/threshold promotes them.
-            let delay = self.get_release_delay(config);
-            return TimerAction::StartTimer(delay);
+            return self.arm_release_timer(config);
         }
 
         let _ = speed::apply_speed(device_id, config, 0.0);
@@ -305,8 +314,10 @@ impl ThreeFingerDrag {
                 self.stop_drag(config, mouse);
                 return TimerAction::StopTimer;
             }
-            let delay = self.get_release_delay(config);
-            return TimerAction::StartTimer(delay);
+            // 2 fingers keep the drag pressed without a timer: a timeout would
+            // release the button between reports, and the re-press at the same
+            // spot is seen by Windows as a click (a second pair opens the item).
+            return TimerAction::None;
         }
 
         // When release-and-restart is enabled:
@@ -380,6 +391,18 @@ impl ThreeFingerDrag {
         mouse.drag_up(config.drag_button);
     }
 
+    /// Arm the drag-end timer. With release-and-restart disabled the drag ends on
+    /// a real contact loss, so a timer must not run while the fingers stay down:
+    /// it would release the button on any gap between reports, and the immediate
+    /// re-press at the same spot becomes a click (a second pair opens the item).
+    fn arm_release_timer(&self, config: &Config) -> TimerAction {
+        if config.allow_release_and_restart {
+            TimerAction::StartTimer(self.get_release_delay(config))
+        } else {
+            TimerAction::None
+        }
+    }
+
     fn get_release_delay(&self, config: &Config) -> u32 {
         if config.allow_release_and_restart {
             config.release_delay_ms.max(RELEASE_FINGERS_THRESHOLD_MS as u32)
@@ -403,7 +426,7 @@ pub enum TimerAction {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::DragButton;
+    use crate::config::{DeviceDragConfig, DragButton};
 
     fn contacts3(x1: i32, y1: i32, x2: i32, y2: i32, x3: i32, y3: i32) -> Vec<TouchpadContact> {
         vec![
@@ -438,5 +461,163 @@ mod tests {
         let _ = drag.on_non_three_finger_contact(&config, &mut mouse, &[]);
         drag.on_timer_fired(&config, &mut mouse);
         assert!(!drag.is_dragging(), "Timer after finger release should end drag");
+    }
+
+    fn test_config(allow_release_and_restart: bool) -> Config {
+        let mut config = Config::default();
+        config.drag_button = DragButton::None;
+        config.allow_release_and_restart = allow_release_and_restart;
+        config.release_delay_ms = 500;
+        config.start_threshold = 40.0;
+        config.stop_threshold = 5.0;
+        config.device_configs.insert(
+            "default".into(),
+            DeviceDragConfig {
+                cursor_move: false,
+                ..Default::default()
+            },
+        );
+        config
+    }
+
+    fn contacts3_at(offset: i32) -> Vec<TouchpadContact> {
+        contacts3(
+            1000 + offset,
+            1000,
+            1500 + offset,
+            1000,
+            2000 + offset,
+            1000,
+        )
+    }
+
+    fn start_drag(drag: &mut ThreeFingerDrag, config: &Config, mouse: &mut MouseSimulator) {
+        let mut old: Vec<TouchpadContact> = Vec::new();
+        for i in 0..8 {
+            let new = contacts3_at(i * 10);
+            drag.on_touchpad_contact("default", config, mouse, &old, &new, 10);
+            old = new;
+            if i == 0 {
+                // Let the new contacts leave the 12ms quarantine.
+                std::thread::sleep(std::time::Duration::from_millis(20));
+            }
+        }
+        assert!(
+            drag.is_dragging(),
+            "drag should start once the start threshold is crossed"
+        );
+    }
+
+    #[test]
+    fn lift_keeps_drag_alive_until_timer_fires() {
+        let config = test_config(true);
+        let mut mouse = MouseSimulator::new();
+        let mut drag = ThreeFingerDrag::new();
+        start_drag(&mut drag, &config, &mut mouse);
+
+        let lifted = drag.on_non_three_finger_contact(&config, &mut mouse, &[]);
+        assert_eq!(lifted, TimerAction::StartTimer(500));
+        assert!(drag.is_dragging());
+
+        drag.on_timer_fired(&config, &mut mouse);
+        assert!(!drag.is_dragging());
+    }
+
+    #[test]
+    fn lift_stops_drag_immediately_when_restart_is_disabled() {
+        let config = test_config(false);
+        let mut mouse = MouseSimulator::new();
+        let mut drag = ThreeFingerDrag::new();
+        start_drag(&mut drag, &config, &mut mouse);
+
+        let lifted = drag.on_non_three_finger_contact(&config, &mut mouse, &[]);
+        assert_eq!(lifted, TimerAction::StopTimer);
+        assert!(!drag.is_dragging());
+    }
+
+    #[test]
+    fn disabled_restart_does_not_arm_timer_while_fingers_stay_down() {
+        let config = test_config(false);
+        let mut mouse = MouseSimulator::new();
+        let mut drag = ThreeFingerDrag::new();
+        start_drag(&mut drag, &config, &mut mouse);
+
+        // A pause in reporting while the fingers are still down must not
+        // release the button: the release/repress pair is seen by Windows as
+        // a click, and a repeated pair opens the dragged item.
+        let action = drag.on_touchpad_contact(
+            "default",
+            &config,
+            &mut mouse,
+            &contacts3_at(70),
+            &contacts3_at(72),
+            10,
+        );
+        assert_eq!(action, TimerAction::None);
+        assert!(drag.is_dragging());
+
+        // A momentary 2-finger report keeps the drag pressed without a timer.
+        let two = vec![
+            TouchpadContact::new(1, 1072, 1000),
+            TouchpadContact::new(2, 1572, 1000),
+        ];
+        let action = drag.on_non_three_finger_contact(&config, &mut mouse, &two);
+        assert_eq!(action, TimerAction::None);
+        assert!(drag.is_dragging());
+
+        // The drag only ends on a real contact loss.
+        let one = vec![TouchpadContact::new(1, 1072, 1000)];
+        let action = drag.on_non_three_finger_contact(&config, &mut mouse, &one);
+        assert_eq!(action, TimerAction::StopTimer);
+        assert!(!drag.is_dragging());
+    }
+
+    #[test]
+    fn retouch_within_release_window_resumes_without_start_threshold() {
+        let config = test_config(true);
+        let mut mouse = MouseSimulator::new();
+        let mut drag = ThreeFingerDrag::new();
+        start_drag(&mut drag, &config, &mut mouse);
+
+        let held = drag.on_non_three_finger_contact(&config, &mut mouse, &[]);
+        assert_eq!(held, TimerAction::StartTimer(500));
+        assert!(drag.is_dragging());
+
+        // Fingers come back within the release window.
+        let retouch = contacts3_at(80);
+        let resumed =
+            drag.on_touchpad_contact("default", &config, &mut mouse, &[], &retouch, 200);
+        assert_eq!(resumed, TimerAction::StartTimer(500));
+        assert!(drag.is_dragging());
+        assert_eq!(drag.finger_counter.original_count(), 3);
+
+        // A move well below the start threshold must already be a drag move.
+        let continued = drag.on_touchpad_contact(
+            "default",
+            &config,
+            &mut mouse,
+            &retouch,
+            &contacts3_at(82),
+            10,
+        );
+        assert_eq!(continued, TimerAction::StartTimer(500));
+        assert!(drag.is_dragging());
+        assert_eq!(drag.finger_counter.original_count(), 3);
+    }
+
+    #[test]
+    fn two_fingers_keep_drag_alive_when_restart_is_enabled() {
+        let config = test_config(true);
+        let mut mouse = MouseSimulator::new();
+        let mut drag = ThreeFingerDrag::new();
+        start_drag(&mut drag, &config, &mut mouse);
+
+        let two = vec![
+            TouchpadContact::new(1, 1070, 1000),
+            TouchpadContact::new(2, 1570, 1000),
+        ];
+        let action = drag.on_non_three_finger_contact(&config, &mut mouse, &two);
+        assert_eq!(action, TimerAction::StartTimer(500));
+        assert!(drag.is_dragging());
     }
 }
