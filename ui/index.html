@@ -3700,7 +3700,7 @@
                     <path d="M10 3.5l1.8 5.2a2 2 0 0 0 1.25 1.25L18.25 11.75l-5.2 1.8a2 2 0 0 0-1.25 1.25L10 20l-1.8-5.2a2 2 0 0 0-1.25-1.25L1.75 11.75l5.2-1.8A2 2 0 0 0 8.2 8.7L10 3.5z"/>
                     <path d="M19 3v4M17 5h4"/>
                 </svg>
-                <span id="upd-modal-title">已更新到 v0.1.6</span>
+                <span id="upd-modal-title">更新内容</span>
             </div>
             <div class="upd-subtitle" id="upd-modal-subtitle">自 v0.1.0 以来的更新</div>
         </div>
@@ -5769,12 +5769,12 @@
         applyLanguage(val);
     }
     // ─── Modern Release / Update Modal (Screenshot Style) ───
-    let currentAppVersion = '0.1.6';
+    let currentAppVersion = "";
     let cachedChangelogMd = '';
     let activeUpdateInfo = null;
     let updateDownloading = false;
 
-    function parseChangelogToSections(md) {
+    function parseChangelogToSections(md, fallbackVersion = currentAppVersion) {
         if (!md) return [];
         const lines = md.split(/\r?\n/);
         const versions = [];
@@ -5811,8 +5811,8 @@
                 if (!content) continue;
                 if (!curVer) {
                     curVer = {
-                        version: 'v' + currentAppVersion,
-                        rawVersion: currentAppVersion,
+                        version: 'v' + (fallbackVersion || currentAppVersion),
+                        rawVersion: fallbackVersion || currentAppVersion,
                         date: '',
                         items: []
                     };
@@ -5887,7 +5887,7 @@
 
             let sections = [];
             if (updateInfo.body && updateInfo.body.trim()) {
-                sections = parseChangelogToSections(updateInfo.body);
+                sections = parseChangelogToSections(updateInfo.body, updateInfo.latest_version);
             }
             if (sections.length === 0) {
                 sections = [{
@@ -5915,11 +5915,11 @@
                 }
             }
 
-            let sections = parseChangelogToSections(md);
+            let sections = parseChangelogToSections(md, currentAppVersion);
             if (sections.length === 0) {
                 sections = [
                     {
-                        version: 'v0.1.6',
+                        version: 'v' + (currentAppVersion || 'latest'),
                         items: [
                             { badge: '改进', html: '<strong style="color:#ffffff;">三指拖移动态加速度：</strong>重构非对称 EMA 动态加速度引擎，带来类 macOS 的跟手拖移体验' },
                             { badge: '优化', html: '<strong style="color:#ffffff;">三指横移防跳动与静止抗抖：</strong>中值滤波与各向同性补偿，彻底消除停顿时指针跳动' },
