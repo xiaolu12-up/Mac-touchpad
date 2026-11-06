@@ -282,6 +282,7 @@ impl GestureEngine {
             // Feeding intermediate frames (1 finger) would cancel the tap
             // due to finger count mismatch in the TapDetector.
 
+            // Edge slide must not fire while the drag still holds the button.
             if !self.drag.is_dragging()
                 && self.config.edge_slide_enabled
                 && !self.four_finger_action_triggered
