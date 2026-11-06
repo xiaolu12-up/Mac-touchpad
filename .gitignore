@@ -1,4 +1,6 @@
 /target/
+/src-tauri/target/
+**/target/
 /dist/
 /Cargo.lock
 
