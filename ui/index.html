@@ -588,6 +588,27 @@
             gap: 6px;
         }
 
+        .update-progress {
+            width: 150px;
+            height: 4px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .update-progress-bar {
+            width: 38%;
+            height: 100%;
+            border-radius: 999px;
+            background: var(--accent);
+            animation: update-progress 1.15s ease-in-out infinite;
+        }
+
+        @keyframes update-progress {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(320%); }
+        }
+
         .upd-btn-secondary {
             background: rgba(255, 255, 255, 0.02);
             color: #d6d8e1;
@@ -3580,7 +3601,7 @@
                     <div class="update-btn"
                          style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
                         <div style="display: flex; gap: 10px; justify-content: center; width: 100%;">
-                            <button class="btn btn-sm" onclick="checkUpdate()" data-i18n="btn_check_update">🔄 检查更新</button>
+                            <button class="btn btn-sm" id="check-update-btn" onclick="checkUpdate()" data-i18n="btn_check_update">🔄 检查更新</button>
                             <button class="btn btn-sm btn-sec" onclick="openChangelogModal()" data-i18n="btn_whats_new">✨ 更新内容</button>
                             <button class="btn btn-sm btn-sec" onclick="openFeedback()" data-i18n="btn_feedback">💬 问题反馈</button>
                         </div>
@@ -5751,6 +5772,7 @@
     let currentAppVersion = '0.1.6';
     let cachedChangelogMd = '';
     let activeUpdateInfo = null;
+    let updateDownloading = false;
 
     function parseChangelogToSections(md) {
         if (!md) return [];
@@ -5953,6 +5975,7 @@
     }
 
     function closeChangelogModal() {
+        if (updateDownloading) return;
         const overlay = document.getElementById('upd-modal-overlay');
         if (overlay) overlay.classList.remove('show');
     }
@@ -5970,13 +5993,19 @@
         if (activeUpdateInfo && activeUpdateInfo.has_update) {
             if (activeUpdateInfo.asset_url) {
                 const primaryBtn = document.getElementById('upd-modal-primary-btn');
+                const secondaryBtn = document.querySelector('.upd-btn-secondary');
                 const statusEl = document.getElementById('upd-modal-status');
                 if (primaryBtn) {
                     primaryBtn.disabled = true;
                     primaryBtn.textContent = '⏳ 正在下载中...';
                 }
+                updateDownloading = true;
+                if (secondaryBtn) secondaryBtn.disabled = true;
                 if (statusEl) {
-                    statusEl.textContent = '正在下载安装包，请稍候...';
+                    statusEl.innerHTML = `
+                        <div class="update-progress"><div class="update-progress-bar"></div></div>
+                        <span>正在后台下载安装包，界面不会卡死...</span>
+                    `;
                 }
                 try {
                     const filePath = await invoke('download_update', { url: activeUpdateInfo.asset_url });
@@ -5996,6 +6025,9 @@
                     if (statusEl) {
                         statusEl.innerHTML = `<span style="color:var(--warn);">下载失败: ${escapeHtml(e)}</span>`;
                     }
+                } finally {
+                    updateDownloading = false;
+                    if (secondaryBtn) secondaryBtn.disabled = false;
                 }
                 return;
             } else if (activeUpdateInfo.download_url) {
@@ -6006,7 +6038,6 @@
         }
         closeChangelogModal();
     }
-
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
             closeChangelogModal();
@@ -6032,7 +6063,12 @@
 
     async function checkUpdate() {
         const el = document.getElementById('update-result');
-        el.textContent = '检查中...';
+        const btn = document.getElementById('check-update-btn');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = '⏳ 检查中...';
+        }
+        el.textContent = '正在检查更新，请稍候...';
         try {
             const info = await invoke('check_update');
             activeUpdateInfo = info;
@@ -6041,9 +6077,13 @@
             if (badge) badge.style.display = info.has_update ? 'block' : 'none';
         } catch (e) {
             el.textContent = '检查失败: ' + e;
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = '🔄 检查更新';
+            }
         }
     }
-
     function showUpdateToast(info) {
         const toast = document.getElementById('update-toast');
         if (!toast) return;

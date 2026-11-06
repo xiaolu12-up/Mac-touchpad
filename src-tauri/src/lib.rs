@@ -289,11 +289,26 @@ fn is_newer_version(current: &str, latest: &str) -> bool {
 }
 
 #[tauri::command]
-fn check_update() -> Result<UpdateInfo, String> {
+async fn check_update() -> Result<UpdateInfo, String> {
+    tauri::async_runtime::spawn_blocking(check_update_blocking)
+        .await
+        .map_err(|e| format!("更新检查任务失败: {}", e))?
+}
+
+fn check_update_blocking() -> Result<UpdateInfo, String> {
     let current = env!("CARGO_PKG_VERSION");
-    let gitee = check_gitee_update();
-    let github = check_github_update();
-    
+    let (gitee, github) = std::thread::scope(|scope| {
+        let gitee_task = scope.spawn(check_gitee_update);
+        let github_task = scope.spawn(check_github_update);
+        let gitee_result = gitee_task
+            .join()
+            .unwrap_or_else(|_| Err("Gitee 更新检查线程异常结束".into()));
+        let github_result = github_task
+            .join()
+            .unwrap_or_else(|_| Err("GitHub 更新检查线程异常结束".into()));
+        (gitee_result, github_result)
+    });
+
     // Log any errors for debugging
     if let Err(ref e) = gitee {
         tracing::warn!("Gitee update check failed: {}", e);
@@ -301,7 +316,7 @@ fn check_update() -> Result<UpdateInfo, String> {
     if let Err(ref e) = github {
         tracing::warn!("GitHub update check failed: {}", e);
     }
-    
+
     // If BOTH failed, return a combined error because we have no update information at all
     if gitee.is_err() && github.is_err() {
         return Err(format!(
@@ -310,9 +325,9 @@ fn check_update() -> Result<UpdateInfo, String> {
             github.unwrap_err()
         ));
     }
-    
+
     let mut best_update: Option<RawRelease> = None;
-    
+
     // Check successful results for newer version
     for update in [gitee.as_ref().ok(), github.as_ref().ok()].into_iter().flatten() {
         if is_newer_version(current, &update.tag_name) {
@@ -326,7 +341,7 @@ fn check_update() -> Result<UpdateInfo, String> {
             }
         }
     }
-    
+
     match best_update {
         Some(raw) => Ok(UpdateInfo {
             has_update: true,
@@ -338,7 +353,6 @@ fn check_update() -> Result<UpdateInfo, String> {
         }),
         None => {
             // Since at least one server succeeded, we return Ok(has_update: false)
-            // instead of throwing an error for the failed server
             Ok(UpdateInfo {
                 has_update: false,
                 current_version: current.into(),
@@ -350,7 +364,6 @@ fn check_update() -> Result<UpdateInfo, String> {
         }
     }
 }
-
 #[derive(Deserialize, Debug)]
 struct GiteeRelease {
     tag_name: String,
@@ -382,7 +395,12 @@ fn check_gitee_update() -> Result<RawRelease, String> {
     use std::os::windows::process::CommandExt;
     let output = std::process::Command::new("curl.exe")
         .creation_flags(0x08000000) // CREATE_NO_WINDOW
-        .args(["-s", "https://gitee.com/api/v5/repos/lu52/Mac-touchpad/releases/latest"])
+        .args([
+            "-sS",
+            "--connect-timeout", "10",
+            "--max-time", "15",
+            "https://gitee.com/api/v5/repos/lu52/Mac-touchpad/releases/latest"
+        ])
         .output()
         .map_err(|e| format!("执行 curl 失败: {}", e))?;
 
@@ -416,7 +434,14 @@ fn check_github_update() -> Result<RawRelease, String> {
     use std::os::windows::process::CommandExt;
     let output = std::process::Command::new("curl.exe")
         .creation_flags(0x08000000) // CREATE_NO_WINDOW
-        .args(["-s", "-H", "User-Agent: Mac-touchpad", "https://api.github.com/repos/xiaolu12-up/Mac-touchpad/releases/latest"])
+        .args([
+            "-sS",
+            "--connect-timeout", "10",
+            "--max-time", "15",
+            "-H", "User-Agent: Mac-touchpad",
+            "-H", "Accept: application/vnd.github+json",
+            "https://api.github.com/repos/xiaolu12-up/Mac-touchpad/releases/latest"
+        ])
         .output()
         .map_err(|e| format!("执行 curl 失败: {}", e))?;
 
@@ -451,57 +476,123 @@ fn open_url(url: String) {
 }
 
 #[tauri::command]
-fn download_update(url: String) -> Result<String, String> {
+async fn download_update(url: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || download_update_blocking(url))
+        .await
+        .map_err(|e| format!("下载任务失败: {}", e))?
+}
+
+fn download_update_blocking(url: String) -> Result<String, String> {
     use std::os::windows::process::CommandExt;
 
-    // Get temp directory path
+    let raw_name = url
+        .rsplit('/')
+        .next()
+        .unwrap_or("update.exe")
+        .split('?')
+        .next()
+        .unwrap_or("update.exe");
+    let safe_name = raw_name
+        .chars()
+        .map(|c| if c.is_control() || matches!(c, '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '*' | '?') { '_' } else { c })
+        .collect::<String>();
+    let file_name = if safe_name.ends_with(".msi") || safe_name.ends_with(".exe") {
+        safe_name
+    } else {
+        format!("{}.exe", safe_name)
+    };
+
+    let unique = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or_default();
     let mut dest_path = std::env::temp_dir();
-    let file_name = url.split('/').last().unwrap_or("update.exe");
-    dest_path.push(file_name);
+    dest_path.push(format!("MacTouchpad-{}-{}", unique, file_name));
     let dest_str = dest_path.to_string_lossy().to_string();
 
-    let output = std::process::Command::new("powershell.exe")
+    // Remove stale partial files from a previous attempt.
+    let _ = std::fs::remove_file(&dest_path);
+
+    let output = std::process::Command::new("curl.exe")
         .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .args([
-            "-NoProfile",
-            "-Command",
-            &format!(
-                r#"[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile('{}', '{}')"#,
-                url, dest_str
-            )
+            "--location",
+            "--fail",
+            "--silent",
+            "--show-error",
+            "--connect-timeout", "15",
+            "--max-time", "600",
+            "--retry", "2",
+            "--retry-delay", "1",
+            "--output", &dest_str,
+            &url,
         ])
         .output();
 
     match output {
-        Ok(out) if out.status.success() => Ok(dest_str),
-        Ok(out) => Err(format!(
-            "下载失败: {}",
-            String::from_utf8_lossy(&out.stderr)
-        )),
-        Err(e) => Err(format!("无法执行下载命令: {}", e)),
+        Ok(out) if out.status.success() && dest_path.exists() => {
+            let size = std::fs::metadata(&dest_path).map(|m| m.len()).unwrap_or(0);
+            if size == 0 {
+                Err("下载失败：安装包为空".into())
+            } else {
+                tracing::info!("Update package downloaded: {} bytes", size);
+                Ok(dest_str)
+            }
+        }
+        Ok(out) => {
+            let _ = std::fs::remove_file(&dest_path);
+            Err(format!(
+                "下载失败: {}",
+                String::from_utf8_lossy(&out.stderr).trim()
+            ))
+        }
+        Err(e) => {
+            let _ = std::fs::remove_file(&dest_path);
+            Err(format!("无法执行下载命令: {}", e))
+        }
     }
 }
 
 #[tauri::command]
-fn run_installer(path: String) -> Result<(), String> {
-    let is_msi = path.ends_with(".msi");
-    let status = if is_msi {
+async fn run_installer(path: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || run_installer_blocking(path))
+        .await
+        .map_err(|e| format!("安装任务失败: {}", e))?
+}
+
+fn run_installer_blocking(path: String) -> Result<(), String> {
+    use std::os::windows::process::CommandExt;
+
+    let path_buf = std::path::PathBuf::from(&path);
+    if !path_buf.exists() {
+        return Err("安装包不存在，请重新下载".into());
+    }
+
+    let is_msi = path_buf.extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| ext.eq_ignore_ascii_case("msi"))
+        .unwrap_or(false);
+
+    let spawn_result = if is_msi {
         std::process::Command::new("msiexec.exe")
+            .creation_flags(0x08000000)
             .args(["/i", &path])
             .spawn()
     } else {
         std::process::Command::new(&path)
+            .creation_flags(0x08000000)
             .spawn()
     };
 
-    match status {
+    match spawn_result {
         Ok(_) => {
+            // Give the installer process time to take ownership of the package handle.
+            std::thread::sleep(std::time::Duration::from_millis(250));
             std::process::exit(0);
         }
         Err(e) => Err(format!("启动安装程序失败: {}", e)),
     }
 }
-
 #[derive(Serialize)]
 struct ActionInfo { key: String, label: String }
 
