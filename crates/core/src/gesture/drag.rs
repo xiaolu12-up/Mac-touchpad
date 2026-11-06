@@ -37,6 +37,10 @@ pub struct ThreeFingerDrag {
     fingers_currently_down: usize,
     /// Anchor position when 1 or 2 fingers touch during release-and-restart window.
     cancel_anchor: Option<(i32, i32, i32)>,
+    /// Set when remaining fingers intentionally continue the active drag.
+    continuation_active: bool,
+    /// Last remaining-finger contact used for continuation movement.
+    continuation_last: Option<(i32, i32, i32)>,
 }
 
 impl ThreeFingerDrag {
@@ -56,6 +60,8 @@ impl ThreeFingerDrag {
             last_move_dir: (0.0, 0.0),
             fingers_currently_down: 0,
             cancel_anchor: None,
+            continuation_active: false,
+            continuation_last: None,
         }
     }
 
@@ -273,69 +279,119 @@ impl ThreeFingerDrag {
 
     /// Handle non-3-finger frames (`0`, `1`, or `2` fingers) while a drag may be active.
     ///
-    /// Prevents cursor jumps during finger lift-off (`3 -> 2 -> 1 -> 0`) while supporting
-    /// `allow_release_and_restart` and immediately canceling if the user starts a 1-finger move
-    /// or 2-finger scroll.
+    /// After a three-finger drag, one remaining finger can intentionally take over and keep
+    /// dragging. Short movement is ignored to absorb lift-off jitter; once the finger passes a
+    /// small threshold, the active drag follows that finger until it is lifted or the timer ends.
     pub fn on_non_three_finger_contact(
         &mut self,
+        device_id: &str,
         config: &Config,
         mouse: &mut MouseSimulator,
         contacts: &[TouchpadContact],
+        elapsed_ms: i64,
     ) -> TimerAction {
         self.fingers_currently_down = contacts.len();
 
         if !self.is_dragging {
             self.cancel_anchor = None;
+            self.continuation_active = false;
+            self.continuation_last = None;
             return TimerAction::None;
         }
 
-        // Freeze cursor movement state immediately when finger count leaves 3 (prevents lift-off jump)
-        self.distance_manager.reset();
-        self.accel_tracker.reset();
-        mouse.clear_subpixel();
-        self.averaging_x = 0.0;
-        self.averaging_y = 0.0;
-        self.averaging_count = 0;
-        self.is_stationary = true;
-        self.finger_counter.on_released_for_restart();
+        let elapsed = elapsed_ms.max(1);
+        let can_continue = config.allow_release_and_restart && !contacts.is_empty();
 
-        if !config.allow_release_and_restart {
-            // When release-and-restart is disabled, stop drag as soon as fingers lift (0 or 1 finger)
-            if contacts.len() <= 1 {
+        if !can_continue {
+            self.distance_manager.reset();
+            self.accel_tracker.reset();
+            mouse.clear_subpixel();
+            self.averaging_x = 0.0;
+            self.averaging_y = 0.0;
+            self.averaging_count = 0;
+            self.is_stationary = true;
+            self.finger_counter.on_released_for_restart();
+            self.cancel_anchor = None;
+            self.continuation_active = false;
+            self.continuation_last = None;
+
+            if !config.allow_release_and_restart && contacts.len() <= 1 {
                 self.stop_drag(config, mouse);
                 return TimerAction::StopTimer;
             }
+
             let delay = self.get_release_delay(config);
             return TimerAction::StartTimer(delay);
         }
 
-        // When release-and-restart is enabled:
-        // If 1 or 2 fingers remain on the pad and actively move past a small cancel threshold,
-        // the user is starting a 1-finger pointer move or 2-finger scroll → release drag immediately.
-        if let Some(first) = contacts.first() {
-            match self.cancel_anchor {
-                Some((id, ax, ay)) if id == first.contact_id => {
-                    let dx = (first.x - ax) as f32;
-                    let dy = (first.y - ay) as f32;
-                    let moved = (dx * dx + dy * dy).sqrt();
-                    if moved > 24.0 {
-                        tracing::debug!("STOP DRAG: {}-finger movement detected after release", contacts.len());
-                        self.stop_drag(config, mouse);
-                        return TimerAction::StopTimer;
+        let first = &contacts[0];
+        match self.cancel_anchor {
+            Some((id, anchor_x, anchor_y)) if id == first.contact_id => {
+                let dx = (first.x - anchor_x) as f32;
+                let dy = (first.y - anchor_y) as f32;
+                let moved = (dx * dx + dy * dy).sqrt();
+
+                if self.continuation_active {
+                    if let Some((last_id, last_x, last_y)) = self.continuation_last {
+                        if last_id == first.contact_id {
+                            let raw_delta = (
+                                (first.x - last_x) as f32,
+                                (first.y - last_y) as f32,
+                            );
+                            if raw_delta.0 != 0.0 || raw_delta.1 != 0.0 {
+                                let delta = self.accel_tracker.process_delta(
+                                    device_id,
+                                    config,
+                                    raw_delta,
+                                    elapsed,
+                                    self.aspect_ratio,
+                                );
+
+                                if config.cursor_averaging > 1 {
+                                    self.averaging_x += delta.0;
+                                    self.averaging_y += delta.1;
+                                    self.averaging_count += 1;
+                                    if self.averaging_count >= config.cursor_averaging {
+                                        mouse.shift_cursor_position(self.averaging_x, self.averaging_y);
+                                        self.averaging_x = 0.0;
+                                        self.averaging_y = 0.0;
+                                        self.averaging_count = 0;
+                                    }
+                                } else {
+                                    mouse.shift_cursor_position(delta.0, delta.1);
+                                }
+                            }
+                        }
                     }
+
+                    self.continuation_last = Some((first.contact_id, first.x, first.y));
+                    let delay = self.get_release_delay(config);
+                    return TimerAction::StartTimer(delay);
                 }
-                _ => {
-                    self.cancel_anchor = Some((first.contact_id, first.x, first.y));
+
+                // Ignore lift-off jitter, then let a deliberate remaining-finger movement take over.
+                if moved > 24.0 {
+                    self.accel_tracker.reset();
+                    mouse.clear_subpixel();
+                    self.averaging_x = 0.0;
+                    self.averaging_y = 0.0;
+                    self.averaging_count = 0;
+                    self.is_stationary = true;
+                    self.continuation_active = true;
+                    self.continuation_last = Some((first.contact_id, first.x, first.y));
+                    tracing::debug!("CONTINUE DRAG with {} finger", contacts.len());
                 }
             }
-        } else {
-            self.cancel_anchor = None;
+            _ => {
+                self.cancel_anchor = Some((first.contact_id, first.x, first.y));
+                self.continuation_active = false;
+                self.continuation_last = None;
+            }
         }
 
         let delay = self.get_release_delay(config);
         TimerAction::StartTimer(delay)
     }
-
     /// Called when the drag-end timer fires (no input for release_delay_ms).
     pub fn on_timer_fired(&mut self, config: &Config, mouse: &mut MouseSimulator) {
         if self.is_dragging {
@@ -373,6 +429,8 @@ impl ThreeFingerDrag {
         self.last_move_dir = (0.0, 0.0);
         self.fingers_currently_down = 0;
         self.cancel_anchor = None;
+        self.continuation_active = false;
+        self.continuation_last = None;
     }
 
     fn stop_drag(&mut self, config: &Config, mouse: &mut MouseSimulator) {
@@ -435,8 +493,48 @@ mod tests {
         assert!(drag.is_dragging(), "Stationary 3-finger hold must not drop drag when timer fires");
 
         // Lifting fingers (0 contacts) and then firing timer should end drag
-        let _ = drag.on_non_three_finger_contact(&config, &mut mouse, &[]);
+        let _ = drag.on_non_three_finger_contact("default", &config, &mut mouse, &[], 10);
         drag.on_timer_fired(&config, &mut mouse);
         assert!(!drag.is_dragging(), "Timer after finger release should end drag");
+    }
+
+    #[test]
+    fn one_finger_can_continue_drag_after_three_finger_start() {
+        let mut config = Config::default();
+        config.drag_button = DragButton::None;
+        config.allow_release_and_restart = true;
+        config.start_threshold = 20.0;
+        let mut mouse = MouseSimulator::new();
+        let mut drag = ThreeFingerDrag::new();
+
+        let c0 = contacts3(1000, 1000, 1500, 1000, 2000, 1000);
+        let c1 = contacts3(1010, 1000, 1510, 1000, 2010, 1000);
+        let c2 = contacts3(1060, 1000, 1560, 1000, 2060, 1000);
+        let _ = drag.on_touchpad_contact("default", &config, &mut mouse, &[], &c0, 10);
+        let _ = drag.on_touchpad_contact("default", &config, &mut mouse, &c0, &c1, 10);
+        let _ = drag.on_touchpad_contact("default", &config, &mut mouse, &c1, &c2, 10);
+        assert!(drag.is_dragging());
+
+        // Small lift-off jitter must not cancel the drag.
+        let jitter = vec![TouchpadContact::new(1, 1060, 1000)];
+        let _ = drag.on_non_three_finger_contact("default", &config, &mut mouse, &jitter, 10);
+        assert!(drag.is_dragging());
+
+        // Deliberate one-finger movement takes over and keeps the drag alive.
+        let moved = vec![TouchpadContact::new(1, 1090, 1000)];
+        let action = drag.on_non_three_finger_contact("default", &config, &mut mouse, &moved, 10);
+        assert!(drag.is_dragging());
+        assert_eq!(action, TimerAction::StartTimer(config.release_delay_ms.max(15)));
+
+        let moved_again = vec![TouchpadContact::new(1, 1130, 1000)];
+        let action =
+            drag.on_non_three_finger_contact("default", &config, &mut mouse, &moved_again, 10);
+        assert!(drag.is_dragging());
+        assert_eq!(action, TimerAction::StartTimer(config.release_delay_ms.max(15)));
+
+        // Lifting the last finger still ends the drag when the timer fires.
+        let _ = drag.on_non_three_finger_contact("default", &config, &mut mouse, &[], 10);
+        drag.on_timer_fired(&config, &mut mouse);
+        assert!(!drag.is_dragging());
     }
 }

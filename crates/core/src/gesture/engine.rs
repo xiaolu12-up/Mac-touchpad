@@ -246,9 +246,11 @@ impl GestureEngine {
         } else if finger_count == 2 {
             // 2 fingers — native scroll or intermediate lift-off frame from 3-finger drag
             let drag_action = self.drag.on_non_three_finger_contact(
+                device_id,
                 &self.config,
                 &mut self.mouse,
                 &contacts,
+                elapsed,
             );
             self.edge_slide.reset();
             self.swipe_detector.reset();
@@ -265,9 +267,11 @@ impl GestureEngine {
         } else if finger_count == 1 {
             // Single finger: edge slide for volume/brightness or intermediate lift-off frame
             let drag_action = self.drag.on_non_three_finger_contact(
+                device_id,
                 &self.config,
                 &mut self.mouse,
                 &contacts,
+                elapsed,
             );
             self.two_finger_swipe.reset();
             self.swipe_detector.reset();
@@ -278,7 +282,10 @@ impl GestureEngine {
             // Feeding intermediate frames (1 finger) would cancel the tap
             // due to finger count mismatch in the TapDetector.
 
-            if self.config.edge_slide_enabled && !self.four_finger_action_triggered {
+            if !self.drag.is_dragging()
+                && self.config.edge_slide_enabled
+                && !self.four_finger_action_triggered
+            {
                 if let Some(action) = self.edge_slide.feed(
                     &contacts,
                     (0, 4096),
@@ -318,9 +325,11 @@ impl GestureEngine {
                 self.execute_action_for_slot(self.config.three_finger_tap_action, "three_finger_tap");
             }
             let drag_action = self.drag.on_non_three_finger_contact(
+                device_id,
                 &self.config,
                 &mut self.mouse,
                 &empty,
+                elapsed,
             );
 
             self.four_finger_action_triggered = false;
