@@ -414,11 +414,13 @@ fn check_gitee_update() -> Result<RawRelease, String> {
             format!("解析 JSON 失败: {}, 响应体: {}", e, body)
         })?;
     
-    // Find MSI asset, fallback to EXE
-    let asset = release.assets.iter()
-        .find(|a| a.name.ends_with(".msi"))
-        .or_else(|| release.assets.iter().find(|a| a.name.ends_with(".exe")));
-        
+    // Prefer the Windows NSIS executable installer; fall back to MSI.
+    let asset = release
+        .assets
+        .iter()
+        .filter(|a| installer_asset_priority(&a.name) < 99)
+        .min_by_key(|a| installer_asset_priority(&a.name));
+
     let asset_url = asset.map(|a| a.browser_download_url.clone());
     let html_url = format!("https://gitee.com/lu52/Mac-touchpad/releases/tag/{}", release.tag_name);
 
@@ -455,11 +457,13 @@ fn check_github_update() -> Result<RawRelease, String> {
             format!("解析 JSON 失败: {}, 响应体: {}", e, body)
         })?;
     
-    // Find MSI asset, fallback to EXE
-    let asset = release.assets.iter()
-        .find(|a| a.name.ends_with(".msi"))
-        .or_else(|| release.assets.iter().find(|a| a.name.ends_with(".exe")));
-        
+    // Prefer the Windows NSIS executable installer; fall back to MSI.
+    let asset = release
+        .assets
+        .iter()
+        .filter(|a| installer_asset_priority(&a.name) < 99)
+        .min_by_key(|a| installer_asset_priority(&a.name));
+
     let asset_url = asset.map(|a| a.browser_download_url.clone());
 
     Ok(RawRelease {
@@ -470,6 +474,20 @@ fn check_github_update() -> Result<RawRelease, String> {
     })
 }
 
+fn installer_asset_priority(name: &str) -> u8 {
+    let lower = name.to_ascii_lowercase();
+    if lower.ends_with("_x64-setup.exe") {
+        0
+    } else if lower.ends_with("-setup.exe") {
+        1
+    } else if lower.ends_with(".exe") {
+        2
+    } else if lower.ends_with(".msi") {
+        3
+    } else {
+        99
+    }
+}
 #[tauri::command]
 fn open_url(url: String) {
     let _ = tauri_plugin_opener::open_url(url, None::<&str>);
